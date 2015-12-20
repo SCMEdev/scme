@@ -50,24 +50,37 @@ module scme
 
 contains
 
-  !ktw  subroutine scme_calculate(nAtms, raOri, lattice, itagl, fa, uTot, virial)
-  subroutine scme_calculate(nAtms, raOri, lattice, fa, uTot)
-    ! nAtms: number of atoms, integer
-    ! raOri: atom coordinates
-    ! lattice: unit cell. lattice = [ax, ay, az]. Only supports rectangular unit cell(?)
-    ! fa: forces
-    ! uTot: total energy
-    ! virial: not implemented
+  !> The main routine for the SCME potential.
+  !! @param[in] n_atoms : The number of atoms. The number of atoms is assumed
+  !!                      to be 3 times the number of water molecules.
+  !! @param[in] coords  : The coordinates of the water molecules.
+  !!                  coords(l+6*(i-1)) stores the l-th coordinate of the first
+  !!                      hydrogen in the i-th molecule
+  !!                  coords(l+3+6*(i-1)) stores the l-th coordinate of the second
+  !!                      hydrogen in the i-th molecule
+  !!                  coords(l+3*(i-1+nHydrogens)) stores the l-th coordinate of the
+  !!                      oxygen in the i-th molecule. (nHydrogens is
+  !!                      the total number of hydrogen atoms).
+  !! @param[in] lattice : The x,y,z dimensions of the rectangular box.
+  !! @param[out] fa     : The forces. The array must have space for n_atoms forces.
+  !! @param[out] u_tot  : The total energy calculated with the SCME potential.
+  subroutine scme_calculate(n_atoms, coords, lattice, fa, u_tot)
 
     implicit none
+    integer, intent(in) :: n_atoms
+    real(dp), intent(in) :: coords(n_atoms)
+    real(dp), intent(in) :: lattice(3)
+    real(dp), intent(out) :: fa(n_atoms)
+    real(dp), intent(out) :: u_tot
+    ! ----------------------------------------
 
-    !timing
-    integer*8 ti, tf, irtc
-    real(dp) t1, t2, t3, t4, t5, t6, t7, rMax, rMax2
-    real(dp) d1, d2
+    ! Parameters.
+    real(dp) rMax, rMax2, pi
 
-    real(dp) pi, raOri(maxCoo), a(3), a2(3), fa(maxCoo)
-    real(dp), dimension(3) :: lattice
+    ! Local arrays for lattice and half lattice.
+    real(dp) a(3), a2(3)
+
+
     real(dp) fCM(3,maxCoo/3), fsf(3,maxCoo/3), tau(3,maxCoo/3)
     real(dp) uD, uQ, uH, uPol, uDisp, uRho, uCore, uES
 
@@ -85,18 +98,22 @@ contains
     real(dp) d1v(3,maxCoo/3), d2v(3,3,maxCoo/3), d3v(3,3,3,maxCoo/3)
     real(dp) d4v(3,3,3,3,maxCoo/3), d5v(3,3,3,3,3,maxCoo/3)
 
-    real(dp) uTot, faB(maxCoo), u, virial, convFactor
+    real(dp) faB(maxCoo), u, virial, convFactor
     real(dp) uCov, uAng, Amp, rMin, lambda, gam, rOHmax
-    integer nM, nO, nH, nAtms, i, ii, j, k, l, NC, nst, Np
 
-    !     Unpolarized multipoles
-    !real(dp) d0(3), q0(3,3), o0(3,3,3), h0(3,3,3,3) ! in pol_params
+    ! Local integers.
+    integer nM, nO, nH, i, ii, j, k, l, NC, nst, Np
 
-    !     Work multipoles. They start unpolarized and with the induction
-    !     loop we induce dipoles and quadrupoles.
-    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
-    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
-    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
+    ! Work multipoles. They start unpolarized and with the induction
+    ! loop we induce dipoles and quadrupoles.
+    real(dp), allocatable :: dpole0(:,:)
+    real(dp), allocatable :: qpole0(:,:,:)
+    real(dp), allocatable :: opole(:,:,:,:)
+    real(dp), allocatable :: hpole(:,:,:,:,:)
+    real(dp), allocatable :: dpole(:,:)
+    real(dp), allocatable :: qpole(:,:,:)
+
+!    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
 
     !     Polarizabilities
     !real(dp) dd0(3,3), dq0(3,3,3), hp0(3,3,3), qq0(3,3,3,3) !defined in polariz_parameters
@@ -129,6 +146,21 @@ contains
     integer     p, q, r, s
     real(dp)      kk1, kk2
 
+
+    u_tot = 0.0d0
+
+    nO = n_atoms/3          ! Number of hydrogens
+    nH = nO*2             ! Number of oxygens
+    nM = nO                ! Number of molecules
+
+    ! Allocate memory.
+    allocate( dpole0(3,nM) )
+    allocate( qpole0(3,3,nM) )
+    allocate( opole(3,3,3,nM) )
+    allocate( hpole(3,3,3,3,nM) )
+    allocate( dpole(3,nM) )
+    allocate( qpole(3,3,nM) )
+
     irigidmolecules = .false.
 !    irigidmolecules = .true.
     useDMS = .true.
@@ -159,15 +191,11 @@ contains
     a2(1) = lattice(1)/2
     a2(2) = lattice(2)/2
     a2(3) = lattice(3)/2
-    nO = nAtms/3          ! Number of hydrogens
-    nH = nO*2             ! Number of oxygens
-    nM = nO                ! Number of molecules
 
-    uTot = 0.0d0
-
+    u_tot = 0.0d0
 
     !     Recover broken molecules due to PBC
-    call recoverMolecules(raOri, ra, nH, nO, a, a2)
+    call recoverMolecules(coords, ra, nH, nO, a, a2)
 
     call calcCentersOfMass(ra, nM, rCM)
 
@@ -249,7 +277,7 @@ contains
 
     !     Calculate the energy of interaction between the multipole moments
     !     and the electric field of the other molecules.
-    call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, uTot)
+    call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_tot)
 
     !PRB - Don't use this one ---------------------------------------------
     !      call calcEnergy(dpole, qpole, opole, hpole, d1v, d2v, d3v, d4v,
@@ -275,18 +303,18 @@ contains
        fa(i) = convFactor * fa(i)
        !         virial = virial - ra(i)*fa(i)
     end do
-    uTot = uTot * convFactor
+    u_tot = u_tot * convFactor
 
-    uES = uTot
+    uES = u_tot
 
 
     ! 112  call dispersion2(ra, fa, uDisp, nM, a, a2, NC, rMax2, iSlab)
     call dispersion(ra, fa, uDisp, nM, a, a2)
-    uTot = uTot + uDisp
+    u_tot = u_tot + uDisp
 
     if (addCore) then
        call coreInt(ra, fa, uCore, nM, a, a2)
-       uTot = uTot + uCore
+       u_tot = u_tot + uCore
     end if
 
     !     KTW adding intramolecular energy from Partridge-Schwenke PES
@@ -308,7 +336,7 @@ contains
 
           call potnasa2(mol,grad,uPES1)
           uPES(i) = uPES1
-          uTot = uTot + uPES1
+          u_tot = u_tot + uPES1
           do p=1,3
              fa(indO  + p) = fa(indO + p) - grad(p)
              fa(indH1 + p) = fa(indH1 + p) - grad(p+3)
@@ -326,7 +354,7 @@ contains
 
 
 !ktw    print '(5f16.10)', uTot, uES, uDisp, uCore, sum(uPES)
-    print '(4f16.10)', uTot, uES, uDisp, sum(uPES)
+!    print '(4f16.10)', uTot, uES, uDisp, sum(uPES)
 
 
     return

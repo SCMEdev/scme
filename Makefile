@@ -13,7 +13,7 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-FFLAGS = -O3 -I$(MODDIR) -J$(MODDIR)
+FFLAGS = -O3 -pg -I$(MODDIR) -J$(MODDIR)
 CFLAGS = -O2 -I$(MODDIR) -J$(MODDIR) -lstdc++
 
 OBJ = $(addprefix $(OBJDIR)/, \
@@ -41,7 +41,7 @@ $(OBJDIR)/libscme.a: $(OBJ)
 
 # compiling
 
-#$(OBJDIR)/.f90.o: 
+#$(OBJDIR)/.f90.o:
 #	$(FC) $(FFLAGS) -c -o $@ $<
 
 #$(OBJDIR)/.cpp.o: $(HEADERS)
