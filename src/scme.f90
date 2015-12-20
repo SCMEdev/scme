@@ -74,12 +74,17 @@ contains
     real(dp), intent(out) :: u_tot
     ! ----------------------------------------
 
-    ! Parameters.
-    real(dp) rMax, rMax2, pi
+    ! Constants and parameters.
+    real(dp), parameter :: pi = 3.14159265358979324d0
+    real(dp), parameter :: kk1 = 2.5417709D0
+    real(dp), parameter :: kk2 = 1.88972666351031921149D0
+    real(dp), parameter :: convFactor = 14.39975841d0 / 4.803206799d0**2
+    real(dp), parameter :: rMax = 11.0d0
+    real(dp), parameter :: rMax2 = rMax*rMax
+    integer, parameter :: NC = num_cells
 
     ! Local arrays for lattice and half lattice.
     real(dp) a(3), a2(3)
-
 
     real(dp) fCM(3,maxCoo/3), fsf(3,maxCoo/3), tau(3,maxCoo/3)
     real(dp) uD, uQ, uH, uPol, uDisp, uRho, uCore, uES
@@ -98,11 +103,11 @@ contains
     real(dp) d1v(3,maxCoo/3), d2v(3,3,maxCoo/3), d3v(3,3,3,maxCoo/3)
     real(dp) d4v(3,3,3,3,maxCoo/3), d5v(3,3,3,3,3,maxCoo/3)
 
-    real(dp) faB(maxCoo), u, virial, convFactor
+    real(dp) faB(maxCoo), u, virial
     real(dp) uCov, uAng, Amp, rMin, lambda, gam, rOHmax
 
     ! Local integers.
-    integer nM, nO, nH, i, ii, j, k, l, NC, nst, Np
+    integer nM, nO, nH, i, ii, j, k, l, nst, Np
 
     ! Work multipoles. They start unpolarized and with the induction
     ! loop we induce dipoles and quadrupoles.
@@ -117,8 +122,16 @@ contains
 
     !     Polarizabilities
     !real(dp) dd0(3,3), dq0(3,3,3), hp0(3,3,3), qq0(3,3,3,3) !defined in polariz_parameters
-    real(dp) dd(3,3,maxCoo/3), dq(3,3,3,maxCoo/3), hp(3,3,3,maxCoo/3)
-    real(dp) qq(3,3,3,3,maxCoo/3)
+
+    ! Polarizabilities.
+    real(dp), allocatable :: dd(:,:,:)
+    real(dp), allocatable :: dq(:,:,:,:)
+    real(dp), allocatable :: hp(:,:,:,:)
+    real(dp), allocatable :: qq(:,:,:,:,:)
+
+
+!    real(dp) dd(3,3,maxCoo/3), dq(3,3,3,maxCoo/3), hp(3,3,3,maxCoo/3)
+!    real(dp) qq(3,3,3,3,maxCoo/3)
 
     !     Move along tetrahedral axis
     real(dp) m(3,3), mI(3,3), ft(3), dft(3), df(3), ftddr, ddd
@@ -144,7 +157,7 @@ contains
 
     ! Debug
     integer     p, q, r, s
-    real(dp)      kk1, kk2
+!    real(dp)      kk1, kk2
 
 
     u_tot = 0.0d0
@@ -161,28 +174,32 @@ contains
     allocate( dpole(3,nM) )
     allocate( qpole(3,3,nM) )
 
+    ! Arrays for polarizabilities.
+    allocate( dd(3,3,nM) )
+    allocate( dq(3,3,3,nM) )
+    allocate( hp(3,3,3,nM) )
+    allocate( qq(3,3,3,3,nM) )
+
     irigidmolecules = .false.
 !    irigidmolecules = .true.
     useDMS = .true.
 !    useDMS = .false.
     debug = .false.
 !    pi = 3.14159265358979312d0
-    pi = 3.14159265358979324d0
     ! ML: corrected version of PI
 
     !call readPoles(d0, q0, o0, h0) ! now in module multipole_parameters
     !call readPolariz(dd0, dq0, hp0, qq0) ! now in module polariz_parameters
-    NC = num_cells       ! Number of cell in each direction (= 0)
-    rMax = 11.d0
-    rMax2 = rMax*rMax
+    !NC = num_cells       ! Number of cell in each direction (= 0)
+
     !     Convert from Debye^2/angstrom^3 to eV
-    convFactor = 14.39975841d0 / 4.803206799d0**2
+    !convFactor = 14.39975841d0 / 4.803206799d0**2
     iSlab = .FALSE.
     !         iSlab = .TRUE.
 !    addCore = .TRUE.
     addCore = .FALSE.
-    kk1 = 2.5417709D0
-    kk2 = 1.88972666351031921149D0
+    !kk1 = 2.5417709D0
+    !kk2 = 1.88972666351031921149D0
 
     !     Size of the simulation cell
     a(1) = lattice(1)
