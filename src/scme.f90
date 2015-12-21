@@ -83,6 +83,16 @@ contains
     real(dp), parameter :: rMax2 = rMax*rMax
     integer, parameter :: NC = num_cells
 
+    ! Parameter flags for controlling behavior.
+    logical*1, parameter :: irigidmolecules = .false.
+    logical*1, parameter :: debug = .false.
+    logical*1, parameter :: iSlab = .false.
+    logical*1, parameter :: addCore = .false.
+    logical*1, parameter :: useDMS = .true.
+
+    ! Local flag for controlling behavior.
+    logical*1 :: converged
+
     ! Local arrays for lattice and half lattice.
     real(dp) a(3), a2(3)
 
@@ -118,42 +128,17 @@ contains
     real(dp), allocatable :: dpole(:,:)
     real(dp), allocatable :: qpole(:,:,:)
 
-!    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
-
-    !     Polarizabilities
-    !real(dp) dd0(3,3), dq0(3,3,3), hp0(3,3,3), qq0(3,3,3,3) !defined in polariz_parameters
-
     ! Polarizabilities.
     real(dp), allocatable :: dd(:,:,:)
     real(dp), allocatable :: dq(:,:,:,:)
     real(dp), allocatable :: hp(:,:,:,:)
     real(dp), allocatable :: qq(:,:,:,:,:)
 
-
-!    real(dp) dd(3,3,maxCoo/3), dq(3,3,3,maxCoo/3), hp(3,3,3,maxCoo/3)
-!    real(dp) qq(3,3,3,3,maxCoo/3)
-
-    !     Move along tetrahedral axis
-    real(dp) m(3,3), mI(3,3), ft(3), dft(3), df(3), ftddr, ddd
-
-    !     Study bulk modulus
-    real(dp) raOld(maxCoo), scale, dr(3)
-    integer iO, iH1, iH2
-    !     Check derivatives
-    integer at, coord, iMol, iComp
-    real(dp) r1(3), r2(3), ro(3)
-    real(dp) dx, di(3), fexa, fnum, uOld, r0(3)
-
-!ktw    logical*1 firstVisit, converged, debug, iSlab
-    logical*1 converged, debug, iSlab
-    logical*1 addCore
     integer indO, indH1, indH2
     real(dp) ROH1, ROH2, uPES(maxCoo), psinp(maxCoo,3)
     real(dp) qdms(3), dipmom(3)
     real(dp) mol(9), grad(9), uPES1
 !ktw    logical irigidmolecules
-    logical*1 irigidmolecules, useDMS
-
 
     ! Debug
     integer     p, q, r, s
@@ -180,11 +165,9 @@ contains
     allocate( hp(3,3,3,nM) )
     allocate( qq(3,3,3,3,nM) )
 
-    irigidmolecules = .false.
 !    irigidmolecules = .true.
-    useDMS = .true.
 !    useDMS = .false.
-    debug = .false.
+!    debug = .false.
 !    pi = 3.14159265358979312d0
     ! ML: corrected version of PI
 
@@ -194,10 +177,10 @@ contains
 
     !     Convert from Debye^2/angstrom^3 to eV
     !convFactor = 14.39975841d0 / 4.803206799d0**2
-    iSlab = .FALSE.
+!    iSlab = .FALSE.
     !         iSlab = .TRUE.
 !    addCore = .TRUE.
-    addCore = .FALSE.
+!    addCore = .FALSE.
     !kk1 = 2.5417709D0
     !kk2 = 1.88972666351031921149D0
 
@@ -256,6 +239,9 @@ contains
     call calcEhigh(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab)
 
     !     Here's where the induction loop begins
+
+    ! ML: Why do we need to say .false. here? it should not be needed if we
+    !     initialize the flag.
     converged = .false.
 
     do while (.not. converged)
