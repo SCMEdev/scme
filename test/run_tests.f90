@@ -16,6 +16,7 @@ program testrunner
   ! Basic functionality tests for scme.
   MIFU_REGISTER_TEST(test_scme_monomer1)
   MIFU_REGISTER_TEST(test_scme_dimer1)
+  MIFU_REGISTER_TEST(test_scme_perf)
 
   ! End the tests.
   MIFU_END()
