@@ -96,7 +96,12 @@ contains
     ! Local arrays for lattice and half lattice.
     real(dp) a(3), a2(3)
 
-    real(dp) fCM(3,maxCoo/3), fsf(3,maxCoo/3), tau(3,maxCoo/3)
+    ! Center of mass forces and torque.
+    real(dp), allocatable :: fCM(:,:)
+    real(dp), allocatable :: fsf(:,:)
+    real(dp), allocatable :: tau(:,:)
+
+!    real(dp) fCM(3,maxCoo/3), fsf(3,maxCoo/3), tau(3,maxCoo/3)
     real(dp) uD, uQ, uH, uPol, uDisp, uRho, uCore, uES
 
     !     atomic position, centers of mass, principal axes.
@@ -152,6 +157,11 @@ contains
     nM = nO                ! Number of molecules
 
     ! Allocate memory.
+    allocate( fCM(3,nM) )
+    allocate( fsf(3,nM) )
+    allocate( tau(3,nM) )
+
+    ! Arrays for multipoles.
     allocate( dpole0(3,nM) )
     allocate( qpole0(3,3,nM) )
     allocate( opole(3,3,3,nM) )
