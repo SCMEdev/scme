@@ -8,7 +8,8 @@ module parameters
   
   ! from param.pot
   
-  real(dp), parameter :: tt_b = 4.40_dp              ! b parameter for Tang_Toennies
+!  real(dp), parameter :: tt_b = 4.40_dp              ! b parameter for Tang_Toennies
+  real(dp), parameter :: tt_b = 2.8811729_dp
   real(dp), parameter :: coreInt_c1 = -1.44350_dp, coreInt_c2 = 20169.17400_dp, coreInt_c3 = -3.46581_dp, &
        coreInt_c4 = 1.0_dp, coreInt_c5_r = -1.0_dp
   real(dp), parameter :: rho_a1 = 1.0250853530d-01, rho_a2 = -1.7246118649d-04, rho_a3 = 1.0219555575d-07,&

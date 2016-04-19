@@ -15,26 +15,43 @@ module polariz_parameters
   real(dp), parameter :: ang_to_au = 1.88972666351031921149_dp
   
   ! components of the polarizabilities
-  real(dp), parameter :: dd0_1 = 10.31146_dp
-  real(dp), parameter :: dd0_2 = 9.54890_dp
-  real(dp), parameter :: dd0_3 = 9.90656_dp
+!  real(dp), parameter :: dd0_1 = 10.31146_dp
+!  real(dp), parameter :: dd0_2 = 9.54890_dp
+!  real(dp), parameter :: dd0_3 = 9.90656_dp
+  real(dp), parameter :: dd0_1 = 9.932447_dp
+  real(dp), parameter :: dd0_2 = 9.438219_dp
+  real(dp), parameter :: dd0_3 = 9.638610_dp
   
-  real(dp), parameter :: dq0_1 = -8.42037_dp
-  real(dp), parameter :: dq0_2 = -1.33400_dp
-  real(dp), parameter :: dq0_3 = -2.91254_dp
-  real(dp), parameter :: dq0_4 =  4.72407_dp
-  real(dp), parameter :: dq0_5 = -1.81153_dp
-  
-  real(dp), parameter :: qq0_1 = 12.11907_dp
-  real(dp), parameter :: qq0_2 = -6.95326_dp
-  real(dp), parameter :: qq0_3 = -5.16582_dp
-  real(dp), parameter :: qq0_4 = 7.86225_dp
-  real(dp), parameter :: qq0_5 = 11.98862_dp
-  real(dp), parameter :: qq0_6 = 11.24741_dp
-  real(dp), parameter :: qq0_7 = -4.29415_dp
-  real(dp), parameter :: qq0_8 = 6.77226_dp
-  real(dp), parameter :: qq0_9 = 9.45997_dp
-  
+!  real(dp), parameter :: dq0_1 = -8.42037_dp
+!  real(dp), parameter :: dq0_2 = -1.33400_dp
+!  real(dp), parameter :: dq0_3 = -2.91254_dp
+!  real(dp), parameter :: dq0_4 =  4.72407_dp
+!  real(dp), parameter :: dq0_5 = -1.81153_dp
+  real(dp), parameter :: dq0_1 = -6.602274_dp
+  real(dp), parameter :: dq0_2 = -2.613041_dp
+  real(dp), parameter :: dq0_3 = -1.016789_dp
+  real(dp), parameter :: dq0_4 = 3.819314_dp
+  real(dp), parameter :: dq0_5 = -2.802525_dp 
+ 
+!  real(dp), parameter :: qq0_1 = 12.11907_dp
+!  real(dp), parameter :: qq0_2 = -6.95326_dp
+!  real(dp), parameter :: qq0_3 = -5.16582_dp
+!  real(dp), parameter :: qq0_4 = 7.86225_dp
+!  real(dp), parameter :: qq0_5 = 11.98862_dp
+!  real(dp), parameter :: qq0_6 = 11.24741_dp
+!  real(dp), parameter :: qq0_7 = -4.29415_dp
+!  real(dp), parameter :: qq0_8 = 6.77226_dp
+!  real(dp), parameter :: qq0_9 = 9.45997_dp
+  real(dp), parameter :: qq0_1 = 42.633711_dp / 3.0_dp
+  real(dp), parameter :: qq0_2 = -23.219259_dp / 3.0_dp
+  real(dp), parameter :: qq0_3 = -19.414453_dp / 3.0_dp
+  real(dp), parameter :: qq0_4 = 33.508394_dp / 3.0_dp
+  real(dp), parameter :: qq0_5 = 38.044926_dp / 3.0_dp
+  real(dp), parameter :: qq0_6 = 45.676750_dp / 3.0_dp
+  real(dp), parameter :: qq0_7 = -22.457490_dp / 3.0_dp
+  real(dp), parameter :: qq0_8 = 33.104536_dp / 3.0_dp
+  real(dp), parameter :: qq0_9 = 41.871945_dp / 3.0_dp 
+ 
   
   ! dipole-dipole polarizability
   real(dp), public, parameter, dimension(3,3) :: dd0 = (ang_to_au)**(-3) * &

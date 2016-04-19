@@ -17,11 +17,14 @@ module multipole_parameters
   real(dp), parameter :: ang_to_au = 1.88972666351031921149_dp
   
   ! components of the unpolarized dipole, quadrupole, ...
-  real(dp), parameter :: d0_1 = -0.72981_dp
-  real(dp), parameter :: q0_1 = 1.95532_dp, q0_2 = -1.85867_dp, q0_3 = -0.09665_dp
+!  real(dp), parameter :: d0_1 = -0.72981_dp
+!  real(dp), parameter :: q0_1 = 1.95532_dp, q0_2 = -1.85867_dp, q0_3 = -0.09665_dp
+  real(dp), parameter :: d0_1 = -0.76219201_dp 
+  real(dp), parameter :: q0_1 = 1.950317739166_dp, q0_2 = -1.840618450315_dp, q0_3 = -0.109699288851_dp 
   real(dp), parameter :: o0_1 = -3.27190_dp, o0_2 = 1.36606_dp, o0_3 = 1.90585_dp
   real(dp), parameter :: h0_1 = -0.94903_dp, h0_2 = -3.38490_dp, h0_3 = 4.33393_dp, &
        h0_4 = 4.09835_dp, h0_5 = -0.71345_dp, h0_6 = -3.62048_dp
+
   
   real(dp), public, parameter, dimension(3) :: d0 = au_to_debye * [0.0_dp, 0.0_dp, d0_1]
   
