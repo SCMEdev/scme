@@ -165,27 +165,28 @@ module test_scme
     call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
 
     ! Check the total energy against reference value.
-    u_tot_ref = 1.2914699994672767d0
-    MIFU_ASSERT_REAL_EQUAL(u_tot, u_tot_ref, 1.0e-10)
+    u_tot_ref = 1.2904844927113648d0
+
+    MIFU_ASSERT_REAL_EQUAL(u_tot_ref, u_tot, 1.0e-10)
 
     ! Check the forces against reference values.
-    ref_forces(1)  =  1.3562179021294438d0
+    ref_forces(1)  =  1.3580482852700133d0
     ref_forces(2)  = -2.6108158941929331d0
-    ref_forces(3)  =  3.5061386883837056d0
+    ref_forces(3)  =  3.5061422780398157d0
     ref_forces(4)  =  3.2864124801108985d0
-    ref_forces(5)  =  3.9367409582683277d0
-    ref_forces(6)  =  1.5157484573318640d0
-    ref_forces(7)  =  0.80444978938411993d0
+    ref_forces(5)  =  3.9382894622077109d0
+    ref_forces(6)  =  1.5157008465161304d0
+    ref_forces(7)  =  0.80474379761950909d0
     ref_forces(8)  =  0.92790818581970669d0
-    ref_forces(9)  =  0.52255072140312320d0
+    ref_forces(9)  =  0.52332582709118647d0
     ref_forces(10) =  0.76242032020453132d0
-    ref_forces(11) = -0.30544903983724547d0
-    ref_forces(12) =  0.37293985457069678d0
-    ref_forces(13) = -4.6401469150382866d0
-    ref_forces(14) = -1.4374295636766843d0
+    ref_forces(11) = -0.30407784368126489d0
+    ref_forces(12) =  0.37221067319580348d0
+    ref_forces(13) = -4.6406547014988444d0
+    ref_forces(14) = -1.4408190402173098d0
     ref_forces(15) = -5.0071366501451626d0
-    ref_forces(16) = -1.5731872079118301d0
-    ref_forces(17) = -0.51168011167155114d0
+    ref_forces(16) = -1.5747776828267221d0
+    ref_forces(17) = -0.51132962120957237d0
     ref_forces(18) = -0.91313228694841819d0
 
     ! Check.

@@ -65,11 +65,11 @@ contains
     ! ----------------------------------------
 
     ! Constants and parameters.
-    real(dp), parameter :: pi = 3.14159265358979324d0
-    real(dp), parameter :: kk1 = 2.5417709D0
-    real(dp), parameter :: kk2 = 1.88972666351031921149D0
-    real(dp), parameter :: convFactor = 14.39975841d0 / 4.803206799d0**2
-    real(dp), parameter :: rMax = 11.0d0
+    real(dp), parameter :: pi = 3.14159265358979324_dp
+    real(dp), parameter :: kk1 = 2.5417709_dp
+    real(dp), parameter :: kk2 = 1.88972666351031921149_dp
+    real(dp), parameter :: convFactor = 14.39975841_dp / 4.803206799_dp**2
+    real(dp), parameter :: rMax = 11.0_dp
     real(dp), parameter :: rMax2 = rMax*rMax
     integer, parameter :: NC = num_cells
 
@@ -155,7 +155,7 @@ contains
     ! ----------------------------
 
     ! Total energy.
-    u_tot = 0.0d0
+    u_tot = 0.0_dp
 
     ! Number of oxygen, hydrogen and moecules.
     nO = n_atoms/3
@@ -166,9 +166,9 @@ contains
     a(1) = lattice(1)
     a(2) = lattice(2)
     a(3) = lattice(3)
-    a2(1) = lattice(1)/2.0d0
-    a2(2) = lattice(2)/2.0d0
-    a2(3) = lattice(3)/2.0d0
+    a2(1) = lattice(1)/2.0_dp
+    a2(2) = lattice(2)/2.0_dp
+    a2(3) = lattice(3)/2.0_dp
 
     ! Recover broken molecules due to periodic boundary conditions.
     call recoverMolecules(coords, ra, nH, nO, a, a2)
@@ -199,7 +199,7 @@ contains
           call dmsnasa2(mol,qdms)
 
           ! Calculate dipole moment wrt center of mass.
-          dipmom(:) = 0.0d0
+          dipmom(:) = 0.0_dp
           do p=1,3
              dipmom(p) = dipmom(p) + qdms(1)*(mol(p)-rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
@@ -277,11 +277,11 @@ contains
     end if
 
     ! Adding intramolecular energy from Partridge-Schwenke PES.
-    uPES(:) = 0.0d0
+    uPES(:) = 0.0_dp
     if (.not. irigidmolecules) then
        do i=1,nM
-          mol(:) = 0.0d0
-          grad(:) = 0.0d0
+          mol(:) = 0.0_dp
+          grad(:) = 0.0_dp
 
           indH1 = 6*(i-1)
           indO  = 3*(i-1+2*nM)
