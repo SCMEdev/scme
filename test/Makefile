@@ -1,10 +1,13 @@
+scme_obj = ../build
+scme_mod = ../build
+#test_build = build
 
 FC = gfortran
-FFLAGS = -O3 -cpp -pg -I../mod/
+FFLAGS = -O3 -cpp -pg -I$(scme_mod)
 
 
 run.x: run_tests.o mifu_asserts.o test_scme.o
-	$(FC) $(FFLAGS) -o run.x run_tests.o mifu_asserts.o test_scme.o ../obj/libscme.a
+	$(FC) $(FFLAGS) -o run.x run_tests.o mifu_asserts.o test_scme.o  $(scme_obj)/libscme.a
 
 run_tests.o: run_tests.f90 mifu_asserts.mod test_scme.mod
 	$(FC) $(FFLAGS) -c run_tests.f90

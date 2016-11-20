@@ -96,7 +96,7 @@ contains
     real(dp) :: tau(3,n_atoms/3)
 
     ! Atomic positions, centers of mass, principal axes.
-    real(dp) :: ra(n_atoms*3)
+    real(dp) :: ra(n_atoms*3) 
     real(dp) :: rCM(3,n_atoms/3)
     real(dp) :: x(3,3,n_atoms/3)
 

@@ -3,6 +3,9 @@
 !     conditions                                                       |
 !----------------------------------------------------------------------+
 
+!JÖ changed all .d0 and .0d0 to .0_dp
+! and other syntax-oriented changes. 
+
 module molecProperties
 
   use data_types
@@ -16,17 +19,28 @@ module molecProperties
 contains
 
   subroutine recoverMolecules(raOri, ra, nH, nO, a, a2)
+    
+    !JÖ reformulate to implicit none and state intention and assumed shape
+    implicit none
+!JÖ    implicit real(dp) (a-h,o-z)
+    
+    real(dp), 	intent(in)	:: raOri(:), a(:), a2(:)
+    integer, 	intent(in) 	:: nH, nO
+    real(dp), 	intent(out) :: ra(:)
 
-    implicit real(dp) (a-h,o-z)
+	! Internal
+    integer  :: i,l,n, index
+    real(dp) :: dist
 
-    real(dp) raOri(maxCoo), a(3), a2(3), ra(maxCoo), dist
-    integer nH,nO
+!JÖ    real(dp) raOri(maxCoo), a(3), a2(3), ra(maxCoo), dist
+!JÖ    integer nH,nO
 
-    do i = 1, nO
-       do l = 1, 3
-          do n = 1, 2
-             index = l+3*(n-1)+6*(i-1)
-             dist = raOri(index) - raOri(l+3*(i-1+nH))
+	!JÖ change 1 = 0,nO-1 and n = 0,2 to make reindexing more straightforward in loop 
+    do i = 0, nO-1 !JÖ oxygen nr i
+       do l = 1, 3 !JÖ the cell dimensions = index of a(l)
+          do n = 0, 1 ! 
+             index = l + 3*(n) + 6*(i)
+             dist = raOri(index) - raOri(l + 3*(i+nH))
              if (dist .gt. a2(l)) then
                 ra(index) = raOri(index) - a(l)
              elseif(dist .lt. -a2(l)) then
@@ -35,7 +49,7 @@ contains
                 ra(index) = raOri(index)
              end if
           end do
-          ra(l+3*(i-1+nH)) = raOri(l+3*(i-1+nH))
+          ra(l + 3*(i+nH)) = raOri(l + 3*(i+nH))
        end do
     end do
     return
@@ -47,20 +61,26 @@ contains
   !----------------------------------------------------------------------+
   subroutine calcCentersOfMass(ra, nM, rCM)
 
-    implicit real(dp) (a-h,o-z)
-    integer nM, iH1, iH2, iO, i, j
-    real(dp) rCM(3,maxCoo/3), ra(maxCoo)
+!JÖ    implicit real(dp) (a-h,o-z)
+    implicit none !JÖ
+    !JÖ state intents and assumed shape:
+    real(dp), 	intent(in) 	:: ra(:)
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(out) 	:: rCM(:,:)
+    
+    integer iH1, iH2, iO, i, j !JÖ nM, 
+!JÖ    real(dp) rCM(3,maxCoo/3), ra(maxCoo)
 
     do i = 1, nM
        iH2 = 2 * i
        iH1 = iH2 - 1
-       iO  = 2 * nM + i
+       iO  = 2*nM + i !JÖ
 
        iH1 = 3 * (iH1 - 1)
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
        do j = 1, 3
-          rCM(j,i) = (ra(iH1+j) + ra(iH2+j) + 16.d0 * ra(iO+j)) / 18.d0
+          rCM(j,i) = (ra(iH1+j) + ra(iH2+j) + 16.0_dp * ra(iO+j)) / 18.0_dp
        end do
     end do
 
@@ -73,10 +93,17 @@ contains
   !----------------------------------------------------------------------+
   subroutine findPpalAxesOLD(ra, nM, x)
 
-    implicit real(dp) (a-h,o-z)
+!JÖ    implicit real(dp) (a-h,o-z)
+    implicit none
+    
+    real(dp), 	intent(in) 	:: ra(:)
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(out) :: x(:,:,:) 
 
-    integer nM, iH1, iH2, iO, i, j
-    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
+    integer 	:: iH1, iH2, iO, i, j !JÖ nM, 
+    real(dp) 	:: r11, r21
+!jö    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
+
 
     do i = 1, nM
        iH2 = 2 * i
@@ -87,7 +114,7 @@ contains
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
        do j = 1, 3
-          x(j,1,i) = -(ra(iH1+j) + ra(iH2+j) - 2.d0 * ra(iO+j))
+          x(j,1,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j))
           x(j,2,i) = ra(iH2+j) - ra(iH1+j)
        end do
        r11 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i))
@@ -109,10 +136,21 @@ contains
   !----------------------------------------------------------------------+
   subroutine findPpalAxes(ra, nM, x)
 
-    implicit real(dp) (a-h,o-z)
+!JÖ    implicit real(dp) (a-h,o-z)
+!JÖ
+!JÖ    integer nM, iH1, iH2, iO, i, j
+!JÖ    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
 
-    integer nM, iH1, iH2, iO, i, j
-    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
+!JÖ use instead:
+    implicit none
+    
+    real(dp), 	intent(in) 	:: ra(:)
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(out) :: x(:,:,:) 
+
+    integer 	:: iH1, iH2, iO, i, j !JÖ nM, 
+    real(dp) 	:: r11, r21
+
 
     ! Debug
     integer*4 p
@@ -126,7 +164,7 @@ contains
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
        do j = 1, 3
-          x(j,3,i) = -(ra(iH1+j) + ra(iH2+j) - 2.d0 * ra(iO+j))
+          x(j,3,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j))
           x(j,1,i) = ra(iH2+j) - ra(iH1+j)
        end do
        r11 = sqrt(x(1,3,i)*x(1,3,i) + x(2,3,i)*x(2,3,i) + x(3,3,i) * x(3,3,i))
@@ -169,27 +207,47 @@ contains
   !! @param[out] x     : ?
   subroutine rotatePoles(d0, q0, o0, h0, dpole, qpole, opole, hpole, nM, x)
     implicit none
-    real(dp), intent(in) :: d0(3)
-    real(dp), intent(in) :: q0(3,3)
-    real(dp), intent(in) :: o0(3,3,3)
-    real(dp), intent(in) :: h0(3,3,3,3)
-    real(dp), intent(out) :: dpole(3,nM)
-    real(dp), intent(out) :: qpole(3,3,nM)
-    real(dp), intent(out) :: opole(3,3,3,nM)
-    real(dp), intent(out) :: hpole(3,3,3,3,nM)
+    real(dp), intent(in) :: d0(:) !JÖ assumed shape can be faster
+    real(dp), intent(in) :: q0(:,:)
+    real(dp), intent(in) :: o0(:,:,:)
+    real(dp), intent(in) :: h0(:,:,:,:)
     integer, intent(in) :: nM
-    real(dp), intent(in) :: x(3,3,nM)
+    real(dp), intent(in) :: x(:,:,:)
+
+    real(dp), intent(out) :: dpole(:,:)
+    real(dp), intent(out) :: qpole(:,:,:)
+    real(dp), intent(out) :: opole(:,:,:,:)
+    real(dp), intent(out) :: hpole(:,:,:,:,:)
+
+
+
+!    real(dp), intent(in) :: d0(3)
+!    real(dp), intent(in) :: q0(3,3)
+!    real(dp), intent(in) :: o0(3,3,3)
+!    real(dp), intent(in) :: h0(3,3,3,3)
+!    integer, intent(in) :: nM
+!    real(dp), intent(in) :: x(3,3,nM)
     ! ----------------------------------------
+
+!    real(dp), intent(out) :: dpole(3,nM)
+!    real(dp), intent(out) :: qpole(3,3,nM)
+!    real(dp), intent(out) :: opole(3,3,3,nM)
+!    real(dp), intent(out) :: hpole(3,3,3,3,nM)
+
 
     ! local variables.
     integer i, j, k, l, ii, jj, kk, ll, m
 
     ! Zeroise.
-    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0d0
-    opole(1:3, 1:3, 1:3, 1:nM) = 0.0d0
-    qpole(1:3, 1:3, 1:nM) = 0.0d0
-    dpole(1:3, 1:nM) = 0.0d0
+!JÖ    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    opole(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    qpole(1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    dpole(1:3, 1:nM) = 0.0_dp
 
+    hpole = 0 !JÖ this is enough 
+    opole = 0
+    qpole = 0
+    dpole = 0
     ! Do the calculation.
     do m = 1, nM
        do l = 1, 3
@@ -230,17 +288,27 @@ contains
     implicit none
 
     integer nM, i, j, k
-    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
-    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
 
-    do i = 1, nM
-       do j = 1, 3
-          dPole(j,i) = dpole0(j,i)
-          do k = 1, 3
-             qpole(k,j,i) = qpole0(k,j,i)
-          end do
-       end do
-    end do
+    real(dp) dpole(:,:) !JÖ 
+    real(dp) dpole0(:,:)
+    real(dp) qpole(:,:,:)
+    real(dp) qpole0(:,:,:)
+
+!JÖ    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
+!JÖ    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
+
+    
+    dPole = dpole0 !JÖ 
+    qpole = qpole0 !JÖ
+
+!JÖ    do i = 1, nM 
+!JÖ       do j = 1, 3
+!JÖ          dPole(j,i) = dpole0(j,i)
+!JÖ          do k = 1, 3
+!JÖ             qpole(k,j,i) = qpole0(k,j,i)
+!JÖ          end do
+!JÖ       end do
+!JÖ    end do
     return
 
   end subroutine setUnpolPoles
@@ -260,26 +328,47 @@ contains
   subroutine rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x)
 
     implicit none
-    real(dp), intent(in) :: hp0(3,3,3)
-    real(dp), intent(in) :: dq0(3,3,3)
-    real(dp), intent(in) :: dd0(3,3)
-    real(dp), intent(in) :: qq0(3,3,3,3)
-    real(dp), intent(out) :: hp(3,3,3,nM)
-    real(dp), intent(out) :: dq(3,3,3,nM)
-    real(dp), intent(out) :: dd(3,3,nM)
-    real(dp), intent(out) :: qq(3,3,3,3,nM)
-    integer, intent(in) :: nM
-    real(dp), intent(in) :: x(3,3,nM)
+!    real(dp), intent(in) :: hp0(3,3,3)
+!    real(dp), intent(in) :: dq0(3,3,3)
+!    real(dp), intent(in) :: dd0(3,3)
+!    real(dp), intent(in) :: qq0(3,3,3,3)
+!    real(dp), intent(out) :: hp(3,3,3,nM)
+!    real(dp), intent(out) :: dq(3,3,3,nM)
+!    real(dp), intent(out) :: dd(3,3,nM)
+!    real(dp), intent(out) :: qq(3,3,3,3,nM)
+!    integer, intent(in) :: nM
+!    real(dp), intent(in) :: x(3,3,nM)
     ! ----------------------------------------
+
+    real(dp), intent(in) :: hp0(:,:,:)
+    real(dp), intent(in) :: dq0(:,:,:)
+    real(dp), intent(in) :: dd0(:,:)
+    real(dp), intent(in) :: qq0(:,:,:,:)
+    real(dp), intent(out) :: hp(:,:,:,:)
+    real(dp), intent(out) :: dq(:,:,:,:)
+    real(dp), intent(out) :: dd(:,:,:)
+    real(dp), intent(out) :: qq(:,:,:,:,:)
+    integer, intent(in) :: nM
+    real(dp), intent(in) :: x(:,:,:)
+    ! ----------------------------------------
+
+
+
 
     ! Local variables.
     integer i, j, k, l, ii, jj, kk, ll, m
 
     ! Zeroise.
-    dd(1:3, 1:3, 1:nM) = 0.d0
-    dq(1:3, 1:3, 1:3, 1:nM) = 0.d0
-    qq(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.d0
-    hp(1:3, 1:3, 1:3, 1:nM) = 0.d0
+!JÖ    dd(1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    dq(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    qq(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    hp(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+
+    dd = 0 !JÖ
+    dq = 0 !JÖ
+    qq = 0 !JÖ
+    hp = 0 !JÖ
+
 
     ! Do the calculation.
     do m = 1, nM
@@ -319,15 +408,24 @@ contains
   subroutine addFields(eH, eD, eT, nM)
 
     implicit none
-    integer i, j, nM
-    real(dp) eH(3,maxCoo/3), eD(3,maxCoo/3)
-    real(dp) eT(3,maxCoo/3)
+!    integer i, j, nM
+!    real(dp) eH(3,maxCoo/3), eD(3,maxCoo/3)
+!    real(dp) eT(3,maxCoo/3)
 
-    do i = 1, nM
-       do j = 1, 3
-          eT(j,i) = eH(j,i) + eD(j,i)
-       end do
-    end do
+    integer , intent(in)   :: nM
+    real(dp), intent(in)   :: eH(:,:)
+    real(dp), intent(in)   :: eD(:,:)
+    real(dp), intent(out) :: eT(:,:)
+    
+    integer i, j
+   
+    eT = eH + eD
+
+!JÖ    do i = 1, nM
+!JÖ       do j = 1, 3
+!JÖ          eT(j,i) = eH(j,i) + eD(j,i)
+!JÖ       end do
+!JÖ    end do
     return
 
   end subroutine addFields
@@ -339,8 +437,11 @@ contains
 
     implicit none
     integer i, j, k, nM
-    real(dp) dEhdr(3,3,maxCoo/3)
-    real(dp) dEtdr(3,3,maxCoo/3), dEddr(3,3,maxCoo/3)
+!    real(dp) dEhdr(3,3,maxCoo/3)
+!    real(dp) dEtdr(3,3,maxCoo/3), dEddr(3,3,maxCoo/3)
+    real(dp) dEhdr(:,:,:)
+    real(dp) dEtdr(:,:,:)
+    real(dp) dEddr(:,:,:)
 
     do i = 1, nM
        do j = 1, 3
@@ -395,12 +496,14 @@ contains
   subroutine SF(r, swFunc)
 
     implicit none
-    real(dp) r, swFunc, x, x2, x3, rSW, rCut
+    real(dp), intent(in) :: r !JÖ
+    real(dp), intent(out) :: swFunc !JÖ
+    real(dp) x, x2, x3, rSW, rCut     !JÖ r, swFunc, 
     real(dp) rL1, rL2, rH1, rH2, dr
 
     !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-    data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 9.d0, 11.d0 /
-    !      data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 11.d0, 13.d0 /
+    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
     save
 
 
@@ -421,9 +524,9 @@ contains
     !$$$      end if
 
     if ((r .ge. rH2) .or. (r .le. rL1)) then
-       swFunc = 0.0d0
+       swFunc = 0.0_dp
     else if ((r .ge. rH1) .and. (r .le. rL2)) then
-       swFunc = 1.0d0
+       swFunc = 1.0_dp
     else if (r .lt. rH1) then
 
        call tang_toenniesN(r, swFunc, 6)
@@ -436,10 +539,10 @@ contains
        x = (r - rL2)/(rH2 - rL2)
        x2 = x * x
        x3 = x2 * x
-       swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
     end if
 
-    !      swFunc = 1.d0
+    !      swFunc = 1.0_dp
 
     return
 
@@ -449,12 +552,14 @@ contains
   subroutine SFdsf(r, swFunc, dSdr)
 
     implicit none
-    real(dp) r, swFunc, x, x2, x3, dSdr, rSW, rCut
+    real(dp), intent(in) :: r !JÖ stated intents
+    real(dp), intent(out) :: swFunc, dSdr !JÖ
+    real(dp) x, x2, x3, rSW, rCut
     real(dp) rL1, rL2, rH1, rH2, dr
 
     !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-    data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 9.d0, 11.d0 /
-    !      data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 11.d0, 13.d0 /
+    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
     save
 
     !     Kroes
@@ -479,11 +584,11 @@ contains
 
 
     if ((r .ge. rH2) .or. (r .le. rL1)) then
-       swFunc = 0.0d0
-       dSdr = 0.0d0
+       swFunc = 0.0_dp
+       dSdr = 0.0_dp
     else if ((r .ge. rH1) .and. (r .le. rL2)) then
-       swFunc = 1.0d0
-       dSdr = 0.0d0
+       swFunc = 1.0_dp
+       dSdr = 0.0_dp
     else if (r .lt. rH1) then
 
        !c         call switchCloseDsf(r, swFunc, dSdr)
@@ -497,11 +602,11 @@ contains
        !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
     else
        x = (r - rL2)/(rH2 - rL2)
-       dr = 1.d0 / (rH2 - rL2)
+       dr = 1.0_dp / (rH2 - rL2)
        x2 = x * x
        x3 = x2 * x
-       swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-       dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
+       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
+       dSdr = 30.0_dp * x2 * (- x2 + 2.0_dp * x - 1.0_dp) * dr
     end if
 
     !      swFunc = 1.d0
