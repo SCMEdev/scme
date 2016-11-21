@@ -15,23 +15,36 @@ contains
     
     implicit none
     
-    real(dp) rCM(3,maxCoo/3), dpole(3,maxCoo/3), qpole(3,3,maxCoo/3), a(3), a2(3)
-    real(dp) dEdr(3,3,maxCoo/3), uD, uQ, eT(3,maxCoo/3)
+!JÖ    real(dp) rCM(3,maxCoo/3), dpole(3,maxCoo/3), qpole(3,3,maxCoo/3), a(3), a2(3)
+!JÖ    real(dp) dEdr(3,3,maxCoo/3), uD, uQ, eT(3,maxCoo/3)
+
+!JÖ here we should change those goto statements to a break/exit statement of named loop
+
+    real(dp) eT   (:,:) !JÖ 3,maxCoo/3
+    real(dp) rCM  (:,:)
+    real(dp) dpole(:,:)
+    real(dp) qpole(:,:,:) !JÖ 3,3,maxCoo/3
+    real(dp) dEdr (:,:,:)
+    real(dp) a(:), a2(:) !JÖ 3
+    real(dp) uD, uQ
+
     
-    real(dp) re(3), r1, r2, r3, r5, r7, eD(3), eq(3), dr(3), dEdr1(3,3), u, rMax2, swFunc, dSdr
+    real(dp) re(3), eD(3), eq(3), dr(3) !JÖ 3
+    real(dp) dEdr1(3,3) !JÖ 3,3
+    real(dp) r1, r2, r3, r5, r7, u, rMax2, swFunc, dSdr
     integer i, j, k, l, nM, NC, NCz, nx, ny, nz
     logical*1 iSlab
     
     NCz = NC
     if (iSlab) NCz = 0
     
-    uD = 0.d0
-    uQ = 0.d0
+    uD = 0.0_dp
+    uQ = 0.0_dp
     do i = 1, nM
        do j = 1, 3
-          eT(j,i) = 0.d0
+          eT(j,i) = 0.0_dp
           do k = 1, 3
-             dEdr(k,j,i) = 0.d0
+             dEdr(k,j,i) = 0.0_dp
           end do
        end do
        do nx = -NC, NC
@@ -99,19 +112,26 @@ contains
     
     implicit none
     
-    real(dp) dpole(3,maxCoo/3), eD(3), dr(3), r2, r3, r5, dEdr(3,3), u
+!    real(dp) dpole(3,maxCoo/3), eD(3), dr(3), r2, r3, r5, dEdr(3,3), u
+
+    real(dp) dpole(:,:) !JÖ 3,maxCoo/3
+    real(dp) dEdr(:,:) !3,3
+    real(dp) eD(:), dr(:) !3
+    real(dp) r2, r3, r5, u, mDr 
+    
+    
     
     integer i, j, k, m
-    real(dp) mDr
+!JÖ    real(dp) mDr
     
     mDr = dpole(1,m)*dr(1) + dpole(2,m)*dr(2) + dpole(3,m)*dr(3)
     do i = 1, 3
-       eD(i) = (3.d0 * mDr * dr(i) / r2 - dpole(i,m)) / r3
+       eD(i) = (3.0_dp * mDr * dr(i) / r2 - dpole(i,m)) / r3
        do j = i, 3
-          dEdr(i,j) = (dpole(i,m) * dr(j) + dpole(j,m) * dr(i) - 5.d0 &
-               * mDr * dr(i) * dr(j) / r2) * 3.d0 / r5
+          dEdr(i,j) = (dpole(i,m) * dr(j) + dpole(j,m) * dr(i) - 5.0_dp &
+               * mDr * dr(i) * dr(j) / r2) * 3.0_dp / r5
           if (i.eq.j) then
-             dEdr(i,j) = dEdr(i,j) + mDr * 3.d0 / r5
+             dEdr(i,j) = dEdr(i,j) + mDr * 3.0_dp / r5
           end if
        end do
     end do
@@ -127,16 +147,23 @@ contains
   subroutine qField(dr, r2, r5, r7, eq, qpole, u, dEdr, m)
     
     implicit none
-    real(dp) qpole(3,3,maxCoo/3)
-    
+!JÖ    real(dp) qpole(3,3,maxCoo/3)
+    real(dp) qpole(:,:,:) !JÖ 3,3,maxCoo/3
+    real(dp) dEdr(:,:) !3,3
+    real(dp) v(3), dr(:), eq(:) !3
+    real(dp) rQr, r2, r5, r7, u
     integer i, j, m
-    real(dp) dr(3), r2, r5, r7, u, dEdr(3,3), eq(3)
-    real(dp) v(3), rQr
+
+
+    
+!JÖ    integer i, j, m
+!JÖ    real(dp) dr(3), r2, r5, r7, u, dEdr(3,3), eq(3)
+!JÖ    real(dp) v(3), rQr
     
     do i = 1, 3
-       v(i) = 0.d0
+       v(i) = 0.0_dp
     end do
-    rQr = 0.d0
+    rQr = 0.0_dp
     do j = 1, 3
        do i = 1, 3
           v(i) = v(i) + qpole(i,j,m) * dr(j)
@@ -145,12 +172,12 @@ contains
     end do
     
     do i = 1, 3
-       eq(i) = 2.d0 * (2.5d0 * rQr / r2 * dr(i) - v(i)) / r5
+       eq(i) = 2.0_dp * (2.5_dp * rQr / r2 * dr(i) - v(i)) / r5
        do j = i, 3
-          dEdr(i,j) = (-2.d0 * qpole(i,j,m) * r2 + 10.d0 * (v(j) &
-               * dr(i) + v(i) * dr(j)) - 35.d0 * rQr * dr(i) * dr(j) / r2) / r7
+          dEdr(i,j) = (-2.0_dp * qpole(i,j,m) * r2 + 10.0_dp * (v(j) &
+               * dr(i) + v(i) * dr(j)) - 35.0_dp * rQr * dr(i) * dr(j) / r2) / r7
           if (i.eq.j) then
-             dEdr(i,j) = dEdr(i,j) + 5.d0 * rQr / r7
+             dEdr(i,j) = dEdr(i,j) + 5.0_dp * rQr / r7
           end if
        end do
     end do

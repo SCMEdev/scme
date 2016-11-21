@@ -15,17 +15,64 @@ contains
     
     implicit none
     
-    real(dp) rCM(3,maxCoo/3)
-    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
+!    real(dp) rCM(3,maxCoo/3)
+!    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
+!    
+!    integer itagl(maxatoms), nM, i, j, k, l, NC, NCz, nx, ny, nz
+!    
+!    real(dp) eoT(3,maxCoo/3), ehT(3,maxCoo/3), eT(3,maxCoo/3)
+!    real(dp) dEdr(3,3,maxCoo/3)
+!    !      real(dp) dEo(3,3,maxCoo/3), dEh(3,3,maxCoo/3)
+!    real(dp) dr(3), r1, r2, r3, r5, r7, r9, r11, re(3)
+!    real(dp) dEdr1(3,3), eO(3), eH(3), a(3), a2(3), u, uH, rMax2,  swFunc, dSdr
+!    logical*1 iSlab
+
+!---------------------------------
+    ! in/out
+    real(dp), intent(in) ::  rCM(:,:)
+    real(dp), intent(in) :: opole(:,:,:,:) 
+    real(dp), intent(in) :: hpole(:,:,:,:,:) !3,3,3,3,maxCoo/3
     
-    integer itagl(maxatoms), nM, i, j, k, l, NC, NCz, nx, ny, nz
+    integer,   intent(in) :: nM
+    integer,   intent(in) :: NC
+
+    logical*1, intent(in) :: iSlab
+    real(dp), intent(in) :: a(3), a2(3)
+    real(dp), intent(in) :: rMax2
+
+    real(dp), intent(out)   :: uH
+    real(dp), intent(out)   :: dEdr(:,:,:) !3,3,maxCoo/3
+    real(dp), intent(out)   ::  eT(:,:)
+
+!----------------------------------------
+!    real(dp) ::  rCM(:,:)
+!    real(dp) :: opole(:,:,:,:) 
+!    real(dp) :: hpole(:,:,:,:,:) !3,3,3,3,maxCoo/3
+!    
+!    integer :: nM, NC
+!
+!    logical*1 :: iSlab
+!    real(dp) :: a(3), a2(3)
+!    real(dp) :: rMax2
+!
+!    real(dp) :: uH
+!    real(dp) :: dEdr(:,:,:) !3,3,maxCoo/3
+!    real(dp) ::  eT(:,:)
+
+
+!JÖ internal: 
+    integer itagl(maxatoms), i, j, k, l, NCz, nx, ny, nz
+    real(dp), dimension(size(eT,1),size(eT,2)) :: eoT, ehT !JÖ automatic array
+!    real(dp) 
     
-    real(dp) eoT(3,maxCoo/3), ehT(3,maxCoo/3), eT(3,maxCoo/3)
-    real(dp) dEdr(3,3,maxCoo/3)
-    !      real(dp) dEo(3,3,maxCoo/3), dEh(3,3,maxCoo/3)
-    real(dp) dr(3), r1, r2, r3, r5, r7, r9, r11, re(3)
-    real(dp) dEdr1(3,3), eO(3), eH(3), a(3), a2(3), u, uH, rMax2,  swFunc, dSdr
-    logical*1 iSlab
+    
+    real(dp) dEdr1(3,3)
+    real(dp) dr(3), re(3) 
+    real(dp) eO(3), eH(3) 
+    real(dp) r1, r2, r3, r5, r7, r9, r11
+    real(dp) u,  swFunc, dSdr
+    
+
     
     NCz = NC
     if (iSlab) NCz = 0
@@ -47,8 +94,8 @@ contains
              do nz = -NCz, NCz
                 re(3) = a(3) * nz
                 
-                do j = 1, nM
-                   if ( (j.eq.i) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) goto 11
+                bicycle:do j = 1, nM !JÖ named loop instead of "goto 11"
+                   if ( (j.eq.i) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) cycle bicycle !JÖ goto 11
                    do k = 1, 3
                       dr(k) = rCM(k,i) - rCM(k,j)
                       if (dr(k) .gt. a2(k)) then
@@ -60,7 +107,7 @@ contains
                    end do
                    r2 = dr(1)**2 + dr(2)**2 + dr(3)**2
                    
-                   if (r2 .gt. rMax2) goto 11
+                   if (r2 .gt. rMax2) cycle bicycle !JÖ goto 11
                    
                    r1 = sqrt(r2)
                    call SF(r1, swFunc)
@@ -90,7 +137,8 @@ contains
                          dEdr(k,l,i) = dEdr(k,l,i) + dEdr1(k,l) * swFunc
                       end do
                    end do
-11              end do
+                end do bicycle !JÖ 
+!11              end do
              end do
           end do
        end do
@@ -107,14 +155,26 @@ contains
     
     implicit none
     
-    real(dp) opole(3,3,3,maxCoo/3)
-    
-    !c      real(dp) opole(3,3,3)
-    real(dp) dr(3), r2, r7, r9, eO(3), u, dEdr(3,3)
-    
-    integer i, j, k, m
+!JÖ    real(dp) opole(3,3,3,maxCoo/3)
+!JÖ    
+!JÖ    !c      real(dp) opole(3,3,3)
+!JÖ    real(dp) dr(3), r2, r7, r9, eO(3), u, dEdr(3,3)
+!JÖ    
+!JÖ    integer i, j, k, m
+!JÖ    real(dp) rrrO, v(3), g(3,3), d(3,3)
+ 
+!JÖ  in/out: 
+    real(dp) opole(:,:,:,:)
+    real(dp) dr(:), eO(:) 
+    real(dp) dEdr(:,:)
+    real(dp) r2, r7, r9, u
+    integer m
+
+!JÖ internal:    
+    integer i, j, k
     real(dp) rrrO, v(3), g(3,3), d(3,3)
-    
+   
+
     rrrO = 0.d0
     do i = 1, 3
        v(i) = 0.d0
@@ -156,11 +216,20 @@ contains
   subroutine hField(dr, r2, r9, r11, eH, hpole, u, dEdr, m)
     
     implicit none
-    integer i, j, k, l, m
+    
+!    integer i, j, k, l, m
+!    real(dp) rrrrH, v(3), g(3,3), d(3,3)
+!    
+!    real(dp) dr(3), r2, r9, r11, eH(3), hpole(3,3,3,3,maxCoo/3), u, dEdr(3,3)
+
+!JÖ in/out    
+    real(dp) dr(:), r2, r9, r11, eH(:)
+    real(dp) hpole(:,:,:,:,:), u, dEdr(:,:)
+
+!JÖ internal: 
     real(dp) rrrrH, v(3), g(3,3), d(3,3)
-    
-    real(dp) dr(3), r2, r9, r11, eH(3), hpole(3,3,3,3,maxCoo/3), u, dEdr(3,3)
-    
+    integer i, j, k, l, m
+   
     rrrrH = 0.d0
     do i = 1, 3
        v(i) = 0.d0

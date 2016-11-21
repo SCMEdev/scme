@@ -16,13 +16,24 @@ contains
     
     implicit none
     
-    integer nM
-    real(dp) fCM(3,maxCoo/3), rCM(3,maxCoo/3), tau(3,maxCoo/3)
-    real(dp) ra(maxCoo), fa(maxCoo)
-    
+    real(dp), intent(in)  :: fCM(:,:), tau(:,:)
+    real(dp), intent(in)  :: ra(:), rCM(:,:)
+    real(dp), intent(out) :: fa(:)
+    integer,  intent(in)  ::  nM
+
+!JÖ internal:    
     integer n, iH1, iH2, iO, i
     real(dp) fTot(3), tt(3), r1(3), r2(3), r3(3), f1(3), f2(3), f3(3)
     integer flag
+
+!    integer nM
+!    real(dp) fCM(3,maxCoo/3), rCM(3,maxCoo/3), tau(3,maxCoo/3)
+!    real(dp) ra(maxCoo), fa(maxCoo)
+!    
+!    integer n, iH1, iH2, iO, i
+!    real(dp) fTot(3), tt(3), r1(3), r2(3), r3(3), f1(3), f2(3), f3(3)
+!    integer flag
+
     
     do n = 1, nM
        iH1 = 6*(n-1)
