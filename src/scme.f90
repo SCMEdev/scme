@@ -310,7 +310,7 @@ contains
 !
 !ktw    print '(5f16.10)', uTot, uES, uDisp, uCore, sum(uPES)
 !    print '(4f16.10)', uTot, uES, uDisp, sum(uPES)
-    print*, size(ra), "is size ra" !JÖ
+!    print*, size(ra), "is size ra" !JÖ
 
     return
 

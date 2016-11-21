@@ -236,7 +236,7 @@ contains
 
 
     ! local variables.
-    integer i, j, k, l, ii, jj, kk, ll, m
+    integer i, j, k, l, ii, jj, kk, ll, m !jö , save ::
 
     ! Zeroise.
 !JÖ    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp

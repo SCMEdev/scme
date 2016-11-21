@@ -24,8 +24,8 @@ contains
     logical*1, intent(inout) ::  converged
 
 !JÖ internal:    
-    real(dp) daux
-    integer i, j, k, m
+    real(dp), save :: daux
+    integer , save :: i, j, k, m
 
 !    integer nM, i, j, k, m
 !    real(dp) dpole(3,maxCoo/3), dpole0(3,maxCoo/3)
@@ -70,8 +70,8 @@ contains
     logical*1, intent(inout) :: converged
 
 !JÖ internal:
-    real(dp) :: qaux
-    integer i, j, k, l, m
+    real(dp), save :: qaux
+    integer , save :: i, j, k, l, m
 
 !    integer nM, i, j, k, l, m
 !    real(dp) qpole(3,3,maxCoo/3), dq(3,3,3,maxCoo/3)

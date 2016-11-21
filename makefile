@@ -15,7 +15,7 @@ vpath %.cpp $(SRCD)
 
 FC = gfortran
 CC = g++
-FFLAGS =  -I$(BD) -J$(BD) -fPIC -Ofast -march=native  -msoft-float -mavx  #-pg 
+FFLAGS = -pg  -I$(BD) -J$(BD) -fPIC -Ofast -march=native  -msoft-float -mavx  #
 CFLAGS = -O2 -I$(BD) -J$(BD) -lstdc++ -Ofast -march=native
 #-O3
 

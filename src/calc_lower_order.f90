@@ -20,18 +20,18 @@ contains
 
 !JÖ here we should change those goto statements to a break/exit statement of named loop
 
-    real(dp) eT   (:,:) !JÖ 3,maxCoo/3
-    real(dp) rCM  (:,:)
-    real(dp) dpole(:,:)
-    real(dp) qpole(:,:,:) !JÖ 3,3,maxCoo/3
-    real(dp) dEdr (:,:,:)
-    real(dp) a(:), a2(:) !JÖ 3
-    real(dp) uD, uQ
-
+    real(dp), intent(out) :: eT   (:,:) !JÖ 3,maxCoo/3
+    real(dp), intent(in)  :: rCM  (:,:)
+    real(dp), intent(in)  :: dpole(:,:)
+    real(dp), intent(in)  :: qpole(:,:,:) !JÖ 3,3,maxCoo/3
+    real(dp), intent(out) :: dEdr (:,:,:)
+    real(dp), intent(in)  :: a(:), a2(:) !JÖ 3
+    real(dp), intent(out) :: uD, uQ
+    real(dp), intent(in)  :: rMax2
     
-    real(dp) re(3), eD(3), eq(3), dr(3) !JÖ 3
-    real(dp) dEdr1(3,3) !JÖ 3,3
-    real(dp) r1, r2, r3, r5, r7, u, rMax2, swFunc, dSdr
+    real(dp), save :: re(3), eD(3), eq(3), dr(3) !JÖ 3
+    real(dp), save :: dEdr1(3,3) !JÖ 3,3
+    real(dp), save :: r1, r2, r3, r5, r7, u, swFunc, dSdr
     integer i, j, k, l, nM, NC, NCz, nx, ny, nz
     logical*1 iSlab
     
@@ -148,11 +148,16 @@ contains
     
     implicit none
 !JÖ    real(dp) qpole(3,3,maxCoo/3)
-    real(dp) qpole(:,:,:) !JÖ 3,3,maxCoo/3
-    real(dp) dEdr(:,:) !3,3
-    real(dp) v(3), dr(:), eq(:) !3
-    real(dp) rQr, r2, r5, r7, u
-    integer i, j, m
+    real(dp), intent(in)  :: dr(:)
+    real(dp), intent(in)  :: r2, r5, r7
+    real(dp), intent(out) :: eq(:) !3
+    real(dp), intent(in)  :: qpole(:,:,:), u !JÖ 3,3,maxCoo/3
+    real(dp), intent(out) :: dEdr(:,:) !3,3
+    integer , intent(in)  :: m
+
+!JÖ internal: 
+    integer  i, j
+    real(dp) v(3), rQr 
 
 
     

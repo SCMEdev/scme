@@ -241,7 +241,7 @@ module test_scme
     forces(:) = 0.0
 
     ! Call the scme function.
-    do i=1,2
+    do i=1,20000
        call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
     end do
 

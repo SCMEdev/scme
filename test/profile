@@ -1,0 +1,310 @@
+Flat profile:
+
+Each sample counts as 0.01 seconds.
+  %   cumulative   self              self     total           
+ time   seconds   seconds    calls  ms/call  ms/call  name    
+ 25.84      0.23     0.23   260016     0.00     0.00  __inducepoles_MOD_inducedipole
+ 21.35      0.42     0.19    20004     0.01     0.01  __calc_derivs_MOD_calcdv
+ 19.10      0.59     0.17    20004     0.01     0.01  __molecproperties_MOD_rotatepoles
+ 14.61      0.72     0.13    20004     0.01     0.01  __molecproperties_MOD_rotatepolariz
+  4.49      0.76     0.04   140010     0.00     0.00  __inducepoles_MOD_induceqpole
+  3.37      0.79     0.03    20004     0.00     0.00  __forcecm_mod_MOD_forcecm
+  3.37      0.82     0.03                             ps::potnasa(double const*, double*, double*)
+  2.25      0.84     0.02    20004     0.00     0.00  __calc_higher_order_MOD_calcehigh
+  2.25      0.86     0.02    20004     0.00     0.04  __scme_MOD_scme_calculate
+  1.12      0.87     0.01   320016     0.00     0.00  __tang_toennies_MOD_tang_toenniesn
+  1.12      0.88     0.01    20004     0.00     0.00  __calcenergy_mod_MOD_calcenergy
+  1.12      0.89     0.01    20004     0.00     0.00  __torquecm_mod_MOD_torquecm
+  0.00      0.89     0.00   320016     0.00     0.00  __molecproperties_MOD_sf
+  0.00      0.89     0.00   140010     0.00     0.00  __calc_lower_order_MOD_calcedip_quad
+  0.00      0.89     0.00   140010     0.00     0.00  __molecproperties_MOD_adddfields
+  0.00      0.89     0.00   140010     0.00     0.00  __molecproperties_MOD_addfields
+  0.00      0.89     0.00    40005     0.00     0.00  __mdutil_MOD_inv6
+  0.00      0.89     0.00    40005     0.00     0.00  __molforce_MOD_molforce3
+  0.00      0.89     0.00    40002     0.00     0.00  __molecproperties_MOD_sfdsf
+  0.00      0.89     0.00    40002     0.00     0.00  __tang_toennies_MOD_tang_toenniesndf
+  0.00      0.89     0.00    20004     0.00     0.00  __atomicforces_mod_MOD_atomicforces
+  0.00      0.89     0.00    20004     0.00     0.00  __dispersion_mod_MOD_dispersion
+  0.00      0.89     0.00    20004     0.00     0.00  __molecproperties_MOD_calccentersofmass
+  0.00      0.89     0.00    20004     0.00     0.00  __molecproperties_MOD_findppalaxes
+  0.00      0.89     0.00    20004     0.00     0.00  __molecproperties_MOD_recovermolecules
+  0.00      0.89     0.00    20004     0.00     0.00  __molecproperties_MOD_setunpolpoles
+  0.00      0.89     0.00       49     0.00     0.00  __mifu_asserts_MOD_assert_equal_real8
+  0.00      0.89     0.00        1     0.00     0.04  __test_scme_MOD_test_scme_dimer1
+  0.00      0.89     0.00        1     0.00     0.13  __test_scme_MOD_test_scme_monomer1
+  0.00      0.89     0.00        1     0.00   859.88  __test_scme_MOD_test_scme_perf
+
+ %         the percentage of the total running time of the
+time       program used by this function.
+
+cumulative a running sum of the number of seconds accounted
+ seconds   for by this function and those listed above it.
+
+ self      the number of seconds accounted for by this
+seconds    function alone.  This is the major sort for this
+           listing.
+
+calls      the number of times this function was invoked, if
+           this function is profiled, else blank.
+
+ self      the average number of milliseconds spent in this
+ms/call    function per call, if this function is profiled,
+	   else blank.
+
+ total     the average number of milliseconds spent in this
+ms/call    function and its descendents per call, if this
+	   function is profiled, else blank.
+
+name       the name of the function.  This is the minor sort
+           for this listing. The index shows the location of
+	   the function in the gprof listing. If the index is
+	   in parenthesis it shows where it would appear in
+	   the gprof listing if it were to be printed.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+		     Call graph (explanation follows)
+
+
+granularity: each sample hit covers 2 byte(s) for 1.12% of 0.89 seconds
+
+index % time    self  children    called     name
+                                                 <spontaneous>
+[1]     96.6    0.00    0.86                 MAIN__ [1]
+                0.00    0.86       1/1           __test_scme_MOD_test_scme_perf [3]
+                0.00    0.00       1/1           __test_scme_MOD_test_scme_monomer1 [16]
+                0.00    0.00       1/1           __test_scme_MOD_test_scme_dimer1 [17]
+-----------------------------------------------
+                0.00    0.00       1/20004       __test_scme_MOD_test_scme_dimer1 [17]
+                0.00    0.00       3/20004       __test_scme_MOD_test_scme_monomer1 [16]
+                0.02    0.84   20000/20004       __test_scme_MOD_test_scme_perf [3]
+[2]     96.6    0.02    0.84   20004         __scme_MOD_scme_calculate [2]
+                0.19    0.11   20004/20004       __calc_derivs_MOD_calcdv [4]
+                0.17    0.00   20004/20004       __molecproperties_MOD_rotatepoles [6]
+                0.13    0.00   20004/20004       __molecproperties_MOD_rotatepolariz [7]
+                0.12    0.00  140010/260016      __inducepoles_MOD_inducedipole [5]
+                0.04    0.00  140010/140010      __inducepoles_MOD_induceqpole [8]
+                0.03    0.00   20004/20004       __forcecm_mod_MOD_forcecm [9]
+                0.02    0.00   20004/20004       __calc_higher_order_MOD_calcehigh [11]
+                0.01    0.00   20004/20004       __torquecm_mod_MOD_torquecm [14]
+                0.01    0.00   20004/20004       __calcenergy_mod_MOD_calcenergy [13]
+                0.00    0.01  140010/140010      __calc_lower_order_MOD_calcedip_quad [15]
+                0.00    0.00  140010/140010      __molecproperties_MOD_addfields [29]
+                0.00    0.00  140010/140010      __molecproperties_MOD_adddfields [28]
+                0.00    0.00   20004/20004       __molecproperties_MOD_recovermolecules [38]
+                0.00    0.00   20004/20004       __molecproperties_MOD_calccentersofmass [36]
+                0.00    0.00   20004/20004       __molecproperties_MOD_findppalaxes [37]
+                0.00    0.00   20004/20004       __molecproperties_MOD_setunpolpoles [39]
+                0.00    0.00   20004/20004       __atomicforces_mod_MOD_atomicforces [34]
+                0.00    0.00   20004/20004       __dispersion_mod_MOD_dispersion [35]
+-----------------------------------------------
+                0.00    0.86       1/1           MAIN__ [1]
+[3]     96.6    0.00    0.86       1         __test_scme_MOD_test_scme_perf [3]
+                0.02    0.84   20000/20004       __scme_MOD_scme_calculate [2]
+-----------------------------------------------
+                0.19    0.11   20004/20004       __scme_MOD_scme_calculate [2]
+[4]     33.3    0.19    0.11   20004         __calc_derivs_MOD_calcdv [4]
+                0.11    0.00  120006/260016      __inducepoles_MOD_inducedipole [5]
+                0.00    0.00   40002/40002       __tang_toennies_MOD_tang_toenniesndf [33]
+                0.00    0.00   40002/40002       __molecproperties_MOD_sfdsf [32]
+-----------------------------------------------
+                0.11    0.00  120006/260016      __calc_derivs_MOD_calcdv [4]
+                0.12    0.00  140010/260016      __scme_MOD_scme_calculate [2]
+[5]     25.8    0.23    0.00  260016         __inducepoles_MOD_inducedipole [5]
+-----------------------------------------------
+                0.17    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[6]     19.1    0.17    0.00   20004         __molecproperties_MOD_rotatepoles [6]
+-----------------------------------------------
+                0.13    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[7]     14.6    0.13    0.00   20004         __molecproperties_MOD_rotatepolariz [7]
+-----------------------------------------------
+                0.04    0.00  140010/140010      __scme_MOD_scme_calculate [2]
+[8]      4.5    0.04    0.00  140010         __inducepoles_MOD_induceqpole [8]
+-----------------------------------------------
+                0.03    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[9]      3.4    0.03    0.00   20004         __forcecm_mod_MOD_forcecm [9]
+-----------------------------------------------
+                                                 <spontaneous>
+[10]     3.4    0.03    0.00                 ps::potnasa(double const*, double*, double*) [10]
+-----------------------------------------------
+                0.02    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[11]     2.4    0.02    0.00   20004         __calc_higher_order_MOD_calcehigh [11]
+                0.00    0.00   40002/320016      __tang_toennies_MOD_tang_toenniesn [12]
+                0.00    0.00   40002/320016      __molecproperties_MOD_sf [27]
+-----------------------------------------------
+                0.00    0.00   40002/320016      __calc_higher_order_MOD_calcehigh [11]
+                0.01    0.00  280014/320016      __calc_lower_order_MOD_calcedip_quad [15]
+[12]     1.1    0.01    0.00  320016         __tang_toennies_MOD_tang_toenniesn [12]
+-----------------------------------------------
+                0.01    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[13]     1.1    0.01    0.00   20004         __calcenergy_mod_MOD_calcenergy [13]
+-----------------------------------------------
+                0.01    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[14]     1.1    0.01    0.00   20004         __torquecm_mod_MOD_torquecm [14]
+-----------------------------------------------
+                0.00    0.01  140010/140010      __scme_MOD_scme_calculate [2]
+[15]     1.0    0.00    0.01  140010         __calc_lower_order_MOD_calcedip_quad [15]
+                0.01    0.00  280014/320016      __tang_toennies_MOD_tang_toenniesn [12]
+                0.00    0.00  280014/320016      __molecproperties_MOD_sf [27]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[16]     0.0    0.00    0.00       1         __test_scme_MOD_test_scme_monomer1 [16]
+                0.00    0.00       3/20004       __scme_MOD_scme_calculate [2]
+                0.00    0.00      30/49          __mifu_asserts_MOD_assert_equal_real8 [40]
+-----------------------------------------------
+                0.00    0.00       1/1           MAIN__ [1]
+[17]     0.0    0.00    0.00       1         __test_scme_MOD_test_scme_dimer1 [17]
+                0.00    0.00       1/20004       __scme_MOD_scme_calculate [2]
+                0.00    0.00      19/49          __mifu_asserts_MOD_assert_equal_real8 [40]
+-----------------------------------------------
+                0.00    0.00   40002/320016      __calc_higher_order_MOD_calcehigh [11]
+                0.00    0.00  280014/320016      __calc_lower_order_MOD_calcedip_quad [15]
+[27]     0.0    0.00    0.00  320016         __molecproperties_MOD_sf [27]
+-----------------------------------------------
+                0.00    0.00  140010/140010      __scme_MOD_scme_calculate [2]
+[28]     0.0    0.00    0.00  140010         __molecproperties_MOD_adddfields [28]
+-----------------------------------------------
+                0.00    0.00  140010/140010      __scme_MOD_scme_calculate [2]
+[29]     0.0    0.00    0.00  140010         __molecproperties_MOD_addfields [29]
+-----------------------------------------------
+                0.00    0.00   40005/40005       __molforce_MOD_molforce3 [31]
+[30]     0.0    0.00    0.00   40005         __mdutil_MOD_inv6 [30]
+-----------------------------------------------
+                0.00    0.00   40005/40005       __atomicforces_mod_MOD_atomicforces [34]
+[31]     0.0    0.00    0.00   40005         __molforce_MOD_molforce3 [31]
+                0.00    0.00   40005/40005       __mdutil_MOD_inv6 [30]
+-----------------------------------------------
+                0.00    0.00   40002/40002       __calc_derivs_MOD_calcdv [4]
+[32]     0.0    0.00    0.00   40002         __molecproperties_MOD_sfdsf [32]
+-----------------------------------------------
+                0.00    0.00   40002/40002       __calc_derivs_MOD_calcdv [4]
+[33]     0.0    0.00    0.00   40002         __tang_toennies_MOD_tang_toenniesndf [33]
+-----------------------------------------------
+                0.00    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[34]     0.0    0.00    0.00   20004         __atomicforces_mod_MOD_atomicforces [34]
+                0.00    0.00   40005/40005       __molforce_MOD_molforce3 [31]
+-----------------------------------------------
+                0.00    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[35]     0.0    0.00    0.00   20004         __dispersion_mod_MOD_dispersion [35]
+-----------------------------------------------
+                0.00    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[36]     0.0    0.00    0.00   20004         __molecproperties_MOD_calccentersofmass [36]
+-----------------------------------------------
+                0.00    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[37]     0.0    0.00    0.00   20004         __molecproperties_MOD_findppalaxes [37]
+-----------------------------------------------
+                0.00    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[38]     0.0    0.00    0.00   20004         __molecproperties_MOD_recovermolecules [38]
+-----------------------------------------------
+                0.00    0.00   20004/20004       __scme_MOD_scme_calculate [2]
+[39]     0.0    0.00    0.00   20004         __molecproperties_MOD_setunpolpoles [39]
+-----------------------------------------------
+                0.00    0.00      19/49          __test_scme_MOD_test_scme_dimer1 [17]
+                0.00    0.00      30/49          __test_scme_MOD_test_scme_monomer1 [16]
+[40]     0.0    0.00    0.00      49         __mifu_asserts_MOD_assert_equal_real8 [40]
+-----------------------------------------------
+
+ This table describes the call tree of the program, and was sorted by
+ the total amount of time spent in each function and its children.
+
+ Each entry in this table consists of several lines.  The line with the
+ index number at the left hand margin lists the current function.
+ The lines above it list the functions that called this function,
+ and the lines below it list the functions this one called.
+ This line lists:
+     index	A unique number given to each element of the table.
+		Index numbers are sorted numerically.
+		The index number is printed next to every function name so
+		it is easier to look up where the function is in the table.
+
+     % time	This is the percentage of the `total' time that was spent
+		in this function and its children.  Note that due to
+		different viewpoints, functions excluded by options, etc,
+		these numbers will NOT add up to 100%.
+
+     self	This is the total amount of time spent in this function.
+
+     children	This is the total amount of time propagated into this
+		function by its children.
+
+     called	This is the number of times the function was called.
+		If the function called itself recursively, the number
+		only includes non-recursive calls, and is followed by
+		a `+' and the number of recursive calls.
+
+     name	The name of the current function.  The index number is
+		printed after it.  If the function is a member of a
+		cycle, the cycle number is printed between the
+		function's name and the index number.
+
+
+ For the function's parents, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the function into this parent.
+
+     children	This is the amount of time that was propagated from
+		the function's children into this parent.
+
+     called	This is the number of times this parent called the
+		function `/' the total number of times the function
+		was called.  Recursive calls to the function are not
+		included in the number after the `/'.
+
+     name	This is the name of the parent.  The parent's index
+		number is printed after it.  If the parent is a
+		member of a cycle, the cycle number is printed between
+		the name and the index number.
+
+ If the parents of the function cannot be determined, the word
+ `<spontaneous>' is printed in the `name' field, and all the other
+ fields are blank.
+
+ For the function's children, the fields have the following meanings:
+
+     self	This is the amount of time that was propagated directly
+		from the child into the function.
+
+     children	This is the amount of time that was propagated from the
+		child's children to the function.
+
+     called	This is the number of times the function called
+		this child `/' the total number of times the child
+		was called.  Recursive calls by the child are not
+		listed in the number after the `/'.
+
+     name	This is the name of the child.  The child's index
+		number is printed after it.  If the child is a
+		member of a cycle, the cycle number is printed
+		between the name and the index number.
+
+ If there are any cycles (circles) in the call graph, there is an
+ entry for the cycle-as-a-whole.  This entry shows who called the
+ cycle (as parents) and the members of the cycle (as children.)
+ The `+' recursive calls entry shows the number of function calls that
+ were internal to the cycle, and the calls entry for each member shows,
+ for that member, how many times it was called from other members of
+ the cycle.
+
+Copyright (C) 2012-2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+Index by function name
+
+  [10] ps::potnasa(double const*, double*, double*) [30] __mdutil_MOD_inv6 [27] __molecproperties_MOD_sf
+  [34] __atomicforces_mod_MOD_atomicforces [40] __mifu_asserts_MOD_assert_equal_real8 [32] __molecproperties_MOD_sfdsf
+   [4] __calc_derivs_MOD_calcdv [28] __molecproperties_MOD_adddfields [31] __molforce_MOD_molforce3
+  [11] __calc_higher_order_MOD_calcehigh [29] __molecproperties_MOD_addfields [2] __scme_MOD_scme_calculate
+  [15] __calc_lower_order_MOD_calcedip_quad [36] __molecproperties_MOD_calccentersofmass [12] __tang_toennies_MOD_tang_toenniesn
+  [13] __calcenergy_mod_MOD_calcenergy [37] __molecproperties_MOD_findppalaxes [33] __tang_toennies_MOD_tang_toenniesndf
+  [35] __dispersion_mod_MOD_dispersion [38] __molecproperties_MOD_recovermolecules [17] __test_scme_MOD_test_scme_dimer1
+   [9] __forcecm_mod_MOD_forcecm [7] __molecproperties_MOD_rotatepolariz [16] __test_scme_MOD_test_scme_monomer1
+   [5] __inducepoles_MOD_inducedipole [6] __molecproperties_MOD_rotatepoles [3] __test_scme_MOD_test_scme_perf
+   [8] __inducepoles_MOD_induceqpole [39] __molecproperties_MOD_setunpolpoles [14] __torquecm_mod_MOD_torquecm
