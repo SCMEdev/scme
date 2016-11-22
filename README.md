@@ -1,5 +1,7 @@
 ## SCME
 
+(This specific branch is the testbranch of Jonatan and may or may not work properly) 
+
 This is the public repository for the development of the *SCME* potential.
 
 When you use the *SCME* potential in your research please **cite** the paper describing the method
