@@ -1,5 +1,7 @@
 # New make file by JÖ. 
-# The previous one dealt with "compiling modules before their depdendencies" through stating dependencies between object files. This resulted in a complicated make-file and longer compile-times for small changes since unecessayily large parts of the program were recomilesd. Now this issue is solved through ordering the file names instead. This might seem less robust. It might be. 
+# The previous one dealt with "compiling modules before their depdendencies" through stating dependencies between object files. 
+# This resulted in a complicated make-file and longer compile-times for small changes since unecessayily large parts of the program were recomilesd. 
+# Now this issue is solved through ordering the file names instead. This might seem less robust. It might be. 
 
 
 # disable the built-in (implicit) rules to avoid trying to compile X.o from X.mod (Modula-2 program)
@@ -51,7 +53,9 @@ $(BD)/%.o: %.cpp
 clean:
 	rm $(addprefix $(BD)/, *.o *.a *.mod)
 
-
+remake: 
+	make clean
+	make
 
 ######################################### Trash:
 #$(BD)/%.o:$(BD)/%.mod
