@@ -1,6 +1,6 @@
 ## SCME
 
-(This specific branch is the testbranch of Jonatan and may or may not work properly) 
+*(This specific branch is the testbranch of Jonatan and may or may not work properly)* 
 
 This is the public repository for the development of the *SCME* potential.
 
