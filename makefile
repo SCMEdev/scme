@@ -6,6 +6,7 @@
 
 # disable the built-in (implicit) rules to avoid trying to compile X.o from X.mod (Modula-2 program)
 .SUFFIXES:
+#.SUFFIXES: .f90 .o .cpp
 
 BD = build
 SRCD = src
@@ -17,8 +18,8 @@ vpath %.cpp $(SRCD)
 
 FC = gfortran
 CC = g++
-FFLAGS = -pg  -I$(BD) -J$(BD) -fPIC -Ofast -march=native  -msoft-float -mavx  #
-CFLAGS = -O2 -I$(BD) -J$(BD) -lstdc++ -Ofast -march=native
+FFLAGS = -I$(BD) -J$(BD)  #-pg -fPIC -Ofast -march=native  -msoft-float -mavx  #
+CFLAGS = -I$(BD) -J$(BD) #-O2 -lstdc++ -Ofast -march=native
 #-O3
 
 ######################################### Files in order:  
@@ -36,13 +37,14 @@ cpp_obj = $(BD)/ps.o
 ######################################### 
 
 all:
-	make -j4 makemodules
+	make -j1 makemodules
 	make -j4 makeobjects
 
 makemodules:$(BD)/scme.mod
 
 $(BD)/%.mod: %.f90
 	$(FC) $(FFLAGS) -fsyntax-only $<
+	touch $@
 	
 
 
@@ -63,70 +65,116 @@ $(BD)/%.o: %.cpp
 
 
 
-######################################### 
-
-$(BD)/mdutil.mod 				\
-$(BD)/polariz_parameters.mod 	\
-$(BD)/multipole_parameters.mod 	\
-$(BD)/max_parameters.mod 		\
-$(BD)/parameters.mod			\
-:$(BD)/data_types.mod 			
-
-$(BD)/atomicForces_mod.mod 		\
-:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molforce.mod	
-
-
-$(BD)/molforce.mod \
-:$(BD)/data_types.mod $(BD)/mdutil.mod 
-
-
-$(BD)/dispersion_mod.mod	\
-$(BD)/torqueCM_mod.mod		\
-$(BD)/forceCM_mod.mod 		\
-$(BD)/inducePoles.mod 		\
-$(BD)/tang_toennies.mod 	\
-$(BD)/calcEnergy_mod.mod 	\
-:$(BD)/data_types.mod $(BD)/max_parameters.mod 
-
-$(BD)/coreInt_mod.mod	\
-$(BD)/rho.mod 			\
-:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/parameters.mod
-
-$(BD)/molecProperties.mod \
-:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/tang_toennies.mod 
-
-$(BD)/calc_derivs.mod 		\
-$(BD)/calc_lower_order.mod 	\
-$(BD)/calc_higher_order.mod \
-:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molecProperties.mod 
-
-
-$(BD)/scme.mod \
-:$(BD)/data_types.mod 			\
-$(BD)/parameters.mod 			\
-$(BD)/max_parameters.mod 		\
-$(BD)/multipole_parameters.mod	\
-$(BD)/polariz_parameters.mod 	\
-$(BD)/calcEnergy_mod.mod 		\
-$(BD)/tang_toennies.mod 		\
-$(BD)/molecProperties.mod 		\
-$(BD)/calc_higher_order.mod 	\
-$(BD)/calc_lower_order.mod 		\
-$(BD)/inducePoles.mod 			\
-$(BD)/calc_derivs.mod 			\
-$(BD)/forceCM_mod.mod 			\
-$(BD)/torqueCM_mod.mod			\
-$(BD)/mdutil.mod 				\
-$(BD)/molforce.mod 				\
-$(BD)/atomicForces_mod.mod 		\
-$(BD)/dispersion_mod.mod 		\
-$(BD)/rho.mod 					\
-$(BD)/coreInt_mod.mod	
 
 ######################################### Compile:
 
+$(BD)/scme.mod\
+:$(BD)/data_types.mod\
+$(BD)/max_parameters.mod\
+$(BD)/parameters.mod\
+$(BD)/polariz_parameters.mod\
+$(BD)/molecProperties.mod\
+$(BD)/calc_lower_order.mod\
+$(BD)/calc_higher_order.mod\
+$(BD)/calc_derivs.mod\
+$(BD)/inducePoles.mod\
+$(BD)/forceCM_mod.mod\
+$(BD)/torqueCM_mod.mod\
+$(BD)/atomicForces_mod.mod\
+$(BD)/calcEnergy_mod.mod\
+$(BD)/coreInt_mod.mod\
+$(BD)/dispersion_mod.mod\
+$(BD)/multipole_parameters.mod
+
+$(BD)/atomicForces_mod.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molforce.mod	
 
 
+$(BD)/molforce.mod:$(BD)/data_types.mod $(BD)/mdutil.mod 
+
+
+$(BD)/mdutil.mod:$(BD)/data_types.mod 			
+$(BD)/polariz_parameters.mod:$(BD)/data_types.mod 			
+$(BD)/multipole_parameters.mod:$(BD)/data_types.mod 			
+$(BD)/max_parameters.mod:$(BD)/data_types.mod 			
+$(BD)/parameters.mod:$(BD)/data_types.mod 			
+
+
+
+$(BD)/dispersion_mod.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+$(BD)/torqueCM_mod.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+$(BD)/forceCM_mod.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+$(BD)/inducePoles.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+$(BD)/tang_toennies.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+$(BD)/calcEnergy_mod.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+
+$(BD)/coreInt_mod.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/parameters.mod $(BD)/rho.mod
+$(BD)/rho.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/parameters.mod
+
+$(BD)/molecProperties.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/tang_toennies.mod 
+
+$(BD)/calc_derivs.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molecProperties.mod 
+$(BD)/calc_lower_order.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molecProperties.mod 
+
+
+######################################### 
+
+#$(BD)/mdutil.mod 				\
+#$(BD)/polariz_parameters.mod 	\
+#$(BD)/multipole_parameters.mod 	\
+#$(BD)/max_parameters.mod 		\
+#$(BD)/parameters.mod			\
+#:$(BD)/data_types.mod 			
+#
+#$(BD)/atomicForces_mod.mod 		\
+#:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molforce.mod	
+#
+#
+#$(BD)/molforce.mod \
+#:$(BD)/data_types.mod $(BD)/mdutil.mod 
+#
+#
+#$(BD)/dispersion_mod.mod	\
+#$(BD)/torqueCM_mod.mod		\
+#$(BD)/forceCM_mod.mod 		\
+#$(BD)/inducePoles.mod 		\
+#$(BD)/tang_toennies.mod 	\
+#$(BD)/calcEnergy_mod.mod 	\
+#:$(BD)/data_types.mod $(BD)/max_parameters.mod 
+#
+#$(BD)/coreInt_mod.mod	\
+#$(BD)/rho.mod 			\
+#:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/parameters.mod
+#
+#$(BD)/molecProperties.mod \
+#:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/tang_toennies.mod 
+#
+#$(BD)/calc_derivs.mod 		\
+#$(BD)/calc_lower_order.mod 	\
+#$(BD)/calc_higher_order.mod \
+#:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molecProperties.mod 
+#
+#
+#$(BD)/scme.mod \
+#:$(BD)/data_types.mod 			\
+#$(BD)/parameters.mod 			\
+#$(BD)/max_parameters.mod 		\
+#$(BD)/multipole_parameters.mod	\
+#$(BD)/polariz_parameters.mod 	\
+#$(BD)/calcEnergy_mod.mod 		\
+#$(BD)/tang_toennies.mod 		\
+#$(BD)/molecProperties.mod 		\
+#$(BD)/calc_higher_order.mod 	\
+#$(BD)/calc_lower_order.mod 		\
+#$(BD)/inducePoles.mod 			\
+#$(BD)/calc_derivs.mod 			\
+#$(BD)/forceCM_mod.mod 			\
+#$(BD)/torqueCM_mod.mod			\
+#$(BD)/mdutil.mod 				\
+#$(BD)/molforce.mod 				\
+#$(BD)/atomicForces_mod.mod 		\
+#$(BD)/dispersion_mod.mod 		\
+#$(BD)/rho.mod 					\
+#$(BD)/coreInt_mod.mod	
 
 
 ######################################### Clean:
