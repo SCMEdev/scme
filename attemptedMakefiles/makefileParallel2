@@ -43,8 +43,7 @@ all:
 makemodules:$(BD)/scme.mod
 
 $(BD)/%.mod: %.f90
-	$(FC) $(FFLAGS) -fsyntax-only $<
-	touch $@
+	$(FC) $(FFLAGS) -fsyntax-only $<; touch $@
 	
 
 
@@ -116,6 +115,15 @@ $(BD)/calc_derivs.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molecP
 $(BD)/calc_lower_order.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/molecProperties.mod 
 
 
+######################################### Clean:
+.PHONY: clean
+clean:
+	rm $(addprefix $(BD)/, *.o *.a *.mod)
+
+remake: 
+	make clean
+	make
+
 ######################################### 
 
 #$(BD)/mdutil.mod 				\
@@ -177,16 +185,3 @@ $(BD)/calc_lower_order.mod:$(BD)/data_types.mod $(BD)/max_parameters.mod $(BD)/m
 #$(BD)/coreInt_mod.mod	
 
 
-######################################### Clean:
-.PHONY: clean
-clean:
-	rm $(addprefix $(BD)/, *.o *.a *.mod)
-
-remake: 
-	make clean
-	make
-
-######################################### Trash:
-#$(BD)/%.o:$(BD)/%.mod
-#$(BD)/%.mod: %.f90
-#	$(FC) $(FFLAGS) -fsyntax-only $<
