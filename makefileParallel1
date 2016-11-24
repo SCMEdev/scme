@@ -36,23 +36,16 @@ cpp_obj = $(BD)/ps.o
 ######################################### 
 
 all:
-	make -j4 makemodules
-	make -j4 makeobjects
+	make -j4 makeit
 
-makemodules:$(BD)/scme.mod
-
-$(BD)/%.mod: %.f90
-	$(FC) $(FFLAGS) -fsyntax-only $<
-	
-
-
-makeobjects: $(BD)/libscme.a
+makeit: $(BD)/libscme.a
 
 $(BD)/libscme.a: $(fort_obj) $(cpp_obj) 
 	ar rcs $@ $^ 
 
+#$(BD)/*.mod
 
-$(BD)/%.o: %.f90 
+$(BD)/%.o $(BD)/%.mod: %.f90 
 	$(FC) $(FFLAGS) -c $< -o $@
 
 $(BD)/%.o: %.cpp
