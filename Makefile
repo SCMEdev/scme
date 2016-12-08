@@ -13,14 +13,20 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-FFLAGS = -O3 -pg -I$(MODDIR) -J$(MODDIR)
+opti = -Ofast -march=native -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -fopenmp
+#-fopenmp
+
+FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR)
 CFLAGS = -O2 -I$(MODDIR) -J$(MODDIR) -lstdc++
+#-fopenmp
+#-floop-unroll-and-jam -ftree-loop-if-convert
+vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution
 
 OBJ = $(addprefix $(OBJDIR)/, \
-	scme.o calc_derivs.o \
+	scme.o calc_derivs.o calc_higher_order.o \
 	data_types.o parameters.o max_parameters.o \
 	multipole_parameters.o polariz_parameters.o \
-	calcEnergy_mod.o calc_higher_order.o calc_lower_order.o \
+	calcEnergy_mod.o calc_lower_order.o \
 	inducePoles.o forceCM_mod.o torqueCM_mod.o \
 	atomicForces_mod.o molforce.o tang_toennies.o mdutil.o \
 	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o)
@@ -28,7 +34,10 @@ OBJ = $(addprefix $(OBJDIR)/, \
 HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
 #all: $(OBJDIR)/scme.o
-all: $(OBJDIR)/libscme.a
+all:
+	make -j4 it
+
+it:$(OBJDIR)/libscme.a
 
 # **********************************************************************************************************************************
 
@@ -102,6 +111,11 @@ $(OBJDIR)/data_types.o		\
 $(OBJDIR)/max_parameters.o 	\
 $(OBJDIR)/tang_toennies.o	\
 
+$(OBJDIR)/tang_toennies.o:	\
+$(OBJDIR)/data_types.o		\
+$(OBJDIR)/parameters.o		\
+
+
 
 # multiple dependents --- few prerequisite:
 $(OBJDIR)/mdutil.o		\
@@ -109,13 +123,13 @@ $(OBJDIR)/polariz_parameters.o	\
 $(OBJDIR)/multipole_parameters.o\
 $(OBJDIR)/max_parameters.o	\
 $(OBJDIR)/parameters.o		\
-:$(OBJDIR)/data_types.o
+:$(OBJDIR)/data_types.o		\
+
 
 $(OBJDIR)/dispersion_mod.o	\
 $(OBJDIR)/torqueCM_mod.o	\
 $(OBJDIR)/forceCM_mod.o		\
 $(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/tang_toennies.o	\
 $(OBJDIR)/calcEnergy_mod.o	\
 :$(OBJDIR)/data_types.o		\
 $(OBJDIR)/max_parameters.o	\

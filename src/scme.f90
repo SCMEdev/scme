@@ -81,14 +81,14 @@ contains
     logical*1, parameter :: useDMS = .true.
 
     ! Local flag for controlling behavior.
-    logical*1 :: converged
+    logical*1, save :: converged
 
     ! Local variables for energies.
-    real(dp) :: uQ, uH, uES, uDisp, uD, uCore
+    real(dp), save :: uQ, uH, uES, uDisp, uD, uCore
 
     ! Local arrays for lattice and half lattice.
-    real(dp) :: a(3)
-    real(dp) :: a2(3)
+    real(dp), save :: a(3)
+    real(dp), save :: a2(3)
 
     ! Center of mass forces and torque.
     real(dp) :: fCM(3,n_atoms/3)
@@ -135,18 +135,18 @@ contains
     real(dp) :: qq(3,3,3,3,n_atoms/3)
 
     ! Local integers.
-    integer :: nM, nO, nH, i, p
-    integer :: indO, indH1, indH2
+    integer, save :: nM, nO, nH, i, p
+    integer, save :: indO, indH1, indH2
 
     ! Local arrays for ??? ML
     real(dp) :: uPES(n_atoms*3)
-    real(dp) :: qdms(3)
-    real(dp) :: dipmom(3)
+    real(dp), save :: qdms(3)
+    real(dp), save :: dipmom(3)
 
     ! Input for the potnasa potential.
-    real(dp) :: mol(9)
-    real(dp) :: grad(9)
-    real(dp) :: uPES1
+    real(dp), save :: mol(9)
+    real(dp), save :: grad(9)
+    real(dp), save :: uPES1
     ! ----------------------------------------
 
 

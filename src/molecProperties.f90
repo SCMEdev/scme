@@ -287,13 +287,15 @@ contains
 
     implicit none
 
-    integer nM, i, j, k
-
-    real(dp) dpole(:,:) !JÖ 
-    real(dp) dpole0(:,:)
-    real(dp) qpole(:,:,:)
-    real(dp) qpole0(:,:,:)
-
+    
+    real(dp), intent(inout) :: dpole(:,:) !JÖ 
+    real(dp), intent(inout) :: qpole(:,:,:)
+    real(dp), intent(in) :: dpole0(:,:)
+    real(dp), intent(in) :: qpole0(:,:,:)
+    integer , intent(in) :: nM
+    
+    integer i, j, k
+    
 !JÖ    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
 !JÖ    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
 
@@ -348,7 +350,7 @@ contains
     real(dp), intent(out) :: dq(:,:,:,:)
     real(dp), intent(out) :: dd(:,:,:)
     real(dp), intent(out) :: qq(:,:,:,:,:)
-    integer, intent(in) :: nM
+    integer , intent(in) :: nM
     real(dp), intent(in) :: x(:,:,:)
     ! ----------------------------------------
 
@@ -436,26 +438,40 @@ contains
   subroutine addDfields(dEhdr, dEddr, dEtdr, nM)
 
     implicit none
-    integer i, j, k, nM
+    integer, intent(in) :: nM !JÖ
 !    real(dp) dEhdr(3,3,maxCoo/3)
 !    real(dp) dEtdr(3,3,maxCoo/3), dEddr(3,3,maxCoo/3)
-    real(dp) dEhdr(:,:,:)
-    real(dp) dEtdr(:,:,:)
-    real(dp) dEddr(:,:,:)
+    real(dp), intent(out) :: dEtdr(:,:,:)
+    real(dp), intent(in)  :: dEhdr(:,:,:)
+    real(dp), intent(in)  :: dEddr(:,:,:)
 
-    do i = 1, nM
-       do j = 1, 3
-          do k = 1, 3
-             dEtdr(k,j,i) = dEhdr(k,j,i) + dEddr(k,j,i)
-             !               dEtdr(j,k,i) = dEhdr(k,j,i)
-          end do
-       end do
-       do j = 2, 3
-          do k = 1, j-1
-             dEtdr(j,k,i) = dEtdr(k,j,i)
-          end do
+    integer i, j, k !JÖ, nM
+    
+!JÖ    do i = 1, nM
+!JÖ       do j = 1, 3
+!JÖ          do k = 1, 3
+!JÖ             dEtdr(k,j,i) = dEhdr(k,j,i) + dEddr(k,j,i)
+!JÖ             !               dEtdr(j,k,i) = dEhdr(k,j,i)
+!JÖ          end do
+!JÖ       end do
+!JÖ       do j = 2, 3
+!JÖ          do k = 1, j-1
+!JÖ             dEtdr(j,k,i) = dEtdr(k,j,i)
+!JÖ          end do
+!JÖ       end do
+!JÖ    end do
+    
+    !JÖ:
+    dEtdr = dEhdr + dEddr
+    !do i = 1, nM
+    do j = 2, 3
+       do k = 1, j-1
+          dEtdr(j,k,:) = dEtdr(k,j,:)
        end do
     end do
+    !end do
+    
+    
     return
 
   end subroutine addDfields
@@ -493,18 +509,23 @@ contains
   !        end subroutine applyPBC
 
   !-----------------------------------------------------------------------
-  subroutine SF(r, swFunc)
+  pure subroutine SF(r, swFunc)
 
     implicit none
     real(dp), intent(in) :: r !JÖ
     real(dp), intent(out) :: swFunc !JÖ
-    real(dp) x, x2, x3, rSW, rCut     !JÖ r, swFunc, 
-    real(dp) rL1, rL2, rH1, rH2, dr
-
+    real(dp) x, x2, x3, rSW, rCut, dr     !JÖ r, swFunc, 
+    !JÖ , save ::
+!JÖ    real(dp), save :: rL1, rL2, rH1, rH2
+    real(dp), parameter :: rL1 = 0.0_dp
+    real(dp), parameter :: rL2 = 9.0_dp
+    real(dp), parameter :: rH1 = 5.0_dp
+    real(dp), parameter :: rH2 = 11.0_dp
+    
     !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+!JÖ    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
     !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
-    save
+!JÖ     save
 
 
     !     Kroes
@@ -554,13 +575,13 @@ contains
     implicit none
     real(dp), intent(in) :: r !JÖ stated intents
     real(dp), intent(out) :: swFunc, dSdr !JÖ
-    real(dp) x, x2, x3, rSW, rCut
-    real(dp) rL1, rL2, rH1, rH2, dr
+    real(dp), save :: x, x2, x3, rSW, rCut
+    real(dp), save :: rL1, rL2, rH1, rH2, dr
 
     !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
     data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
     !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
-    save
+    !JÖ save
 
     !     Kroes
     !$$$      rSW = 8.d0

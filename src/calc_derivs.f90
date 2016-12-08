@@ -1098,7 +1098,7 @@ contains
     integer  i, j, k, l, s
     real(dp) r2, r3, r5, r7, r9, r11, r13, r15, r17, r19
     real(dp) t1, t2, t3, y1, y2, y3, y4, z1, z2, z3, z4, z5, w1, w2, w3,w4, w5
-    real(dp) r4h, v(3), g(3,3), d(3,3,3)
+    real(dp), save :: r4h, v(3), g(3,3), d(3,3,3)
            ! 
     real(dp) dt1k, dt2k, dt3k
     real(dp) dy1l, dt1l, ddt2kl, dy2l, dt2l, ddt3kl, dy3l, dt3l, dy4l

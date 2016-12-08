@@ -1,0 +1,5 @@
+gprof run.x gmon.out > profile
+
+Thor: 
+hru får man in saker i run_tests?
+
