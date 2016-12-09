@@ -13,8 +13,8 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-opti = -Ofast -march=native -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -fopenmp
-#-fopenmp
+opti = -O2
+# -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native 
 
 FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR)
 CFLAGS = -O2 -I$(MODDIR) -J$(MODDIR) -lstdc++

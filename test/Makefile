@@ -4,7 +4,8 @@ scme_src = ../src
 #test_build = build
 
 FC = gfortran
-FFLAGS = -O3 -cpp -pg -I$(scme_mod) -fopenmp
+FFLAGS = -O2 -cpp -pg -I$(scme_mod) 
+#-fopenmp 
 
 
 run.x: run_tests.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
