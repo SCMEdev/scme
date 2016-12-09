@@ -107,6 +107,11 @@ contains
     NCz = NC
     if (iSlab) NCz = 0
     
+    !$omp parallel &
+    !$omp default(private) &
+    !$omp shared(nM, NC, a, NCz, rCM, a2, rMax2, d1v, d2v, d3v, d4v, d5v,dpole,qpole,opole,hpole,iSlab,fsf)
+
+    !$omp do
     do n = 1, nM
        do m = 1, nM
           
@@ -208,6 +213,8 @@ contains
           end do
        end do
     end do
+    !$omp end do 
+    
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9
     !$$$
@@ -221,6 +228,12 @@ contains
     
     !     Copy all the permutations. (Is this really necessary??)
     !$$$      ti = irtc()
+    
+    !$omp do 
+    !&
+    !!$omp default(private) &
+    !!$omp shared(d2v, d3v, d4v, d5v)
+
     do i = 1, 3
        do j = 1, 3
           !in2(1) = i
@@ -281,6 +294,9 @@ contains
           end do
        end do
     end do
+    !$omp end do
+    !$omp end parallel 
+    
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9
     !$$$      print '(A,f15.6)', 'Permutations: ', t4
@@ -291,14 +307,14 @@ contains
   end subroutine calcDv
   
   !-----------------------------------------------------------------------
-  subroutine insertIN(i, n)
+  pure subroutine insertIN(i, n) !JÖ pure
   !JÖ this SR removes the n:th value from i(:) moves a few intries up one index to cover the gap
   !and then puts the originally removed value back in the new void. This new place is the entry not larger than 
   !the original value, or the first entry in the vector i(:). 
     implicit none
     integer, intent(inout) :: i(*)
     integer, intent(in)    :: n
-    integer, save ::  j, iaux !JÖ k, , n, j,
+    integer ::  j, iaux !JÖ k, , n, j, , save
     
     if (n .ge. 2) then
        iaux = i(n)
@@ -315,7 +331,7 @@ contains
   end subroutine insertIN
   
   !-----------------------------------------------------------------------
-  integer function delta(i, j) !result(delta)
+  pure integer function delta(i, j) !result(delta)
     implicit none
     integer, intent(in) :: i, j
     !integer delta !, intent(out) :: 
@@ -331,7 +347,7 @@ contains
   end function delta
   
   !-----------------------------------------------------------------------
-  subroutine addDeriv(d1v, d2v, d3v, d4v, d5v, d1d, d2d, d3d, d4d, d5d, n, swFunc)
+  pure subroutine addDeriv(d1v, d2v, d3v, d4v, d5v, d1d, d2d, d3d, d4d, d5d, n, swFunc)
     
     implicit none
 
@@ -345,7 +361,7 @@ contains
     integer, intent(in) :: n
     
 !JÖ internal:     
-    integer, save :: i, j, k, l, s
+    integer :: i, j, k, l, s !JÖ , save
 
 !    real(dp) d1v(3,maxCoo/3), d2v(3,3,maxCoo/3), d3v(3,3,3,maxCoo/3)
 !    real(dp) d4v(3,3,3,3,maxCoo/3), d5v(3,3,3,3,3,maxCoo/3)
@@ -384,7 +400,7 @@ contains
   end subroutine addDeriv
   
   !-----------------------------------------------------------------------
-  subroutine addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
+  pure subroutine addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
     
     implicit none
 !JÖ in/Out    
@@ -394,7 +410,7 @@ contains
     real(dp), intent(in) :: d1d(:), d2d(:,:), d3d(:,:,:)
     real(dp), intent(in) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
 !JÖ internal    
-    integer, save :: n, i, j, k, l, s
+    integer :: n, i, j, k, l, s !JÖ , save
 
 !    real(dp) d1a(3), d2a(3,3), d3a(3,3,3)
 !    real(dp) d4a(3,3,3,3), d5a(3,3,3,3,3)
@@ -433,7 +449,7 @@ contains
   end subroutine addDerivA
   
   !-----------------------------------------------------------------------
-  subroutine addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole, opole, hpole, fsf)
+  pure subroutine addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole, opole, hpole, fsf)
     
     implicit none
     
@@ -445,10 +461,10 @@ contains
     integer, intent(in) :: n
     
 !JÖ internal:    
-    real(dp), save :: u
-    
-    integer, save :: i, ii, j, k, l, in2(2), in3(3), in4(4)
-
+    real(dp) :: u
+!JÖ , save
+    integer :: i, ii, j, k, l, in2(2), in3(3), in4(4)
+!JÖ , save
 
 !    real(dp) d1a(3), d2a(3,3), d3a(3,3,3), d4a(3,3,3,3)
 !    real(dp) dSdr, dr(3), r1, fsf(3,maxCoo/3), u
@@ -534,7 +550,7 @@ contains
   !----------------------------------------------------------------------+
   !     Derivatives of the dipole field                                  |
   !----------------------------------------------------------------------+
-  subroutine dDpole(d, r, d1d, d2d, d3d, d4d, d5d)
+  pure subroutine dDpole(d, r, d1d, d2d, d3d, d4d, d5d)
     
     implicit none
     real(dp), intent(in)  :: d(:), r(:) !3
@@ -542,14 +558,22 @@ contains
     real(dp), intent(out) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
 
 !JÖ internal:    
-    integer, save :: dij, dik, dil, dis, djk, djl, djs, dkl, dks, dls
-    integer, save :: i, j, k, l, s
-    real(dp), save :: r2, r3, r5, r7, r9, r11, r13, rd
-    real(dp), save :: t1, t2, y1, y2, y3, z1, z2, z3, w1, w2, w3, w4
-    
-    real(dp), save :: dt1k, dt2k, dt1l, ddt2kl, dy2l, dt2l, dy3l, dddt2kls
-    real(dp), save :: dt1s, ddy2ls, dz1s, ddt2ks, dy2s, ddt2ls, dt2s
-    real(dp), save :: ddy3ls, dz2s, dy3s, dz3s
+    integer  :: dij, dik, dil, dis, djk, djl, djs, dkl, dks, dls
+    integer  :: i, j, k, l, s
+    real(dp) :: r2, r3, r5, r7, r9, r11, r13, rd
+    real(dp) :: t1, t2, y1, y2, y3, z1, z2, z3, w1, w2, w3, w4
+
+!, save
+!, save
+!, save
+!, save    
+    real(dp) :: dt1k, dt2k, dt1l, ddt2kl, dy2l, dt2l, dy3l, dddt2kls
+    real(dp) :: dt1s, ddy2ls, dz1s, ddt2ks, dy2s, ddt2ls, dt2s
+    real(dp) :: ddy3ls, dz2s, dy3s, dz3s
+!, save
+!, save
+!, save
+
 !------------------------------------------
 !    real(dp) d(3), r(3), d1d(3), d2d(3,3), d3d(3,3,3)
 !    real(dp) d4d(3,3,3,3), d5d(3,3,3,3,3)
@@ -689,7 +713,7 @@ contains
   !----------------------------------------------------------------------+
   !     Derivatives of the quadrupole field                              |
   !----------------------------------------------------------------------+
-  subroutine dQpole(q, r, d1q, d2q, d3q, d4q, d5q)
+  pure subroutine dQpole(q, r, d1q, d2q, d3q, d4q, d5q)
     
     implicit none
     real(dp), intent(in)  :: q(:,:), r(:)
@@ -702,13 +726,13 @@ contains
     
     integer dij, dik, dil, dis, djk, djl, djs, dkl, dks, dls
     integer i, j, k, l, s
-    real(dp), save :: r2, r3, r5, r7, r9, r11, r13, r15, rrq
-    real(dp), save :: t1, t2, t3, y1, y2, y3, z1, z2, z3, z4, w1, w2, w3, w4
-    real(dp), save :: v(3)
-           !, save :: 
-    real(dp), save :: dt2k, dt3k, ddt2kl, dy1l, dt2l, ddt3kl, dy2l, dt3l, dy3l
-    real(dp), save :: dddt3kls, dt2s, ddt2ls, ddy2ls, ddt2ks, dy1s, dz2s
-    real(dp), save :: ddt3ks, dy2s, ddt3ls, dt3s, ddy3ls, dz3s, dy3s, dz4s
+    real(dp) :: r2, r3, r5, r7, r9, r11, r13, r15, rrq
+    real(dp) :: t1, t2, t3, y1, y2, y3, z1, z2, z3, z4, w1, w2, w3, w4
+    real(dp) :: v(3)
+           ! :: 
+    real(dp) :: dt2k, dt3k, ddt2kl, dy1l, dt2l, ddt3kl, dy2l, dt3l, dy3l
+    real(dp) :: dddt3kls, dt2s, ddt2ls, ddy2ls, ddt2ks, dy1s, dz2s
+    real(dp) :: ddt3ks, dy2s, ddt3ls, dt3s, ddy3ls, dz3s, dy3s, dz4s
     
     r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
     r3 = sqrt(r2) * r2
@@ -873,7 +897,7 @@ contains
   !----------------------------------------------------------------------+
   !     Derivatives of the octopole field                                |
   !----------------------------------------------------------------------+
-  subroutine dOpole(o, r, d1o, d2o, d3o, d4o, d5o)
+  pure subroutine dOpole(o, r, d1o, d2o, d3o, d4o, d5o)
     
     implicit none
     real(dp), intent(in)  :: o(:,:,:), r(:)
@@ -1083,7 +1107,7 @@ contains
   !----------------------------------------------------------------------+
   !     Derivatives of the hexadecapole field                            |
   !----------------------------------------------------------------------+
-  subroutine dHpole(h, r, d1h, d2h, d3h, d4h, d5h)
+  pure subroutine dHpole(h, r, d1h, d2h, d3h, d4h, d5h)
     
     implicit none
     
@@ -1098,8 +1122,8 @@ contains
     integer  i, j, k, l, s
     real(dp) r2, r3, r5, r7, r9, r11, r13, r15, r17, r19
     real(dp) t1, t2, t3, y1, y2, y3, y4, z1, z2, z3, z4, z5, w1, w2, w3,w4, w5
-    real(dp), save :: r4h, v(3), g(3,3), d(3,3,3)
-           ! 
+    real(dp) :: r4h, v(3), g(3,3), d(3,3,3)
+           !, save 
     real(dp) dt1k, dt2k, dt3k
     real(dp) dy1l, dt1l, ddt2kl, dy2l, dt2l, ddt3kl, dy3l, dt3l, dy4l
     real(dp) ddt1ls, dt1s, dddt2kls, ddy2ls, dy1s, dz2s, ddt2ks, dy2s, &

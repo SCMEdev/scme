@@ -570,16 +570,22 @@ contains
   end subroutine SF
 
   !-----------------------------------------------------------------------
-  subroutine SFdsf(r, swFunc, dSdr)
+  pure subroutine SFdsf(r, swFunc, dSdr)!JÖ pure
 
     implicit none
     real(dp), intent(in) :: r !JÖ stated intents
     real(dp), intent(out) :: swFunc, dSdr !JÖ
-    real(dp), save :: x, x2, x3, rSW, rCut
-    real(dp), save :: rL1, rL2, rH1, rH2, dr
-
+    real(dp) :: x, x2, x3, rSW, rCut, dr
+!JÖ pure    real(dp) :: rL1, rL2, rH1, rH2  !JÖ pure: ^, dr
+    
+    real(dp), parameter :: rL1 = 0.0_dp   !JÖ pure
+    real(dp), parameter :: rH1 = 5.0_dp   !JÖ pure
+    real(dp), parameter :: rL2 = 9.0_dp   !JÖ pure
+    real(dp), parameter :: rH2 = 11.0_dp  !JÖ pure
+!, save
+!, save
     !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+!JÖ pure    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
     !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
     !JÖ save
 
