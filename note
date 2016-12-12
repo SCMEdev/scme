@@ -1,0 +1,3 @@
+nu vet jag för jag ändrade hur libscme byggs, så det packar in nya filer med gamla filer och om man inte rengör ordentligt så kan det vara så att den ligger kvar från förrut. 
+Måste kolla detta. 
+nä men det gjorde jag inte alls, nu är det ju nästan originalfilen
