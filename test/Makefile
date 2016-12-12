@@ -4,15 +4,18 @@ scme_src = ../src
 #test_build = build
 
 FC = gfortran
-FFLAGS = -O2 -cpp -pg -I$(scme_mod) 
+FFLAGS = -Ofast -cpp -pg -I$(scme_mod) -fopenmp
 #-fopenmp 
 
+all:
+	make run.x
+	make 2run.x
 
 run.x: run_tests.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
 	$(FC) $(FFLAGS) -o run.x $^
 
 
-## The 9 and 15 H2O tests:
+## The 9 and 15 and 32 and 64 H2O tests:
 2run.x: run_tests2.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
 	$(FC) $(FFLAGS) -o $@ $^
 	
@@ -22,7 +25,7 @@ run_tests2.o: run_tests2.f90 mifu_asserts.mod test_scme.mod
 scme:
 	(cd ../ && make) 
 
-kscme:
+klean_scme:
 	(cd ../ && make clean) 
 
 #$(scme_obj)/libscme.a: $(wildcard ../$(scme_src)/*.f90)
