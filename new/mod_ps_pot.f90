@@ -395,15 +395,6 @@ implicit none
         0.0000000000000D+00, 0.0000000000000D+00, 0.0000000000000D+00, &
         0.0000000000000D+00, 0.0000000000000D+00]
 
-
-contains !//////////////////////////////////////////////////////////////
-
-   subroutine vibpot(rij,v,n)
-      !implicit real*8 (a-h,o-z)
-      !implicit integer (i-n)
-      
-       real*8 , intent(in)  :: rij(n,3)
-       real*8 , intent(out) :: v(n)
  
        real*8, parameter :: b2A     = 0.529177249d0 
        real*8, parameter :: cm2au   = 4.556335d-6
@@ -425,20 +416,20 @@ contains !//////////////////////////////////////////////////////////////
        real*8, parameter :: c5z(245) = &
             [ ( f5z*c5zt(1)*2d0 + fbasis*cbasis(1)*2d0 + fcore*ccore(1)*2d0 + frest*crest(1)*2d0 ),&
               ( f5z*c5zt(2:245) + fbasis*cbasis(2:245) + fcore*ccore(2:245) + frest*crest(2:245) )  ]*cm2au
-       
-!internal variables       
-       real*8 ex, x1,x2,x3,rhh,vhh,voh1,voh2
-       integer, intent(in) :: n
-       integer j
-       real*8 fmat(15,3)!, c5z(245)
 
 
-!solve this:        
-       !c5z(:) = ( f5z*c5z(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )*cm2au 
-       !c5z(:) = [tc5z(1)*2d0,tc5z(2:245)]
-       
+contains !//////////////////////////////////////////////////////////////
 
-
+   subroutine vibpot(rij,v,n)
+     integer, intent(in)  :: n
+     real*8 , intent(in)  :: rij(n,3)
+     real*8 , intent(out) :: v(n)
+     
+   !internal variables       
+     real*8 ex, x1,x2,x3,rhh,vhh,voh1,voh2
+     integer j
+     real*8 fmat(15,3)!, c5z(245)
+     
       do i=1,n
          x1=(rij(i,1)-reoh)/reoh
          x2=(rij(i,2)-reoh)/reoh
@@ -470,8 +461,7 @@ contains !//////////////////////////////////////////////////////////////
          enddo
          v(i)=v(i)*dexp(-b1*((rij(i,1)-reoh)**2+(rij(i,2)-reoh)**2)) + c5z(1) + voh1+voh2+vhh
       enddo
-      return
-      end subroutine
+   end subroutine
 end module
       
 program ps_test
@@ -501,6 +491,9 @@ end program
        
        
        
+!solve this:        
+       !c5z(:) = ( f5z*c5z(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )*cm2au 
+       !c5z(:) = [tc5z(1)*2d0,tc5z(2:245)]
        
 !      print*, pot
        !phh2    = phh2*0.529177249d0
