@@ -1,26 +1,9 @@
-      program ps_test
-      implicit none
-      integer, parameter :: n = 4
-      real*8 pot(n), conf(n,3), A2au, pi, deg2rad, conv(3)
-      integer p
-      pi = 3.1415926535d0
-      A2au = 1.0d0/0.529177249d0
-      deg2rad = pi/180.d0
-      conv = [A2au, A2au, deg2rad]
-      p=1;   conf(p,:) = [0.95d0,1.01d0,106.0d0]*conv
-      p=p+1; conf(p,:) = [0.93d0,0.93d0,104.0d0]*conv
-      p=p+1; conf(p,:) = [0.94d0,0.94d0,105.0d0]*conv
-      p=p+1; conf(p,:) = [1.34d0,1.24d0,108.0d0]*conv
-      call vibpot(conf,pot,n)
-      print*, pot
-      end program
       
-      
-      
-      
-      
-      subroutine vibpot(rij,v,n)
-      implicit real*8 (a-h,o-z)
+module ps_pot      
+implicit none
+!-----------------------------------------------------------------------
+!      subroutine vibpot(rij,v,n)
+!      implicit real*8 (a-h,o-z)
 !
 !     pes for h2o,
 !     Harry Partridge and David W. Schwenke, J. Chem. Phys.,
@@ -30,7 +13,12 @@
 !     v(i) is pes in au
 !     n is number of geometries
 !
-      dimension rij(n,3),v(n),c5z(245),cbasis(245),ccore(245), crest(245),idx(245,3),fmat(15,3)
+!-----------------------------------------------------------------------
+!     Changes from original source is made by Jonatan Öström in 
+!     2016-12-12. 
+!-----------------------------------------------------------------------
+      real*8, save  :: c5z(245),cbasis(245),ccore(245), crest(245)
+      integer, save :: idx(245,3), i
       
        data (idx(i,1),i=1,245)/ &
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, &
@@ -406,37 +394,47 @@
         0.0000000000000D+00, 0.0000000000000D+00, 0.0000000000000D+00, &
         0.0000000000000D+00, 0.0000000000000D+00, 0.0000000000000D+00, &
         0.0000000000000D+00, 0.0000000000000D+00/
-       data reoh,thetae,b1,roh,alphaoh,deoh,phh1,phh2/ &
-        0.958649d0, 104.3475d0,2.0d0,0.9519607159623009d0,2.587949757553683d0, &
-          42290.92019288289d0,16.94879431193463d0,12.66426998162947d0/
-       data f5z,fbasis,fcore,frest/0.99967788500000d0, 0.15860145369897d0,-1.6351695982132d0,1d0/
-      save
-      data ifirst/0/
 
-      if(ifirst.eq.0)then
-         ifirst=1
-         do i=1,245
-            c5z(i)=f5z*c5z(i)+fbasis*cbasis(i)+fcore*ccore(i) + frest*crest(i)
-         enddo
-         phh1=phh1*f5z
-         deoh=deoh*f5z
 
-!  convert parameters from 1/cm, angstrom to a.u.
-         reoh=reoh/0.529177249d0
-         b1=b1*0.529177249d0**2
-         do  i=1,245
-             c5z(i)=c5z(i)*4.556335d-6 
-         enddo 
-         rad=dacos(-1d0)/1.8d2
-         ce=dcos(thetae*rad)
-         phh1=phh1*dexp(phh2)
-         phh1=phh1*4.556335d-6
-         phh2=phh2*0.529177249d0
-         deoh=deoh*4.556335d-6
-         roh=roh/0.529177249d0
-         alphaoh=alphaoh*0.529177249d0
-         c5z(1)=c5z(1)*2d0
-      end if
+contains !//////////////////////////////////////////////////////////////
+
+   subroutine vibpot(rij,v,n)
+      !implicit real*8 (a-h,o-z)
+      !implicit integer (i-n)
+      
+       real*8 , intent(in)  :: rij(n,3)
+       real*8 , intent(out) :: v(n)
+ 
+       real*8, parameter :: b2A     = 0.529177249d0 
+       real*8, parameter :: cm2au   = 4.556335d-6
+       real*8, parameter :: f5z     = 0.99967788500000d0
+       real*8, parameter :: fbasis  = 0.15860145369897d0
+       real*8, parameter :: fcore   = -1.6351695982132d0
+       real*8, parameter :: frest   = 1d0
+
+       real*8, parameter :: b1      = 2.0d0*b2A**2
+       real*8, parameter :: roh     = 0.9519607159623009d0/b2A
+       real*8, parameter :: alphaoh = 2.587949757553683d0*b2A
+       real*8, parameter :: deoh    = 42290.92019288289d0*f5z*cm2au
+       real*8, parameter :: reoh    = 0.958649d0/b2A
+       real*8, parameter :: thetae  = 104.3475d0
+       real*8, parameter :: rad     = dacos(-1d0)/1.8d2
+       real*8, parameter :: ce      = dcos(thetae*rad)
+       real*8, parameter :: phh2    = 12.66426998162947d0*b2A
+       real*8, parameter :: phh1    = 16.94879431193463d0*cm2au*dexp(phh2/b2A)*f5z
+
+!internal variables       
+       real*8 ex, x1,x2,x3,rhh,vhh,voh1,voh2
+       integer, intent(in) :: n
+       integer j
+       real*8 fmat(15,3)
+
+
+!solve this:        
+       c5z(:) = ( f5z*c5z(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )*cm2au 
+       c5z(1) = c5z(1)*2d0
+       
+
 
       do i=1,n
          x1=(rij(i,1)-reoh)/reoh
@@ -464,10 +462,57 @@
          
          v(i)=0d0
          do j=2,245
-            term=c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
-            v(i)=v(i)+term
+            v(i)=v(i)+c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
+            !term
          enddo
          v(i)=v(i)*dexp(-b1*((rij(i,1)-reoh)**2+(rij(i,2)-reoh)**2)) + c5z(1) + voh1+voh2+vhh
       enddo
       return
-      end
+      end subroutine
+end module
+      
+program ps_test
+      use ps_pot, only: vibpot
+      implicit none
+      integer, parameter :: n = 4
+      real*8 pot(n), conf(n,3), A2au, pi, deg2rad, conv(3)
+      integer p, i
+      pi = 3.1415926535d0
+      A2au = 1.0d0/0.529177249d0
+      deg2rad = pi/180.d0
+      conv = [A2au, A2au, deg2rad]
+      p=1;   conf(p,:) = [0.95d0,1.01d0,106.0d0]*conv
+      p=p+1; conf(p,:) = [0.93d0,0.93d0,104.0d0]*conv
+      p=p+1; conf(p,:) = [0.94d0,0.94d0,105.0d0]*conv
+      p=p+1; conf(p,:) = [1.34d0,1.24d0,108.0d0]*conv
+      call vibpot(conf,pot,n)
+      do i = 1,n
+          print*, pot(i), "in a.u."
+      enddo
+end program
+
+
+       
+       
+
+       
+       
+       
+       
+!      print*, pot
+       !phh2    = phh2*0.529177249d0
+!       c5z(:) = c5z(:)
+!       b1      = 2.0d0
+!         roh=roh/0.529177249d0
+!         alphaoh=alphaoh*0.529177249d0
+!       phh1    = 16.94879431193463d0
+!         phh1=phh1*f5z
+!         phh1=phh1*4.556335d-6
+!       deoh    = 42290.92019288289d0
+!         deoh=deoh*f5z
+!         deoh=deoh*4.556335d-6
+!       reoh    = 0.958649d0
+         !do  i=1,245
+         !enddo 
+!      end if
+
