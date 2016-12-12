@@ -17,7 +17,7 @@
 !     project: SCMEdev on GitHub. 
 !-------------------------------------------------------------------------
 
-module ps_mod
+module ps_dip
       implicit none!real*8 (a-h,o-z)
       real*8:: coef(823) ! d(n,3),coef(823),idx(823,3),fmat(19,3),x(n,3,3)
       integer :: i, idx(823,3)
@@ -416,11 +416,11 @@ module ps_mod
          5.1929492676140D+02, -2.3951066467556D+02/
 ! END Dipole Data /////////////////////////////////////////////////////////
          
-      real*8,parameter :: reoh= 0.958648999999999973d0*1.889725989d0 ! relaxed OH bond distance in bohr
-      real*8,parameter :: thetae= 104.347499999999997d0              ! HOH angle
-      real*8,parameter :: b1= 1.50000000000000000d0/1.889725989d0**2 ! dunno
-      real*8,parameter :: rad=acos(-1d0)/1.8d2                       ! pi/180
-      real*8,parameter :: ce=cos(thetae*rad)                         ! cos(u0) where uo is the relaxed angle in radians
+      real*8,parameter :: reoh   = 0.958648999999999973d0*1.889725989d0   ! relaxed OH bond distance in bohr
+      real*8,parameter :: thetae = 104.347499999999997d0                  ! HOH angle
+      real*8,parameter :: b1     = 1.5d0/1.889725989d0**2                 ! dunno
+      real*8,parameter :: rad    = acos(-1d0)/1.8d2                       ! pi/180
+      real*8,parameter :: ce     = cos(thetae*rad)                        ! cos(u0) where uo is the relaxed angle in radians
 
       private
       public vibdip
@@ -431,10 +431,9 @@ contains !//////////////////////////////////////////////////////////////
       real*8 , intent(out) :: d(:,:)   !d(n,3) = d(n_h2o,dip_x,dip_y,dip_z),
       integer, intent(in)  :: n
 !JÖ internal:      
-      real*8 fmat(19,3),v1(3),v2(3)
-      real*8 r1,r2,cabc,x1,x2,x3,p1,p2,damp1,damp2,term,term1,term2
-      integer i, j
-      
+      real*8  :: fmat(19,3),v1(3),v2(3)
+      real*8  :: r1,r2,cabc,x1,x2,x3,p1,p2,damp1,damp2,term,term1,term2
+      integer :: i, j
       
       do i=1,n
           ! Compute the distances
@@ -483,8 +482,8 @@ contains !//////////////////////////////////////////////////////////////
           d(i,2) = p1*( x(i,2,2) - x(i,2,1))  +  p2*( x(i,2,3) - x(i,2,1) ) !JÖ changed indices
           d(i,3) = p1*( x(i,3,2) - x(i,3,1))  +  p2*( x(i,3,3) - x(i,3,1) ) !JÖ changed indices
       enddo
-      return
-      end
+      
+      end subroutine
 end module      
       
       
