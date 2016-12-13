@@ -3,27 +3,31 @@ Flat profile:
 Each sample counts as 0.01 seconds.
   %   cumulative   self              self     total           
  time   seconds   seconds    calls  ms/call  ms/call  name    
- 94.66      4.07     4.07                             __scme_MOD_scme_calculate
-  2.56      4.18     0.11      102     1.08     1.11  __calcenergy_mod_MOD_calcenergy
-  1.40      4.24     0.06      100     0.60     0.63  __calc_higher_order_MOD_calcehigh
-  0.70      4.27     0.03      200     0.15     0.15  __molecproperties_MOD_rotatepolariz
-  0.23      4.28     0.01   131001     0.00     0.00  ps::dmsnasa(double const*, double*)
-  0.23      4.29     0.01                             ps::potnasa(double const*, double*, double*)
-  0.23      4.30     0.01                             __dispersion_mod_MOD_dispersion
-  0.00      4.30     0.00   294015     0.00     0.00  __mdutil_MOD_inv6
-  0.00      4.30     0.00     3200     0.00     0.00  __molforce_MOD_molforce3
-  0.00      4.30     0.00      200     0.00     0.00  __molecproperties_MOD_rotatepoles
-  0.00      4.30     0.00      102     0.00     0.00  __calc_lower_order_MOD_calcedip_quad
-  0.00      4.30     0.00      102     0.00     0.00  __inducepoles_MOD_induceqpole
-  0.00      4.30     0.00      102     0.00     0.00  __molecproperties_MOD_sf
-  0.00      4.30     0.00      100     0.00     0.00  __calc_derivs_MOD_calcdv
-  0.00      4.30     0.00      100     0.00     0.00  __forcecm_mod_MOD_forcecm
-  0.00      4.30     0.00      100     0.00     0.00  __inducepoles_MOD_inducedipole
-  0.00      4.30     0.00      100     0.00     0.00  __molecproperties_MOD_adddfields
-  0.00      4.30     0.00      100     0.00     0.00  __molecproperties_MOD_findppalaxes
-  0.00      4.30     0.00      100     0.00     0.00  __molecproperties_MOD_recovermolecules
-  0.00      4.30     0.00      100     0.00     0.00  __test_scme_MOD_test_scme_monomer1
-  0.00      4.30     0.00      100     0.00     0.00  __torquecm_mod_MOD_torquecm
+ 96.73      2.07     2.07      100    20.70    21.40  __scme_MOD_scme_calculate
+  1.40      2.10     0.03      100     0.30     0.30  __calc_higher_order_MOD_calcehigh
+  1.40      2.13     0.03      100     0.30     0.30  __calcenergy_mod_MOD_calcenergy
+  0.47      2.14     0.01      101     0.10     0.10  __molecproperties_MOD_adddfields
+  0.00      2.14     0.00   375206     0.00     0.00  __molecproperties_MOD_sf
+  0.00      2.14     0.00   159568     0.00     0.00  __molecproperties_MOD_sfdsf
+  0.00      2.14     0.00    58492     0.00     0.00  __tang_toennies_MOD_tang_toenniesn
+  0.00      2.14     0.00    27215     0.00     0.00  __tang_toennies_MOD_tang_toenniesndf
+  0.00      2.14     0.00     6400     0.00     0.00  __mdutil_MOD_inv6
+  0.00      2.14     0.00     6400     0.00     0.00  __molforce_MOD_molforce3
+  0.00      2.14     0.00      101     0.00     0.00  __calc_lower_order_MOD_calcedip_quad
+  0.00      2.14     0.00      101     0.00     0.00  __inducepoles_MOD_inducedipole
+  0.00      2.14     0.00      101     0.00     0.00  __inducepoles_MOD_induceqpole
+  0.00      2.14     0.00      101     0.00     0.00  __molecproperties_MOD_addfields
+  0.00      2.14     0.00      100     0.00     0.00  __atomicforces_mod_MOD_atomicforces
+  0.00      2.14     0.00      100     0.00     0.00  __calc_derivs_MOD_calcdv
+  0.00      2.14     0.00      100     0.00     0.00  __dispersion_mod_MOD_dispersion
+  0.00      2.14     0.00      100     0.00     0.00  __forcecm_mod_MOD_forcecm
+  0.00      2.14     0.00      100     0.00     0.00  __molecproperties_MOD_calccentersofmass
+  0.00      2.14     0.00      100     0.00     0.00  __molecproperties_MOD_findppalaxes
+  0.00      2.14     0.00      100     0.00     0.00  __molecproperties_MOD_recovermolecules
+  0.00      2.14     0.00      100     0.00     0.00  __molecproperties_MOD_rotatepolariz
+  0.00      2.14     0.00      100     0.00     0.00  __molecproperties_MOD_rotatepoles
+  0.00      2.14     0.00      100     0.00     0.00  __molecproperties_MOD_setunpolpoles
+  0.00      2.14     0.00      100     0.00     0.00  __torquecm_mod_MOD_torquecm
 
  %         the percentage of the total running time of the
 time       program used by this function.
@@ -61,101 +65,117 @@ notice and this notice are preserved.
 		     Call graph (explanation follows)
 
 
-granularity: each sample hit covers 2 byte(s) for 0.23% of 4.30 seconds
+granularity: each sample hit covers 2 byte(s) for 0.47% of 2.14 seconds
 
 index % time    self  children    called     name
-                              295070             __scme_MOD_scme_calculate [1]
-[1]     99.5    4.07    0.21       0+295070  __scme_MOD_scme_calculate [1]
-                0.11    0.00     102/102         __calcenergy_mod_MOD_calcenergy [2]
-                0.06    0.00     100/100         __calc_higher_order_MOD_calcehigh [3]
-                0.03    0.00     200/200         __molecproperties_MOD_rotatepolariz [4]
-                0.00    0.00   43629/131001      ps::dmsnasa(double const*, double*) [5]
-                0.00    0.00   98313/294015      __mdutil_MOD_inv6 [18]
-                0.00    0.00     200/200         __molecproperties_MOD_rotatepoles [20]
-                0.00    0.00     102/102         __molecproperties_MOD_sf [23]
-                0.00    0.00     102/102         __inducepoles_MOD_induceqpole [22]
-                0.00    0.00     102/102         __calc_lower_order_MOD_calcedip_quad [21]
-                0.00    0.00     100/100         __molecproperties_MOD_findppalaxes [28]
-                0.00    0.00     100/100         __molecproperties_MOD_adddfields [27]
-                0.00    0.00     100/100         __calc_derivs_MOD_calcdv [24]
-                0.00    0.00     100/100         __inducepoles_MOD_inducedipole [26]
-                0.00    0.00     100/100         __forcecm_mod_MOD_forcecm [25]
-                0.00    0.00     100/100         __torquecm_mod_MOD_torquecm [31]
-                0.00    0.00     100/100         __molecproperties_MOD_recovermolecules [29]
-                              295070             __scme_MOD_scme_calculate [1]
------------------------------------------------
-                0.11    0.00     102/102         __scme_MOD_scme_calculate [1]
-[2]      2.6    0.11    0.00     102         __calcenergy_mod_MOD_calcenergy [2]
-                0.00    0.00   43372/131001      ps::dmsnasa(double const*, double*) [5]
-                0.00    0.00   96702/294015      __mdutil_MOD_inv6 [18]
------------------------------------------------
-                0.06    0.00     100/100         __scme_MOD_scme_calculate [1]
-[3]      1.5    0.06    0.00     100         __calc_higher_order_MOD_calcehigh [3]
-                0.00    0.00   44000/131001      ps::dmsnasa(double const*, double*) [5]
-                0.00    0.00   99000/294015      __mdutil_MOD_inv6 [18]
------------------------------------------------
-                0.03    0.00     200/200         __scme_MOD_scme_calculate [1]
-[4]      0.7    0.03    0.00     200         __molecproperties_MOD_rotatepolariz [4]
------------------------------------------------
-                0.00    0.00   43372/131001      __calcenergy_mod_MOD_calcenergy [2]
-                0.00    0.00   43629/131001      __scme_MOD_scme_calculate [1]
-                0.00    0.00   44000/131001      __calc_higher_order_MOD_calcehigh [3]
-[5]      0.2    0.01    0.00  131001         ps::dmsnasa(double const*, double*) [5]
+                              517919             __scme_MOD_scme_calculate [1]
+                2.07    0.07     100/100         __test_scme_MOD_test_scme_cluster_64_perf [2]
+[1]    100.0    2.07    0.07     100+517919  __scme_MOD_scme_calculate [1]
+                0.03    0.00     100/100         __calc_higher_order_MOD_calcehigh [3]
+                0.03    0.00     100/100         __calcenergy_mod_MOD_calcenergy [4]
+                0.01    0.00     101/101         __molecproperties_MOD_adddfields [5]
+                0.00    0.00  159568/159568      __molecproperties_MOD_sfdsf [17]
+                0.00    0.00   27215/27215       __tang_toennies_MOD_tang_toenniesndf [19]
+                0.00    0.00     101/101         __calc_lower_order_MOD_calcedip_quad [22]
+                0.00    0.00     101/101         __molecproperties_MOD_addfields [25]
+                0.00    0.00     101/101         __inducepoles_MOD_inducedipole [23]
+                0.00    0.00     101/101         __inducepoles_MOD_induceqpole [24]
+                0.00    0.00     100/100         __molecproperties_MOD_recovermolecules [32]
+                0.00    0.00     100/100         __molecproperties_MOD_calccentersofmass [30]
+                0.00    0.00     100/100         __molecproperties_MOD_findppalaxes [31]
+                0.00    0.00     100/100         __molecproperties_MOD_rotatepoles [34]
+                0.00    0.00     100/100         __molecproperties_MOD_setunpolpoles [35]
+                0.00    0.00     100/100         __molecproperties_MOD_rotatepolariz [33]
+                0.00    0.00     100/100         __calc_derivs_MOD_calcdv [27]
+                0.00    0.00     100/100         __forcecm_mod_MOD_forcecm [29]
+                0.00    0.00     100/100         __torquecm_mod_MOD_torquecm [36]
+                0.00    0.00     100/100         __atomicforces_mod_MOD_atomicforces [26]
+                0.00    0.00     100/100         __dispersion_mod_MOD_dispersion [28]
+                              517919             __scme_MOD_scme_calculate [1]
 -----------------------------------------------
                                                  <spontaneous>
-[6]      0.2    0.01    0.00                 ps::potnasa(double const*, double*, double*) [6]
+[2]    100.0    0.00    2.14                 __test_scme_MOD_test_scme_cluster_64_perf [2]
+                2.07    0.07     100/100         __scme_MOD_scme_calculate [1]
 -----------------------------------------------
-                                                 <spontaneous>
-[7]      0.2    0.01    0.00                 __dispersion_mod_MOD_dispersion [7]
+                0.03    0.00     100/100         __scme_MOD_scme_calculate [1]
+[3]      1.4    0.03    0.00     100         __calc_higher_order_MOD_calcehigh [3]
+                0.00    0.00  241400/375206      __molecproperties_MOD_sf [16]
+                0.00    0.00   37000/58492       __tang_toennies_MOD_tang_toenniesn [18]
 -----------------------------------------------
-                0.00    0.00   96702/294015      __calcenergy_mod_MOD_calcenergy [2]
-                0.00    0.00   98313/294015      __scme_MOD_scme_calculate [1]
-                0.00    0.00   99000/294015      __calc_higher_order_MOD_calcehigh [3]
-[18]     0.0    0.00    0.00  294015         __mdutil_MOD_inv6 [18]
+                0.03    0.00     100/100         __scme_MOD_scme_calculate [1]
+[4]      1.4    0.03    0.00     100         __calcenergy_mod_MOD_calcenergy [4]
+                0.00    0.00  133806/375206      __molecproperties_MOD_sf [16]
+                0.00    0.00   21492/58492       __tang_toennies_MOD_tang_toenniesn [18]
 -----------------------------------------------
-                0.00    0.00    3200/3200        __atomicforces_mod_MOD_atomicforces [32]
-[19]     0.0    0.00    0.00    3200         __molforce_MOD_molforce3 [19]
+                0.01    0.00     101/101         __scme_MOD_scme_calculate [1]
+[5]      0.5    0.01    0.00     101         __molecproperties_MOD_adddfields [5]
 -----------------------------------------------
-                0.00    0.00     200/200         __scme_MOD_scme_calculate [1]
-[20]     0.0    0.00    0.00     200         __molecproperties_MOD_rotatepoles [20]
+                0.00    0.00  133806/375206      __calcenergy_mod_MOD_calcenergy [4]
+                0.00    0.00  241400/375206      __calc_higher_order_MOD_calcehigh [3]
+[16]     0.0    0.00    0.00  375206         __molecproperties_MOD_sf [16]
 -----------------------------------------------
-                0.00    0.00     102/102         __scme_MOD_scme_calculate [1]
-[21]     0.0    0.00    0.00     102         __calc_lower_order_MOD_calcedip_quad [21]
+                0.00    0.00  159568/159568      __scme_MOD_scme_calculate [1]
+[17]     0.0    0.00    0.00  159568         __molecproperties_MOD_sfdsf [17]
 -----------------------------------------------
-                0.00    0.00     102/102         __scme_MOD_scme_calculate [1]
-[22]     0.0    0.00    0.00     102         __inducepoles_MOD_induceqpole [22]
+                0.00    0.00   21492/58492       __calcenergy_mod_MOD_calcenergy [4]
+                0.00    0.00   37000/58492       __calc_higher_order_MOD_calcehigh [3]
+[18]     0.0    0.00    0.00   58492         __tang_toennies_MOD_tang_toenniesn [18]
 -----------------------------------------------
-                0.00    0.00     102/102         __scme_MOD_scme_calculate [1]
-[23]     0.0    0.00    0.00     102         __molecproperties_MOD_sf [23]
+                0.00    0.00   27215/27215       __scme_MOD_scme_calculate [1]
+[19]     0.0    0.00    0.00   27215         __tang_toennies_MOD_tang_toenniesndf [19]
+-----------------------------------------------
+                0.00    0.00    6400/6400        __molforce_MOD_molforce3 [21]
+[20]     0.0    0.00    0.00    6400         __mdutil_MOD_inv6 [20]
+-----------------------------------------------
+                0.00    0.00    6400/6400        __atomicforces_mod_MOD_atomicforces [26]
+[21]     0.0    0.00    0.00    6400         __molforce_MOD_molforce3 [21]
+                0.00    0.00    6400/6400        __mdutil_MOD_inv6 [20]
+-----------------------------------------------
+                0.00    0.00     101/101         __scme_MOD_scme_calculate [1]
+[22]     0.0    0.00    0.00     101         __calc_lower_order_MOD_calcedip_quad [22]
+-----------------------------------------------
+                0.00    0.00     101/101         __scme_MOD_scme_calculate [1]
+[23]     0.0    0.00    0.00     101         __inducepoles_MOD_inducedipole [23]
+-----------------------------------------------
+                0.00    0.00     101/101         __scme_MOD_scme_calculate [1]
+[24]     0.0    0.00    0.00     101         __inducepoles_MOD_induceqpole [24]
+-----------------------------------------------
+                0.00    0.00     101/101         __scme_MOD_scme_calculate [1]
+[25]     0.0    0.00    0.00     101         __molecproperties_MOD_addfields [25]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[24]     0.0    0.00    0.00     100         __calc_derivs_MOD_calcdv [24]
+[26]     0.0    0.00    0.00     100         __atomicforces_mod_MOD_atomicforces [26]
+                0.00    0.00    6400/6400        __molforce_MOD_molforce3 [21]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[25]     0.0    0.00    0.00     100         __forcecm_mod_MOD_forcecm [25]
+[27]     0.0    0.00    0.00     100         __calc_derivs_MOD_calcdv [27]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[26]     0.0    0.00    0.00     100         __inducepoles_MOD_inducedipole [26]
+[28]     0.0    0.00    0.00     100         __dispersion_mod_MOD_dispersion [28]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[27]     0.0    0.00    0.00     100         __molecproperties_MOD_adddfields [27]
+[29]     0.0    0.00    0.00     100         __forcecm_mod_MOD_forcecm [29]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[28]     0.0    0.00    0.00     100         __molecproperties_MOD_findppalaxes [28]
+[30]     0.0    0.00    0.00     100         __molecproperties_MOD_calccentersofmass [30]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[29]     0.0    0.00    0.00     100         __molecproperties_MOD_recovermolecules [29]
------------------------------------------------
-                0.00    0.00     100/100         __test_scme_MOD_test_scme_cluster_32_perf [50]
-[30]     0.0    0.00    0.00     100         __test_scme_MOD_test_scme_monomer1 [30]
+[31]     0.0    0.00    0.00     100         __molecproperties_MOD_findppalaxes [31]
 -----------------------------------------------
                 0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
-[31]     0.0    0.00    0.00     100         __torquecm_mod_MOD_torquecm [31]
+[32]     0.0    0.00    0.00     100         __molecproperties_MOD_recovermolecules [32]
 -----------------------------------------------
-                                3200             __atomicforces_mod_MOD_atomicforces [32]
-[32]     0.0    0.00    0.00       0+3200    __atomicforces_mod_MOD_atomicforces [32]
-                0.00    0.00    3200/3200        __molforce_MOD_molforce3 [19]
-                                3200             __atomicforces_mod_MOD_atomicforces [32]
+                0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
+[33]     0.0    0.00    0.00     100         __molecproperties_MOD_rotatepolariz [33]
+-----------------------------------------------
+                0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
+[34]     0.0    0.00    0.00     100         __molecproperties_MOD_rotatepoles [34]
+-----------------------------------------------
+                0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
+[35]     0.0    0.00    0.00     100         __molecproperties_MOD_setunpolpoles [35]
+-----------------------------------------------
+                0.00    0.00     100/100         __scme_MOD_scme_calculate [1]
+[36]     0.0    0.00    0.00     100         __torquecm_mod_MOD_torquecm [36]
 -----------------------------------------------
 
  This table describes the call tree of the program, and was sorted by
@@ -248,10 +268,12 @@ notice and this notice are preserved.
 
 Index by function name
 
-   [5] ps::dmsnasa(double const*, double*) [25] __forcecm_mod_MOD_forcecm [4] __molecproperties_MOD_rotatepolariz
-   [6] ps::potnasa(double const*, double*, double*) [26] __inducepoles_MOD_inducedipole [20] __molecproperties_MOD_rotatepoles
-  [24] __calc_derivs_MOD_calcdv [22] __inducepoles_MOD_induceqpole [23] __molecproperties_MOD_sf
-   [3] __calc_higher_order_MOD_calcehigh [18] __mdutil_MOD_inv6 [19] __molforce_MOD_molforce3
-  [21] __calc_lower_order_MOD_calcedip_quad [27] __molecproperties_MOD_adddfields [1] __scme_MOD_scme_calculate
-   [2] __calcenergy_mod_MOD_calcenergy [28] __molecproperties_MOD_findppalaxes [30] __test_scme_MOD_test_scme_monomer1
-   [7] __dispersion_mod_MOD_dispersion [29] __molecproperties_MOD_recovermolecules [31] __torquecm_mod_MOD_torquecm
+  [26] __atomicforces_mod_MOD_atomicforces [20] __mdutil_MOD_inv6 [16] __molecproperties_MOD_sf
+  [27] __calc_derivs_MOD_calcdv [5] __molecproperties_MOD_adddfields [17] __molecproperties_MOD_sfdsf
+   [3] __calc_higher_order_MOD_calcehigh [25] __molecproperties_MOD_addfields [21] __molforce_MOD_molforce3
+  [22] __calc_lower_order_MOD_calcedip_quad [30] __molecproperties_MOD_calccentersofmass [1] __scme_MOD_scme_calculate
+   [4] __calcenergy_mod_MOD_calcenergy [31] __molecproperties_MOD_findppalaxes [18] __tang_toennies_MOD_tang_toenniesn
+  [28] __dispersion_mod_MOD_dispersion [32] __molecproperties_MOD_recovermolecules [19] __tang_toennies_MOD_tang_toenniesndf
+  [29] __forcecm_mod_MOD_forcecm [33] __molecproperties_MOD_rotatepolariz [36] __torquecm_mod_MOD_torquecm
+  [23] __inducepoles_MOD_inducedipole [34] __molecproperties_MOD_rotatepoles
+  [24] __inducepoles_MOD_induceqpole [35] __molecproperties_MOD_setunpolpoles

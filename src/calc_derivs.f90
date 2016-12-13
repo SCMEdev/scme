@@ -21,6 +21,8 @@ contains
     real(dp), intent(in) ::  rCM(:,:), a(:), a2(:)
     real(dp), intent(in) ::  dpole(:,:), qpole(:,:,:)
     real(dp), intent(in) ::  opole(:,:,:,:), hpole(:,:,:,:,:)
+    !, target :: dpole(:,:), qpole(:,:,:)
+    !, target :: opole(:,:,:,:), hpole(:,:,:,:,:)
     
     real(dp), intent(in) ::   rMax2
     logical*1, intent(in) ::  iSlab
@@ -32,15 +34,30 @@ contains
 !JÖ internal: (trying the save option)     
     real(dp), save :: d1d(3), d2d(3,3), d3d(3,3,3)
     real(dp), save :: d4d(3,3,3,3), d5d(3,3,3,3,3)
-    
     real(dp), save :: d1a(3), d2a(3,3), d3a(3,3,3)
     real(dp), save :: d4a(3,3,3,3), d5a(3,3,3,3,3)
-    
-    real(dp), save :: d(3), q(3,3), o(3,3,3), h(3,3,3,3)
     real(dp), save :: re(3), dr(3), r1, r2, swFunc, dSdr
-            
     integer , save :: i, j, k, l, s, n, m, ii, nx, ny, nz
     integer , save :: in2(2), in3(3), in4(4), in5(5)
+
+!JÖ    real(dp) :: d(3), q(3,3), o(3,3,3), h(3,3,3,3)
+!JÖ    real(dp), pointer :: d(:), q(:,:), o(:,:,:), h(:,:,:,:)
+
+!, save
+!, save
+!
+!, save
+!, save
+!
+!, save
+!, save
+!
+!, save
+!, save
+! Save is no improvement, probably because this routine is to high up  
+! and the save only consumes cache for the lower level/faster routines.
+!
+!
 
 !--------------------------------------------    
 !    implicit none
@@ -110,7 +127,7 @@ contains
     !$omp parallel &
     !$omp default(private) &
     !$omp shared(nM, NC, a, NCz, rCM, a2, rMax2, d1v, d2v, d3v, d4v, d5v,dpole,qpole,opole,hpole,iSlab,fsf)
-
+    
     !$omp do
     do n = 1, nM
        do m = 1, nM
@@ -135,15 +152,15 @@ contains
                    r2 = sum(dr**2) !JÖ dr(1)**2 + dr(2)**2 + dr(3)**2
                    
                    if (r2 .gt. rMax2) cycle crescent!JÖ goto 11
-                   r1 = sqrt(r2)
+                   r1 = dsqrt(r2)
                    call SFdsf(r1, swFunc, dSdr)
                    
                    
                    !do i = 1, 3
                    !   d(i) = dpole(i,m)
                    !end do
-                   !d = dpole(:,m)
                    !                     call dDpole(d, dr, d1d, d2d, d3d, d4d, d5d)
+                   !d => dpole(:,m)
                    !call dDpole(d, dr, d1a, d2a, d3a, d4a, d5a)
                    call dDpole(dpole(:,m), dr, d1a, d2a, d3a, d4a, d5a)
                    
@@ -161,7 +178,8 @@ contains
                    !      q(i,j) = qpole(i,j,m)
                    !   end do
                    !end do
-                   !q = qpole(:,:,m)
+                   
+                   !q => qpole(:,:,m)
                    !call dQpole(q, dr, d1d, d2d, d3d, d4d, d5d)
                    call dQpole(qpole(:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
@@ -176,7 +194,7 @@ contains
                    !      end do
                    !   end do
                    !end do
-                   !o = opole(:,:,:,m)
+                   !o => opole(:,:,:,m)
                    !call dOpole(o, dr, d1d, d2d, d3d, d4d, d5d)
                    call dOpole(opole(:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
@@ -193,7 +211,7 @@ contains
                    !      end do
                    !   end do
                    !end do
-                   !h = hpole(:,:,:,:,m)
+                   !h => hpole(:,:,:,:,m)
                    !call dHpole(h, dr, d1d, d2d, d3d, d4d, d5d)
                    call dHpole(hpole(:,:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
@@ -230,9 +248,9 @@ contains
     !$$$      ti = irtc()
     
     !$omp do 
-    !&
-    !!$omp default(private) &
-    !!$omp shared(d2v, d3v, d4v, d5v)
+    !!!!&
+    !!!!!$omp default(private) &
+    !!!!!$omp shared(d2v, d3v, d4v, d5v)
 
     do i = 1, 3
        do j = 1, 3
@@ -589,7 +607,7 @@ contains
 
     
     r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
-    r3 = sqrt(r2) * r2
+    r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2
     r9 = r7 * r2
@@ -624,10 +642,10 @@ contains
              !     3rd derivative
              
              dt1k = d(i)*djk + d(j)*dik + d(k) * dij
-             y1 = dt1k
+             y1   = dt1k
              dt2k = d(k) * r(i)*r(j) + rd * (r(i)*djk + dik*r(j))
-             y2 = t1*r(k) + dt2k
-             y3 = t2 * r(k)
+             y2   = t1*r(k) + dt2k
+             y3   = t2 * r(k)
              
              d3d(i,j,k) = y1*r5 + y2*r7 + y3*r9
              
@@ -645,7 +663,7 @@ contains
                        +   rd * ( dil*djk + dik*djl)
                        
                 dy2l = dt1l*r(k) + t1*dkl + ddt2kl
-                z1 = y1*r(l) + dy2l
+                z1   = y1*r(l) + dy2l
                 
                 dt2l = d(l) * r(i)*r(j) + rd * (r(i)*djl + dil*r(j))
                 dy3l = dt2l * r(k) + t2 * dkl
@@ -735,7 +753,7 @@ contains
     real(dp) :: ddt3ks, dy2s, ddt3ls, dt3s, ddy3ls, dz3s, dy3s, dz4s
     
     r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
-    r3 = sqrt(r2) * r2
+    r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2
     r9 = r7 * r2
@@ -921,7 +939,7 @@ contains
     
     
     r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
-    r3 = sqrt(r2) * r2
+    r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2
     r9 = r7 * r2
@@ -1118,21 +1136,21 @@ contains
 !    real(dp) h(3,3,3,3), r(3), d1h(3), d2h(3,3), d3h(3,3,3)
 !    real(dp) d4h(3,3,3,3), d5h(3,3,3,3,3)
     
-    integer  dij, dik, dil, dis, djk, djl, djs, dkl, dks, dls
-    integer  i, j, k, l, s
-    real(dp) r2, r3, r5, r7, r9, r11, r13, r15, r17, r19
-    real(dp) t1, t2, t3, y1, y2, y3, y4, z1, z2, z3, z4, z5, w1, w2, w3,w4, w5
+    integer  :: dij, dik, dil, dis, djk, djl, djs, dkl, dks, dls
+    integer  :: i, j, k, l, s
+    real(dp) :: r2, r3, r5, r7, r9, r11, r13, r15, r17, r19
+    real(dp) :: t1, t2, t3, y1, y2, y3, y4, z1, z2, z3, z4, z5, w1, w2, w3,w4, w5
     real(dp) :: r4h, v(3), g(3,3), d(3,3,3)
-           !, save 
-    real(dp) dt1k, dt2k, dt3k
-    real(dp) dy1l, dt1l, ddt2kl, dy2l, dt2l, ddt3kl, dy3l, dt3l, dy4l
-    real(dp) ddt1ls, dt1s, dddt2kls, ddy2ls, dy1s, dz2s, ddt2ks, dy2s, &
+           ! 
+    real(dp) :: dt1k, dt2k, dt3k
+    real(dp) :: dy1l, dt1l, ddt2kl, dy2l, dt2l, ddt3kl, dy3l, dt3l, dy4l
+    real(dp) :: ddt1ls, dt1s, dddt2kls, ddy2ls, dy1s, dz2s, ddt2ks, dy2s, &
          dt2s, ddt2ls, dddt3kls, ddy3ls, dz3s, ddt3ks, dy3s, dt3s, &
          ddt3ls, ddy4ls, dz4s, dy4s, dz5s
     
     
     r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
-    r3 = sqrt(r2) * r2
+    r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2
     r9 = r7 * r2
