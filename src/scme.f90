@@ -197,7 +197,7 @@ contains
              mol(p+6) = ra(indH2  + p)
           end do
           call dmsnasa2(mol,qdms)
-          print*, sum(qdms**2)/0.393456
+          !print*, sum(qdms**2)/0.393456
 
           ! Calculate dipole moment wrt center of mass.
           dipmom(:) = 0.0_dp
