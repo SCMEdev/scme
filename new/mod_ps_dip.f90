@@ -488,7 +488,7 @@ end module
       
       
     program testdip
-      use ps_mod, only: vibdip
+      use ps_dip, only: vibdip
       implicit none
       integer, parameter :: n = 6
       real*8 x(n,3,3), d(n,3), A2b, au2deb
