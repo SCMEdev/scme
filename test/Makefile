@@ -5,6 +5,8 @@ scme_src = ../src
 
 FC = gfortran
 FFLAGS = -Ofast -cpp -pg -I$(scme_mod) -fopenmp
+## flags for home:
+#-Ofast -cpp -pg -I$(scme_mod) -fopenmp
 #-fopenmp 
 
 all:
