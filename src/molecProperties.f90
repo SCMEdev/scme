@@ -38,9 +38,9 @@ contains
 	!JÖ change 1 = 0,nO-1 and n = 0,2 to make reindexing more straightforward in loop 
     do i = 0, nO-1 !JÖ oxygen nr i
        do l = 1, 3 !JÖ the cell dimensions = index of a(l)
-          do n = 0, 1 ! 
+          do n = 0, 1 !JÖ which hydrogen 
              index = l + 3*(n) + 6*(i)
-             dist = raOri(index) - raOri(l + 3*(i+nH))
+             dist = raOri(index) - raOri(l + 3*(i+nH)) !H-position - O-positon
              if (dist .gt. a2(l)) then
                 ra(index) = raOri(index) - a(l)
              elseif(dist .lt. -a2(l)) then
@@ -66,7 +66,7 @@ contains
     !JÖ state intents and assumed shape:
     real(dp), 	intent(in) 	:: ra(:)
     integer, 	intent(in) 	:: nM
-    real(dp), 	intent(out) 	:: rCM(:,:)
+    real(dp), 	intent(out) :: rCM(:,:)
     
     integer iH1, iH2, iO, i, j !JÖ nM, 
 !JÖ    real(dp) rCM(3,maxCoo/3), ra(maxCoo)
