@@ -147,6 +147,7 @@ contains
     real(dp), save :: mol(9)
     real(dp), save :: grad(9)
     real(dp), save :: uPES1
+    integer jjj
     ! ----------------------------------------
 
 
@@ -295,6 +296,18 @@ contains
           end do
 
           call potnasa2(mol,grad,uPES1)
+          
+          !print*, 'mol1:',mol(1:3)
+          !print*, 'mol2:',mol(4:6)
+          !print*, 'mol3:',mol(7:9)
+          do jjj=1,9
+             print*, 'grad:',grad(jjj)
+          enddo
+          
+          !print*, 'grad2:',grad(4:6)
+          !print*, 'grad3:',grad(7:9)
+          print*, 'uPES1:', uPES1
+          
           uPES(i) = uPES1
           u_tot = u_tot + uPES1
           do p=1,3

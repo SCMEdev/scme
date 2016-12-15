@@ -488,12 +488,12 @@ program ps_test
       use ps_pot, only: vibpot
       implicit none
       integer, parameter :: n = 6
-      real*8 pot(n), conf(n,3), A2au, pi, deg2rad, conv(3)
+      real*8 pot(n), conf(n,3)!, A2au, pi, deg2rad, conv(3)
       integer p, i
-      pi = 3.1415926535d0
-      A2au = 1.0d0/0.529177249d0
-      deg2rad = pi/180.d0
-      conv = [A2au, A2au, deg2rad]
+      real*8, parameter :: pi = 3.1415926535d0
+      real*8, parameter :: A2b = 1.0d0/0.529177249d0
+      real*8, parameter :: deg2rad = pi/180.d0
+      real*8, parameter :: conv(3) = [A2b, A2b, deg2rad]
       p=1;   conf(p,:) = [0.96124665682903654, 0.99530972600241363, 106.24940460167122]*conv
       p=p+1; conf(p,:) = [0.96149143541323312, 0.97715429456202052, 106.02667221493672]*conv
       p=p+1; conf(p,:) = [0.96736249779749062, 0.97100269661520500, 101.81292304599501]*conv

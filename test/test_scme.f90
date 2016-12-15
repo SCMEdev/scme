@@ -247,6 +247,57 @@ module test_scme
 
   end subroutine test_scme_perf
 
+  subroutine test_scme_cluster_2_perf()
+    implicit none
+    ! ----------------------------------------
+    integer, parameter :: n_atoms = 6
+    integer :: i
+    real*8  :: u_tot = 0.0d0
+    real*8  :: u_tot_ref = 0.0d0
+    real*8,dimension(18)     :: coordinates
+    real*8,dimension(3)         :: cell
+    real*8,dimension(54)     :: forces
+    real*8,dimension(n_atoms*3) :: ref_forces
+    ! ----------------------------------------
+
+    ! ---------------------------------------------------------
+    ! Test 1) Looping calculation of forces and energy to
+    !         run timings.
+    ! ---------------------------------------------------------
+
+    coordinates(1)  =  0.018       ! x H1 on W1
+    coordinates(2)  = -0.739       ! y H1 on W1
+    coordinates(3)  =  0.521       ! z H1 on W1
+    coordinates(4)  = -0.815       ! x H2 on W1
+    coordinates(5)  = -0.673
+    coordinates(6)  = -0.592
+    coordinates(7)  =  1.942       ! x H1 on W2
+    coordinates(8)  = -1.964       ! y H1 on W2
+    coordinates(9)  =  1.223       ! z H1 on W2
+    coordinates(10) =  2.319       ! x H2 on W2
+    coordinates(11) = -3.450
+    coordinates(12) =  1.136
+    coordinates(13) =  0.000       ! x O on W1
+    coordinates(14) =  0.000
+    coordinates(15) =  0.000
+    coordinates(16) =  1.675       ! x O on W2
+    coordinates(17) = -2.803
+    coordinates(18) =  0.911
+
+    cell(1) = 35.000
+    cell(2) = 35.000
+    cell(3) = 35.000
+
+    forces(:) = 0.0
+
+    ! Call the scme function.
+    do i=1,1
+       call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
+    end do
+
+  end subroutine 
+
+
   subroutine test_scme_cluster_9_perf()
     implicit none
     ! ----------------------------------------

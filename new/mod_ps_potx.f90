@@ -427,16 +427,21 @@ contains !//////////////////////////////////////////////////////////////
 
    subroutine vibpot(x,v,n)
      integer, intent(in)  :: n
-     real*8 , intent(in)  :: x(n,3,3)
+     real*8 , intent(in)  :: x(n,3,3)!h20,OHH,xyz
      real*8 , intent(out) :: v(n)
      
    !internal variables       
-     real*8 ex, x1,x2,x3,rhh,vhh,voh1,voh2
+     real*8 ex, x1,x2,x3,vhh,voh1,voh2  !,rhh
      integer j
      real*8 fmat(15,3)!, c5z(245)
      
-     real*8 v1(3),v2(3),r1,r2,cabc
-     
+     real*8 v1(3),v2(3),r1,r2,cos_hoh
+    !new: 
+     real*8 sum0,sum3,sum1,sum2,temp
+     integer idx10,idx20,idx30,idx11,idx21,idx31
+     logical, parameter :: do_grad = .true.!.false.
+     real*8 :: efac,exp1,exp2,dVa1,dVa2,Vb,dVb,dVcdr1,dVcdr2,dVcdcth,v12(3),dr(9,n)   ,r12!   , cos_hoh !remove costh OR cos_hoh
+     integer ii
      !------------------------------------------------------------------
      ! Warning: This SR expepcts Units og BOHR in the configuration data
      !------------------------------------------------------------------
@@ -446,20 +451,25 @@ contains !//////////////////////////////////////////////////////////////
          
           !-------------------------------------------------------------
           ! From PS dip :
-        
-          v1 = x(i,:,2) - x(i,:,1) !JÖ changed order
+          
+          !OHH order:
+          v1 = x(i,2,:) - x(i,1,:) !H1-O
           r1 = sqrt(sum( v1**2 ))
           
-          v2 = x(i,:,3) - x(i,:,1) !JÖ changed order
+          v2 = x(i,3,:) - x(i,1,:) !H2-O
           r2 = sqrt(sum( v2**2 ))
           
-          cabc = ( v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3) ) / (r1*r2) !=cos(HOH) 
+          v12 = x(i,2,:) - x(i,3,:) !H1-H2
+          r12 = sqrt(sum( v12**2 ))
+          
+          cos_hoh = ( v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3) ) / (r1*r2) !=cos(HOH) 
+          
           
           x1=(r1-reoh)/reoh
           x2=(r2-reoh)/reoh
-          x3=cabc-ce
-          !print*, acos(cabc)*180/3.141592653589793238, 'acos(cabc)'
-          print*, "r1,r2, acos(cabc):", r1*b2A,',',r2*b2A,',',acos(cabc)*180/3.141592653589793238
+          x3=cos_hoh-ce
+          !print*, acos(cos_hoh)*180/3.141592653589793238, 'acos(cos_hoh)'
+          print*, "r1,r2, acos(cos_hoh):", r1*b2A,',',r2*b2A,',',acos(cos_hoh)*180/3.141592653589793238
 !          print*, x3, 'x3'
           !-------------------------------------------------------------
          
@@ -467,8 +477,9 @@ contains !//////////////////////////////////////////////////////////////
          !x2=(rij(i,2)-reoh)/reoh
          !x3=dcos(rij(i,3))-ce
          
-         rhh=dsqrt( r1**2 + r2**2 -2d0*r1*r2*cabc ) !JÖ dcos(rij(i,3)))
-         vhh=phh1*dexp(-phh2*rhh)
+         !rhh=dsqrt( r1**2 + r2**2 -2d0*r1*r2*cos_hoh ) !JÖ dcos(rij(i,3)))   | This is formula a**2 = b**2 + c**2 -2*b*c*cos(a_ang), where a_ang is the angle opposite to side a of triangle. 
+         !vhh=phh1*dexp(-phh2*rhh)
+         vhh=phh1*dexp(-phh2*r12)
          
          ex=dexp(-alphaoh*(r1-roh))
          voh1=deoh*ex*(ex-2d0)
@@ -486,21 +497,172 @@ contains !//////////////////////////////////////////////////////////////
             fmat(j,3)=fmat(j-1,3)*x3
          enddo
          
-         v(i)=0d0
-         do j=2,245
-            v(i)=v(i)+c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
-            !term
-         enddo
-         v(i)=v(i)*dexp(-b1*((r1-reoh)**2+(r2-reoh)**2)) + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 ((withour the parenthesis  (voh1+v...) the order this term and c5z mattered in the 14th decimal of he outpot
+         !v(i)=0d0
+         
+         !inI = idx1[j]
+         !inJ = idx2[j]
+         !inK = idx3[j]
+         if (.not.do_grad) then
+            sum0 = 0
+            do j=2,245
+                sum0 = sum0 + c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
+            enddo
+            v(i)=sum0*dexp(-b1*((r1-reoh)**2+(r2-reoh)**2)) + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 ((withour the parenthesis  (voh1+v...) the order this term and c5z mattered in the 14th decimal of he outpot
+         else
+            sum0 = 0
+            sum1 = 0
+            sum2 = 0
+            sum3 = 0
+            do j=2,245
+               !v(i)=v(i)+c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
+               !term
+              !sum0 = sum0 + c5z[j]*(fmat[0][inI]    *fmat[1][inJ]     + fmat[0][inJ]    *fmat[1][inI])     * fmat[2][inK];
+               idx10 =  idx(j,1)
+               idx20 =  idx(j,2)
+               idx30 =  idx(j,3)
+               idx11 = (idx(j,1)-1)
+               idx21 = (idx(j,2)-1)
+               idx31 = (idx(j,3)-1)
+               
+               sum0  = sum0 + c5z(j)*( fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2) )*fmat(idx30,3)
+               sum3  = sum3 + c5z(j)*( fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2) )*idx31*fmat(idx31,3)
+               sum1  = sum1 + c5z(j)*( idx11*fmat(idx11,1)*fmat(idx20,2) + idx21*fmat(idx21,1)*fmat(idx10,2) )*fmat(idx30,3)
+               sum2  = sum2 + c5z(j)*( idx21*fmat(idx10,1)*fmat(idx21,2) + idx11*fmat(idx20,1)*fmat(idx11,2) )*fmat(idx30,3)
+   
+   !            temp = temp + c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
+               
+   !            tem1 = tem1 + c5z(j)*(idx11       *fmat(idx11,1)     *fmat(idx20,2)    + idx21       *fmat(idx21,1)     *fmat(idx10,2))   *fmat(idx30,3)
+   !           !sum1 = sum1 + c5z[j]*((inI - 1)   *fmat[0][inI - 1]  *fmat[1][inJ]     + (inJ - 1)   *fmat[0][inJ - 1]  *fmat[1][inI])   *fmat[2][inK];
+   !           !tem1 = tem1 + c5z(j)*((idx(j,1)-1)*fmat(idx(j,1)-1,1)*fmat(idx(j,2),2) + (idx(j,2)-1)*fmat(idx(j,2)-1,1)*fmat(idx(j,1),2)*fmat(idx(j,3),3)
+   !            tem2 = tem2 + c5z(j)*(idx21    *fmat(idx10,1) *fmat(idx21,2)    + idx11    *fmat(idx20,1)*fmat(idx11,2)    *fmat(idx30,3)
+   !           !sum2 = sum2 + c5z[j]*((inJ - 1)*fmat[0][inI]  *fmat[1][inJ - 1] + (inI - 1)*fmat[0][inJ] *fmat[1][inI - 1])*fmat[2][inK];
+   !            tem3 = tem3 + c5z(j)*(fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2))*idx31    *fmat(idx31,3)
+   !           !sum3 = sum3 + c5z[j]*(fmat[0][inI] *fmat[1][inJ]  + fmat[0][inJ] *fmat[1][inI]) *(inK - 1)*fmat[2][inK - 1];
+            enddo
+            !const double :
+            efac = dexp(-b1*(    (r1-reoh)**2 + (r2-reoh)**2   ))
+            !efac = std::exp(-b1*(std::pow((dROH1 - reoh), 2) + std::pow((dROH2 - reoh), 2)));
+            !const double 
+            exp1 = dexp(-alphaoh*(r1 - roh));
+            !const double 
+            exp2 = dexp(-alphaoh*(r2 - roh));
+            !const double 
+            dVa1= 2d0*alphaoh*deoh*exp1*(1d0 - exp1)/r1;
+            !const double 
+            dVa2= 2d0*alphaoh*deoh*exp2*(1d0 - exp2)/r2;
+            !const double 
+            Vb = phh1*dexp(-phh2*r12)!rhh);
+            !const double
+            dVb = -phh2*Vb/r12!rhh;
+            
+            !costh = (v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3))/(r1*r2) !same as cos_hoh
+              
+            v(i)=sum0*efac + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 AGAINNNNNNNNNNNNNNNNNNN
+            
+            
+             
+            !const double
+            dVcdr1 = (-2d0*b1*efac*(r1 - reoh)*sum0 + efac*sum1/reoh)/r1
+            !const double
+            dVcdr2 = (-2d0*b1*efac*(r2 - reoh)*sum0 + efac*sum2/reoh)/r2; 
+            !const double
+            dVcdcth = efac*sum3 
+            
+            !v12 = x(i,2,:) - x(i,3,:)
+            !r12 = sqrt(sum( v12**2 )) !never needed, and is the same as rhh
+            
+            
+            do ii = 1,3 !(size_t i = 0; i < 3; ++i) {
+                 dr(3 + ii,i) = dVa1*v1(ii) + dVb*v12(ii) + dVcdr1*v1(ii) + dVcdcth*(v2(ii)/(r1*r2) - cos_hoh*v1(ii)/(r1*r1)) !H1
+                 dr(6 + ii,i) = dVa2*v2(ii) - dVb*v12(ii) + dVcdr2*v2(ii) + dVcdcth*(v1(ii)/(r1*r2) - cos_hoh*v2(ii)/(r2*r2)) !H2
+                 dr(0 + ii,i) = -( dr(3 + ii,i) + dr(6 + ii,i) ) ! O 
+            enddo
+            
+            do ii = 1,9
+                print*, "dr:", dr(ii,i)*27.211396132*A2b
+            enddo
+             
+             
+            ! !// derivatives
+            ! 
+            ! const double dVcdr1 =
+            !     (-2*b1*efac*(dROH1 - reoh)*sum0 + efac*sum1/reoh)/dROH1;
+            ! 
+            ! const double dVcdr2 =
+            !     (-2*b1*efac*(dROH2 - reoh)*sum0 + efac*sum2/reoh)/dROH2;
+            ! 
+            ! const double dVcdcth = efac*sum3;
+            ! 
+            ! for (size_t i = 0; i < 3; ++i) {
+            !     // H1
+            !     dr[3 + i] = dVa1*ROH1[i] + dVb*RHH[i] + dVcdr1*ROH1[i]
+            !     + dVcdcth*(ROH2[i]/(dROH1*dROH2) - costh*ROH1[i]/(dROH1*dROH1));
+            !     // H2
+            !     dr[6 + i] = dVa2*ROH2[i] - dVb*RHH[i] + dVcdr2*ROH2[i]
+            !     + dVcdcth*(ROH1[i]/(dROH1*dROH2) - costh*ROH2[i]/(dROH2*dROH2));
+            !     // O
+            !     dr[0 + i] = -(dr[3 + i] + dr[6 + i]);
+            ! }
+            !
+            ! I dont think Ineed this:  
+            ! for (size_t i = 0; i < 9; ++i)
+            !     dr[i] *= constants::cm1_eV; !// cm-1 --> eV
+                
+            
+         endif
+         
       enddo
    end subroutine
 end module
       
+!program ps_test
+!      use ps_pot, only: vibpot
+!      implicit none
+!      integer, parameter :: n = 6
+!      real*8 pot(n), x(n,3,3)!n,OHH,xyz
+!      !real*8 A2b!, pi, deg2rad, conv(3)
+!      integer p, i
+!      !pi = 3.1415926535d0
+!      real*8, parameter :: A2b = 1.0d0/0.529177249d0 !Angstr to Bohr
+!      !deg2rad = pi/180.d0
+!      !conv = [A2au, A2au, deg2rad]
+!      !p=1;   conf(p,:) = [0.95d0,1.01d0,106.0d0]*conv
+!      !p=p+1; conf(p,:) = [0.93d0,0.93d0,104.0d0]*conv
+!      !p=p+1; conf(p,:) = [0.94d0,0.94d0,105.0d0]*conv
+!      !p=p+1; conf(p,:) = [1.34d0,1.24d0,108.0d0]*conv
+!      
+!      !conversion to bohr happens here, in the code, bohr should come in too
+!      
+!      x(1,1,:) = [-1.502169d+00, -1.913590d-01,  1.434927d+00]*A2b ! O
+!      x(1,2,:) = [-2.006698d+00, -4.223270d-01,  2.219847d+00]*A2b ! H
+!      x(1,3,:) = [-6.010540d-01, -5.969720d-01,  1.553718d+00]*A2b ! H 
+!      x(2,1,:) = [-1.744575d+00, -3.823480d-01, -1.309144d+00]*A2b ! O
+!      x(2,2,:) = [-2.516835d+00, -7.667650d-01, -1.733766d+00]*A2b ! H
+!      x(2,3,:) = [-1.888941d+00, -4.796530d-01, -3.476240d-01]*A2b ! H
+!      x(3,1,:) = [-5.604090d-01,  2.017830d+00, -1.219840d-01]*A2b ! O
+!      x(3,2,:) = [-9.898310d-01,  1.592736d+00, -8.774190d-01]*A2b ! H
+!      x(3,3,:) = [-9.477200d-01,  1.533567d+00,  6.252280d-01]*A2b ! H
+!      x(4,1,:) = [ 9.648030d-01, -1.165765d+00,  1.439987d+00]*A2b ! O
+!      x(4,2,:) = [ 1.542224d+00, -3.936920d-01,  1.344373d+00]*A2b ! H
+!      x(4,3,:) = [ 9.795570d-01, -1.522041d+00,  5.278330d-01]*A2b ! H
+!      x(5,1,:) = [ 9.747050d-01, -1.401503d+00, -1.335970d+00]*A2b ! O
+!      x(5,2,:) = [ 1.470709d+00, -5.709330d-01, -1.277710d+00]*A2b ! H
+!      x(5,3,:) = [ 6.516100d-02, -1.118951d+00, -1.522886d+00]*A2b ! H
+!      x(6,1,:) = [ 2.002280d+00,  1.057824d+00, -1.245020d-01]*A2b ! O
+!      x(6,2,:) = [ 2.674716d+00,  1.735342d+00, -2.379950d-01]*A2b ! H
+!      x(6,3,:) = [ 1.141637d+00,  1.532266d+00, -1.401210d-01]*A2b ! H      
+!      
+!      call vibpot(x,pot,n)
+!      do i = 1,n
+!          print*, 'pot = ',pot(i), "a.u. = ",pot(i)*27.211396132, "eV"
+!      enddo
+!end program
+
 program ps_test
       use ps_pot, only: vibpot
       implicit none
-      integer, parameter :: n = 6
-      real*8 pot(n), x(n,3,3)!n,xyz,OHH
+      integer, parameter :: n = 2
+      real*8 pot(n), x(n,3,3)!n,OHH,xyz
       !real*8 A2b!, pi, deg2rad, conv(3)
       integer p, i
       !pi = 3.1415926535d0
@@ -514,30 +676,46 @@ program ps_test
       
       !conversion to bohr happens here, in the code, bohr should come in too
       
-      x(1,:,1) = [-1.502169d+00, -1.913590d-01,  1.434927d+00]*A2b ! O
-      x(1,:,2) = [-2.006698d+00, -4.223270d-01,  2.219847d+00]*A2b ! H
-      x(1,:,3) = [-6.010540d-01, -5.969720d-01,  1.553718d+00]*A2b ! H 
-      x(2,:,1) = [-1.744575d+00, -3.823480d-01, -1.309144d+00]*A2b ! O
-      x(2,:,2) = [-2.516835d+00, -7.667650d-01, -1.733766d+00]*A2b ! H
-      x(2,:,3) = [-1.888941d+00, -4.796530d-01, -3.476240d-01]*A2b ! H
-      x(3,:,1) = [-5.604090d-01,  2.017830d+00, -1.219840d-01]*A2b ! O
-      x(3,:,2) = [-9.898310d-01,  1.592736d+00, -8.774190d-01]*A2b ! H
-      x(3,:,3) = [-9.477200d-01,  1.533567d+00,  6.252280d-01]*A2b ! H
-      x(4,:,1) = [ 9.648030d-01, -1.165765d+00,  1.439987d+00]*A2b ! O
-      x(4,:,2) = [ 1.542224d+00, -3.936920d-01,  1.344373d+00]*A2b ! H
-      x(4,:,3) = [ 9.795570d-01, -1.522041d+00,  5.278330d-01]*A2b ! H
-      x(5,:,1) = [ 9.747050d-01, -1.401503d+00, -1.335970d+00]*A2b ! O
-      x(5,:,2) = [ 1.470709d+00, -5.709330d-01, -1.277710d+00]*A2b ! H
-      x(5,:,3) = [ 6.516100d-02, -1.118951d+00, -1.522886d+00]*A2b ! H
-      x(6,:,1) = [ 2.002280d+00,  1.057824d+00, -1.245020d-01]*A2b ! O
-      x(6,:,2) = [ 2.674716d+00,  1.735342d+00, -2.379950d-01]*A2b ! H
-      x(6,:,3) = [ 1.141637d+00,  1.532266d+00, -1.401210d-01]*A2b ! H      
+      x(1,2,:) = [  0.018, -0.739,  0.521]*A2b ! H
+      x(1,3,:) = [ -0.815, -0.673, -0.592]*A2b ! H 
+      x(2,2,:) = [  1.942, -1.964,  1.223]*A2b ! H
+      x(2,3,:) = [  2.319, -3.450,  1.136]*A2b ! H
+      x(1,1,:) = [  0.000,  0.000,  0.000]*A2b ! O
+      x(2,1,:) = [  1.675, -2.803,  0.911]*A2b ! O
+
+!    coordinates(1)  =  0.018       ! x H1 on W1
+!    coordinates(2)  = -0.739       ! y H1 on W1
+!    coordinates(3)  =  0.521       ! z H1 on W1
+!    
+!    coordinates(4)  = -0.815       ! x H2 on W1
+!    coordinates(5)  = -0.673
+!    coordinates(6)  = -0.592!< done
+!    
+!    coordinates(7)  =  1.942       ! x H1 on W2
+!    coordinates(8)  = -1.964       ! y H1 on W2
+!    coordinates(9)  =  1.223       ! z H1 on W2!< done
+!    
+!    coordinates(10) =  2.319       ! x H2 on W2
+!    coordinates(11) = -3.450
+!    coordinates(12) =  1.136!< done
+!    
+!    coordinates(13) =  0.000       ! x O on W1
+!    coordinates(14) =  0.000
+!    coordinates(15) =  0.000!< done
+!    
+!    coordinates(16) =  1.675       ! x O on W2
+!    coordinates(17) = -2.803
+!    coordinates(18) =  0.911
       
       call vibpot(x,pot,n)
       do i = 1,n
-          print*, 'pot = ',pot(i), "a.u. = ",pot(i)*27.211396132, "eV"
+          print*, 'pot = ',pot(i), "a.u. = ",(pot(i))*27.211396132+0.44739574026257*1.23981d-4, "eV" 
+          !the last terms give rise to equivalence with the cpp file, the value 0.44739574026257 was taken from there, 1.23981d-4 is cm-1 to eV  
       enddo
 end program
+
+
+
 
 
 !    program testdip
