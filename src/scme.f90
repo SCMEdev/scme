@@ -31,6 +31,10 @@ module scme
   use calcEnergy_mod, only: calcEnergy
   use coreInt_mod, only: coreInt
   use dispersion_mod, only: dispersion
+  
+ ! the new PS surfaces: 
+  use ps_dip, only: vibdip
+  use ps_pot, only: vibpot
 
   implicit none
   private
@@ -140,21 +144,25 @@ contains
 
     ! Local arrays for ??? ML
     real(dp) :: uPES(n_atoms*3)
-    real(dp), save :: qdms(3)
     real(dp), save :: dipmom(3)
+    !real(dp), save :: qdms(3)
+    
 
     ! Input for the potnasa potential.
     real(dp), save :: mol(9)
     real(dp), save :: grad(9)
     real(dp), save :: uPES1
+   !new shit: 
     integer jjj
-    ! ----------------------------------------
-
-
+    real(dp) ps_mol(1,3,3) !fix this  !!!  ! ps(O,H1,H1 ; x,y,z)
+    
+    
+    real(dp) :: qdms(3)
+    real(dp) :: dms(1,3)
+    
     ! ----------------------------
     ! Set initial Intitial values.
     ! ----------------------------
-
     ! Total energy.
     u_tot = 0.0_dp
 
@@ -193,19 +201,48 @@ contains
 
           ! Get x, y, z coordinates for H and O.
           do p=1,3
+             ps_mol(1,1,p) = ra(indO  + p)
+             ps_mol(1,2,p) = ra(indH1 + p)
+             ps_mol(1,3,p) = ra(indH2 + p)
+             
              mol(p) = ra(indO  + p)
              mol(p+3) = ra(indH1  + p)
              mol(p+6) = ra(indH2  + p)
           end do
+          
+          print*, 'position ps_mol(1,1,:)  O', ps_mol(1,1,:)
+          print*, 'position mol(1:3)       O', mol(1:3)
+          
+          print*, 'position ps_mol(1,2,:) H1', ps_mol(1,2,:)
+          print*, 'position mol(4:6)      H1', mol(4:6)
+          
+          
+          
+          dms = 0
+          call vibdip(ps_mol,dms,1) !the coordinates in , the dipole out, an one of them only
+          print*, 'ps total dipole     :',sqrt(sum(dms**2))/0.393456
+          print*, 'ps dipole components:',dms/0.393456
+          
+          
+          qdms = 0
           call dmsnasa2(mol,qdms)
-          !print*, sum(qdms**2)/0.393456
-
+          print*, 'cpp total dipole     :',sqrt(sum(qdms**2))/0.393456
+          print*, 'cpp dipole components:',qdms/0.393456
+          
+          
           ! Calculate dipole moment wrt center of mass.
           dipmom(:) = 0.0_dp
           do p=1,3
+          !   dipmom(p) = dipmom(p) + dms(1,1)*(ps_mol(1,1,p)-rCM(p,i))
+          !   dipmom(p) = dipmom(p) + dms(1,2)*(ps_mol(1,2,p)-rCM(p,i))
+          !   dipmom(p) = dipmom(p) + dms(1,3)*(ps_mol(1,3,p)-rCM(p,i))
+             
              dipmom(p) = dipmom(p) + qdms(1)*(mol(p)-rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
+             
+             
+             
           end do
 
           ! Set unpolarized dipoles to Partridge-Schwenke dipoles
@@ -215,7 +252,10 @@ contains
           end do
        end do
     end if
-
+    
+    !print*, sqrt(sum(dpole0(:,1)**2))
+    !print*, sqrt(sum(dpole0(:,1)**2))
+    
     ! NEEDS DOCUMENTATION
     call setUnpolPoles(dpole, qpole, dpole0, qpole0, nM)
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x)
@@ -300,13 +340,13 @@ contains
           !print*, 'mol1:',mol(1:3)
           !print*, 'mol2:',mol(4:6)
           !print*, 'mol3:',mol(7:9)
-          do jjj=1,9
-             print*, 'grad:',grad(jjj)
-          enddo
+          !do jjj=1,9
+          !   print*, 'grad:',grad(jjj)
+          !enddo
           
           !print*, 'grad2:',grad(4:6)
           !print*, 'grad3:',grad(7:9)
-          print*, 'uPES1:', uPES1
+          !print*, 'uPES1:', uPES1
           
           uPES(i) = uPES1
           u_tot = u_tot + uPES1

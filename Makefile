@@ -8,7 +8,9 @@ OBJDIR = obj
 MODDIR = mod
 SRCDIR = src/
 
+#have added the "new/" directory and PS-files
 vpath %.f90 $(SRCDIR)
+vpath %.f90 new/
 vpath %.cpp $(SRCDIR)
 
 FC = gfortran
@@ -32,7 +34,8 @@ OBJ = $(addprefix $(OBJDIR)/, \
 	calcEnergy_mod.o calc_lower_order.o \
 	inducePoles.o forceCM_mod.o torqueCM_mod.o \
 	atomicForces_mod.o molforce.o tang_toennies.o mdutil.o \
-	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o)
+	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o\
+	ps_pot.o ps_dip.o)
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
@@ -87,8 +90,9 @@ $(OBJDIR)/calcEnergy_mod.o	\
 $(OBJDIR)/coreInt_mod.o		\
 $(OBJDIR)/dispersion_mod.o	\
 $(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/ps.o
-
+$(OBJDIR)/ps.o \
+$(OBJDIR)/ps_pot.o \
+$(OBJDIR)/ps_dip.o
 
 $(OBJDIR)/atomicForces_mod.o:	\
 $(OBJDIR)/data_types.o		\

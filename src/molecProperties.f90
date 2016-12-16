@@ -19,6 +19,13 @@ module molecProperties
 contains
 
   subroutine recoverMolecules(raOri, ra, nH, nO, a, a2)
+    !-------------------------------------------------------------------
+    ! Thos routine takes the coords(3*n_atoms) and puts out ar(3*natoms)
+    ! (both in the HH HH HH HH HH... O O O O... order). Oxygen position
+    ! is copied but in case an H is on the wrong side of the box, it is
+    ! moved to correct position beside the Oxygen. 
+    !    / Description by Jonatan Öström in Dec 2016
+    !-------------------------------------------------------------------
     
     !JÖ reformulate to implicit none and state intention and assumed shape
     implicit none
@@ -34,25 +41,25 @@ contains
 
 !JÖ    real(dp) raOri(maxCoo), a(3), a2(3), ra(maxCoo), dist
 !JÖ    integer nH,nO
-
+    !HH HH HH HH O O O O is the order expected from raOri
 	!JÖ change 1 = 0,nO-1 and n = 0,2 to make reindexing more straightforward in loop 
     do i = 0, nO-1 !JÖ oxygen nr i
-       do l = 1, 3 !JÖ the cell dimensions = index of a(l)
+       do l = 1, 3 !JÖ the x,y,z directions of atom coordinates and box size a(l)
           do n = 0, 1 !JÖ which hydrogen 
              index = l + 3*(n) + 6*(i)
-             dist = raOri(index) - raOri(l + 3*(i+nH)) !H-position - O-positon
-             if (dist .gt. a2(l)) then
-                ra(index) = raOri(index) - a(l)
+             dist = raOri(index) - raOri(l + 3*(i+nH)) ! H-position - O-positon
+             if (dist .gt. a2(l)) then                 ! a2 = a/2 = boxdimension/2
+                ra(index) = raOri(index) - a(l)        
              elseif(dist .lt. -a2(l)) then
                 ra(index) = raOri(index) + a(l)
              else
                 ra(index) = raOri(index)
              end if
           end do
-          ra(l + 3*(i+nH)) = raOri(l + 3*(i+nH))
+          ra(l + 3*(i+nH)) = raOri(l + 3*(i+nH)) !oxygen is copied over regardless
        end do
     end do
-    return
+    !return
 
   end subroutine recoverMolecules
 
@@ -113,12 +120,12 @@ contains
        iH1 = 3 * (iH1 - 1)
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
-       do j = 1, 3
-          x(j,1,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j))
-          x(j,2,i) = ra(iH2+j) - ra(iH1+j)
+       do j = 1, 3 ! j = x,y,z coord of H1,H2,O
+          x(j,1,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j)) !x(:,1,i) = -{ H1(:) + H2(:) - 2*O(:) } 
+          x(j,2,i) = ra(iH2+j) - ra(iH1+j)                        !x(:,2,i) = H2(:) - H1(:) 
        end do
-       r11 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i))
-       r21 = sqrt(x(1,2,i)*x(1,2,i) + x(2,2,i)*x(2,2,i) + x(3,2,i) * x(3,2,i))
+       r11 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i)) !norm(x(:,1,i)),  ":" is x,y,z
+       r21 = sqrt(x(1,2,i)*x(1,2,i) + x(2,2,i)*x(2,2,i) + x(3,2,i) * x(3,2,i)) !norm(x(:,2,i))
        do j = 1, 3
           x(j,1,i) = x(j,1,i) / r11
           x(j,2,i) = x(j,2,i) / r21
@@ -135,6 +142,10 @@ contains
   !     Routine to calculate the principal axes of each molecule         |
   !----------------------------------------------------------------------+
   subroutine findPpalAxes(ra, nM, x)
+  !---------------------------------------------------------------------
+  ! This routine finds the principal axis of the molecule but does it 
+  ! apply to a water molecule with non-fixed geometry?
+  !---------------------------------------------------------------------
 
 !JÖ    implicit real(dp) (a-h,o-z)
 !JÖ
@@ -163,19 +174,19 @@ contains
        iH1 = 3 * (iH1 - 1)
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
-       do j = 1, 3
-          x(j,3,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j))
-          x(j,1,i) = ra(iH2+j) - ra(iH1+j)
+       do j = 1, 3 ! j = x,y,z coord of H1,H2,O
+          x(j,3,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j)) !x(:,1,i) = -{ H1(:) + H2(:) - 2*O(:) } |
+          x(j,1,i) = ra(iH2+j) - ra(iH1+j)                        !x(:,2,i) = H2(:) - H1(:)               | These find two vectors in the plane of the molecule
        end do
-       r11 = sqrt(x(1,3,i)*x(1,3,i) + x(2,3,i)*x(2,3,i) + x(3,3,i) * x(3,3,i))
-       r21 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i))
+       r11 = sqrt(x(1,3,i)*x(1,3,i) + x(2,3,i)*x(2,3,i) + x(3,3,i) * x(3,3,i)) !norm(x(:,1,i)),  ":" is x,y,z
+       r21 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i)) !norm(x(:,2,i))
 
        do j = 1, 3
-          x(j,3,i) = x(j,3,i) / r11
+          x(j,3,i) = x(j,3,i) / r11 !normalize?
           x(j,1,i) = x(j,1,i) / r21
        end do
-       x(1,2,i) = x(2,3,i) * x(3,1,i) - x(3,3,i) * x(2,1,i)
-       x(2,2,i) = x(3,3,i) * x(1,1,i) - x(1,3,i) * x(3,1,i)
+       x(1,2,i) = x(2,3,i) * x(3,1,i) - x(3,3,i) * x(2,1,i) !cross product ? find middle vector orthogonal to plane
+       x(2,2,i) = x(3,3,i) * x(1,1,i) - x(1,3,i) * x(3,1,i) !do we need all three of them? Yes!
        x(3,2,i) = x(1,3,i) * x(2,1,i) - x(2,3,i) * x(1,1,i)
     end do
 
