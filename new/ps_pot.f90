@@ -18,9 +18,12 @@ implicit none
 !     2016-12-12. 
 !-----------------------------------------------------------------------
       !real*8, save  :: c5zt(245),cbasis(245),ccore(245), crest(245) !
-      integer, save :: idx(245,3), i
       
-       data (idx(i,1),i=1,245)/ &
+      !integer, save :: idx(245,3), i
+      !integer,parameter,dimension(245) :: idx1(245),idx2(245),idx3(245)!idx(245,3), i
+      
+       !data (idx(i,1),i=1,245)/ &
+       integer,parameter,dimension(245) :: idx1 = [ &
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, &
         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
         2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, &
@@ -33,8 +36,10 @@ implicit none
         5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 7, &
         7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 5, 5, 5, 5, 5, 5, 5, 6, 6, 6, &
         6, 6, 6, 6, 7, 7, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 8, 8, 9, 9, &
-        9, 9, 9, 9, 9/
-       data (idx(i,2),i=1,245)/ &
+        9, 9, 9, 9, 9]
+        !/
+       !data (idx(i,2),i=1,245)/ &
+       integer,parameter,dimension(245) :: idx2 = [ &
         1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, &
         1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, &
         2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, &
@@ -47,9 +52,11 @@ implicit none
         4, 4, 4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, &
         2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 4, 4, 4, &
         4, 4, 4, 4, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 1, 1, &
-        1, 1, 1, 1, 1/
-       data (idx(i,3),i=1,245)/ &
-        1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15, 1, 2, 3, 4, 5, &
+        1, 1, 1, 1, 1]
+        !/
+       !data (idx(i,3),i=1,245)/ &
+       integer,parameter,dimension(245) :: idx3 = [ &
+       1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15, 1, 2, 3, 4, 5, &
         6, 7, 8, 9,10,11,12,13,14, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11, &
        12,13, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13, 1, 2, 3, 4, 5, &
         6, 7, 8, 9,10,11,12, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12, 1, &
@@ -61,7 +68,9 @@ implicit none
         3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, &
         7, 8, 1, 2, 3, 4, 5, 6, 7, 8, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, &
         4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2, 3, 4, 5, 6, 7, 1, 2, &
-        3, 4, 5, 6, 7/
+        3, 4, 5, 6, 7]
+        !/
+        
        real*8, parameter :: c5z_temp(245) = [ &!(c5z(i),i=1,245)/ &
         4.2278462684916D+04, 4.5859382909906D-02, 9.4804986183058D+03, &
         7.5485566680955D+02, 1.9865052511496D+03, 4.3768071560862D+02, &
@@ -395,8 +404,10 @@ implicit none
         0.0000000000000D+00, 0.0000000000000D+00, 0.0000000000000D+00, &
         0.0000000000000D+00, 0.0000000000000D+00]
 
-       real*8, parameter :: A2b = 1.0d0/0.529177249d0 !Angstr to Bohr
+       !real*8, parameter :: A2b     = 1.0d0/0.529177249d0 !Angstr to Bohr
+       real*8, parameter :: A2b     = 1.889725989d0 !Ångström to Bohr       
        real*8, parameter :: b2A     = 0.529177249d0 
+       real*8, parameter :: h2eV    = 27.211396132d0 !hartree to eV       
        real*8, parameter :: cm2au   = 4.556335d-6
        real*8, parameter :: f5z     = 0.99967788500000d0
        real*8, parameter :: fbasis  = 0.15860145369897d0
@@ -425,41 +436,37 @@ implicit none
 
 contains !//////////////////////////////////////////////////////////////
 
-   subroutine vibpot(x,v,n)
-     integer, intent(in)  :: n
-     real*8 , intent(in)  :: x(n,3,3)!h20,OHH,xyz
-     real*8 , intent(out) :: v(n)
+   subroutine vibpot(x,v,dr)!,n
+     !integer, intent(in)  :: n
+     real*8 , intent(in)  :: x(3,3)!x(OHH,xyz)                   !x(n,3,3)!h20,OHH,xyz
+     real*8 , intent(out) :: v,dr(9) !v(n),dr(9,n)
+     
      
    !internal variables       
-     real*8 ex, x1,x2,x3,vhh,voh1,voh2  !,rhh
+     real*8 ex, x1,x2,x3,vhh,voh1,voh2, x123(3)  !,rhh
      integer j
      real*8 fmat(15,3)!, c5z(245)
      
-     real*8 v1(3),v2(3),r1,r2,cos_hoh
+     real*8 v1(3),v2(3),r1,r2,cos_hoh 
     !new: 
      real*8 sum0,sum3,sum1,sum2,temp
      integer idx10,idx20,idx30,idx11,idx21,idx31
      logical, parameter :: do_grad = .true.!.false.
-     real*8 :: efac,exp1,exp2,dVa1,dVa2,Vb,dVb,dVcdr1,dVcdr2,dVcdcth,v12(3),dr(9,n)   ,r12!   , cos_hoh !remove costh OR cos_hoh
+     real*8 :: efac,exp1,exp2,dVa1,dVa2,Vb,dVb,dVcdr1,dVcdr2,dVcdcth,v12(3)   ,r12!   , cos_hoh !remove costh OR cos_hoh
      integer ii
      !------------------------------------------------------------------
-     ! Warning: This SR expepcts Units og BOHR in the configuration data
+     ! Warning: This SR expepcts Units of Ångstöm in the configuration data
      !------------------------------------------------------------------
      
-     do i=1,n
-     
-         
-          !-------------------------------------------------------------
-          ! From PS dip :
+     !do i=1,n
           
-          !OHH order:
-          v1 = x(i,2,:) - x(i,1,:) !H1-O
-          r1 = sqrt(sum( v1**2 ))
+          !OHH order:      
+          v1  = ( x(2,:) - x(1,:) )*A2b !x(i,2,:) - x(i,1,:) !H1-O
+          v2  = ( x(3,:) - x(1,:) )*A2b !x(i,3,:) - x(i,1,:) !H2-O
+          v12 = ( x(2,:) - x(3,:) )*A2b !H1-H2
           
-          v2 = x(i,3,:) - x(i,1,:) !H2-O
-          r2 = sqrt(sum( v2**2 ))
-          
-          v12 = x(i,2,:) - x(i,3,:) !H1-H2
+          r1  = sqrt(sum( v1**2 ))
+          r2  = sqrt(sum( v2**2 ))
           r12 = sqrt(sum( v12**2 ))
           
           cos_hoh = ( v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3) ) / (r1*r2) !=cos(HOH) 
@@ -468,33 +475,23 @@ contains !//////////////////////////////////////////////////////////////
           x1=(r1-reoh)/reoh
           x2=(r2-reoh)/reoh
           x3=cos_hoh-ce
-          !print*, acos(cos_hoh)*180/3.141592653589793238, 'acos(cos_hoh)'
-          print*, "r1,r2, acos(cos_hoh):", r1*b2A,',',r2*b2A,',',acos(cos_hoh)*180/3.141592653589793238
-!          print*, x3, 'x3'
-          !-------------------------------------------------------------
+          x123 = [x1,x2,x3]
+          
          
-         !x1=(rij(i,1)-reoh)/reoh
-         !x2=(rij(i,2)-reoh)/reoh
-         !x3=dcos(rij(i,3))-ce
-         
-         !rhh=dsqrt( r1**2 + r2**2 -2d0*r1*r2*cos_hoh ) !JÖ dcos(rij(i,3)))   | This is formula a**2 = b**2 + c**2 -2*b*c*cos(a_ang), where a_ang is the angle opposite to side a of triangle. 
-         !vhh=phh1*dexp(-phh2*rhh)
          vhh=phh1*dexp(-phh2*r12)
-         
+
+         !print*, "r1,r2, acos(cos_hoh):", r1*b2A,',',r2*b2A,',',acos(cos_hoh)*180d0/3.141592653589793238d0
          ex=dexp(-alphaoh*(r1-roh))
          voh1=deoh*ex*(ex-2d0)
          
          ex=dexp(-alphaoh*(r2-roh))
          voh2=deoh*ex*(ex-2d0)
          
-         fmat(1,1)=1d0
-         fmat(1,2)=1d0
-         fmat(1,3)=1d0
          
+         fmat(1,:)=1d0
          do j=2,15
-            fmat(j,1)=fmat(j-1,1)*x1
-            fmat(j,2)=fmat(j-1,2)*x2
-            fmat(j,3)=fmat(j-1,3)*x3
+            fmat(j,:)=fmat(j-1,:)*x123(:)
+            
          enddo
          
          !v(i)=0d0
@@ -505,9 +502,10 @@ contains !//////////////////////////////////////////////////////////////
          if (.not.do_grad) then
             sum0 = 0
             do j=2,245
-                sum0 = sum0 + c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
+                sum0 = sum0 + c5z(j)*(fmat(idx1(j),1)*fmat(idx2(j),2) + fmat(idx2(j),1)*fmat(idx1(j),2)) * fmat(idx3(j),3)
             enddo
-            v(i)=sum0*dexp(-b1*((r1-reoh)**2+(r2-reoh)**2)) + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 ((withour the parenthesis  (voh1+v...) the order this term and c5z mattered in the 14th decimal of he outpot
+            v=sum0*dexp(-b1*((r1-reoh)**2+(r2-reoh)**2)) + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 ((withour the parenthesis  (voh1+v...) the order this term and c5z mattered in the 14th decimal of he outpot
+            !v(i)
          else
             sum0 = 0
             sum1 = 0
@@ -517,18 +515,72 @@ contains !//////////////////////////////////////////////////////////////
                !v(i)=v(i)+c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
                !term
               !sum0 = sum0 + c5z[j]*(fmat[0][inI]    *fmat[1][inJ]     + fmat[0][inJ]    *fmat[1][inI])     * fmat[2][inK];
-               idx10 =  idx(j,1)
-               idx20 =  idx(j,2)
-               idx30 =  idx(j,3)
-               idx11 = (idx(j,1)-1)
-               idx21 = (idx(j,2)-1)
-               idx31 = (idx(j,3)-1)
+               idx10 =  idx1(j)
+               idx20 =  idx2(j)
+               idx30 =  idx3(j)
+               idx11 = (idx1(j)-1)
+               idx21 = (idx2(j)-1)
+               idx31 = (idx3(j)-1)
                
                sum0  = sum0 + c5z(j)*( fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2) )*fmat(idx30,3)
                sum3  = sum3 + c5z(j)*( fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2) )*idx31*fmat(idx31,3)
                sum1  = sum1 + c5z(j)*( idx11*fmat(idx11,1)*fmat(idx20,2) + idx21*fmat(idx21,1)*fmat(idx10,2) )*fmat(idx30,3)
                sum2  = sum2 + c5z(j)*( idx21*fmat(idx10,1)*fmat(idx21,2) + idx11*fmat(idx20,1)*fmat(idx11,2) )*fmat(idx30,3)
    
+            enddo
+            efac = dexp(-b1*(    (r1-reoh)**2 + (r2-reoh)**2   ))
+            exp1 = dexp(-alphaoh*(r1 - roh));
+            exp2 = dexp(-alphaoh*(r2 - roh));
+            dVa1= 2d0*alphaoh*deoh*exp1*(1d0 - exp1)/r1;
+            dVa2= 2d0*alphaoh*deoh*exp2*(1d0 - exp2)/r2;
+            Vb = phh1*dexp(-phh2*r12)!rhh);
+            dVb = -phh2*Vb/r12!rhh;
+              
+            v=sum0*efac + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 AGAINNNNNNNNNNNNNNNNNNN
+            !v(i)
+            
+             
+            dVcdr1 = (-2d0*b1*efac*(r1 - reoh)*sum0 + efac*sum1/reoh)/r1
+            dVcdr2 = (-2d0*b1*efac*(r2 - reoh)*sum0 + efac*sum2/reoh)/r2; 
+            dVcdcth = efac*sum3 
+            
+            do ii = 1,3 !(size_t i = 0; i < 3; ++i) {
+                 dr(3 + ii) = dVa1*v1(ii) + dVb*v12(ii) + dVcdr1*v1(ii) + dVcdcth*(v2(ii)/(r1*r2) - cos_hoh*v1(ii)/(r1*r1)) !H1
+                 dr(6 + ii) = dVa2*v2(ii) - dVb*v12(ii) + dVcdr2*v2(ii) + dVcdcth*(v1(ii)/(r1*r2) - cos_hoh*v2(ii)/(r2*r2)) !H2
+                 dr(0 + ii) = -( dr(3 + ii) + dr(6 + ii) ) ! O 
+                 
+            enddo
+            
+            !units out shoud be v[eV], dvdr[ev/A] ... 
+            dr=dr*h2eV*A2b !... Why is this unit correct? why not b2A? Because: dv/dr[eV/A] = dv/dr[h/b]*h2eV/b2A = dv/dr[h/b]*h2eV*A2b
+            v=v*h2eV
+            
+         endif
+         
+      !enddo
+   end subroutine
+end module
+
+         !x1=(rij(i,1)-reoh)/reoh
+         !x2=(rij(i,2)-reoh)/reoh
+         !x3=dcos(rij(i,3))-ce
+         
+         !rhh=dsqrt( r1**2 + r2**2 -2d0*r1*r2*cos_hoh ) !JÖ dcos(rij(i,3)))   | This is formula a**2 = b**2 + c**2 -2*b*c*cos(a_ang), where a_ang is the angle opposite to side a of triangle. 
+         !vhh=phh1*dexp(-phh2*rhh)
+
+
+
+      
+         !fmat(1,1)=1d0
+         !fmat(1,2)=1d0
+         !fmat(1,3)=1d0
+
+            !fmat(j,1)=fmat(j-1,1)*x1
+            !fmat(j,2)=fmat(j-1,2)*x2
+            !fmat(j,3)=fmat(j-1,3)*x3
+
+
+
    !            temp = temp + c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
                
    !            tem1 = tem1 + c5z(j)*(idx11       *fmat(idx11,1)     *fmat(idx20,2)    + idx21       *fmat(idx21,1)     *fmat(idx10,2))   *fmat(idx30,3)
@@ -538,49 +590,16 @@ contains !//////////////////////////////////////////////////////////////
    !           !sum2 = sum2 + c5z[j]*((inJ - 1)*fmat[0][inI]  *fmat[1][inJ - 1] + (inI - 1)*fmat[0][inJ] *fmat[1][inI - 1])*fmat[2][inK];
    !            tem3 = tem3 + c5z(j)*(fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2))*idx31    *fmat(idx31,3)
    !           !sum3 = sum3 + c5z[j]*(fmat[0][inI] *fmat[1][inJ]  + fmat[0][inJ] *fmat[1][inI]) *(inK - 1)*fmat[2][inK - 1];
-            enddo
-            !const double :
-            efac = dexp(-b1*(    (r1-reoh)**2 + (r2-reoh)**2   ))
-            !efac = std::exp(-b1*(std::pow((dROH1 - reoh), 2) + std::pow((dROH2 - reoh), 2)));
-            !const double 
-            exp1 = dexp(-alphaoh*(r1 - roh));
-            !const double 
-            exp2 = dexp(-alphaoh*(r2 - roh));
-            !const double 
-            dVa1= 2d0*alphaoh*deoh*exp1*(1d0 - exp1)/r1;
-            !const double 
-            dVa2= 2d0*alphaoh*deoh*exp2*(1d0 - exp2)/r2;
-            !const double 
-            Vb = phh1*dexp(-phh2*r12)!rhh);
-            !const double
-            dVb = -phh2*Vb/r12!rhh;
-            
-            !costh = (v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3))/(r1*r2) !same as cos_hoh
-              
-            v(i)=sum0*efac + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 AGAINNNNNNNNNNNNNNNNNNN
-            
-            
-             
-            !const double
-            dVcdr1 = (-2d0*b1*efac*(r1 - reoh)*sum0 + efac*sum1/reoh)/r1
-            !const double
-            dVcdr2 = (-2d0*b1*efac*(r2 - reoh)*sum0 + efac*sum2/reoh)/r2; 
-            !const double
-            dVcdcth = efac*sum3 
-            
-            !v12 = x(i,2,:) - x(i,3,:)
-            !r12 = sqrt(sum( v12**2 )) !never needed, and is the same as rhh
-            
-            
-            do ii = 1,3 !(size_t i = 0; i < 3; ++i) {
-                 dr(3 + ii,i) = dVa1*v1(ii) + dVb*v12(ii) + dVcdr1*v1(ii) + dVcdcth*(v2(ii)/(r1*r2) - cos_hoh*v1(ii)/(r1*r1)) !H1
-                 dr(6 + ii,i) = dVa2*v2(ii) - dVb*v12(ii) + dVcdr2*v2(ii) + dVcdcth*(v1(ii)/(r1*r2) - cos_hoh*v2(ii)/(r2*r2)) !H2
-                 dr(0 + ii,i) = -( dr(3 + ii,i) + dr(6 + ii,i) ) ! O 
-            enddo
-            
-            do ii = 1,9
-                print*, "dr:", dr(ii,i)*27.211396132*A2b
-            enddo
+
+
+                 !dr(3 + ii,i) = dVa...
+                 !dr(6 + ii,i) = dVa...
+                 !dr(0 + ii) = -( dr(3 + ii,i) + dr(6 + ii,i) ) ! O 
+
+
+            !do ii = 1,9
+            !    print*, "dr:", dr(ii,i)*27.211396132*A2b
+            !enddo
              
              
             ! !// derivatives
@@ -609,9 +628,3 @@ contains !//////////////////////////////////////////////////////////////
             !     dr[i] *= constants::cm1_eV; !// cm-1 --> eV
                 
             
-         endif
-         
-      enddo
-   end subroutine
-end module
-      

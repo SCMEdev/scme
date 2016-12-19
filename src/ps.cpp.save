@@ -717,30 +717,30 @@ namespace ps {
     const double xx = constants::Bohr_A;
     const double xx2 = xx*xx;
 
-    //dp1dr1 /= reoh/xx;
-    //dp1dr2 /= reoh/xx;
-    //dp2dr1 /= reoh/xx;
-    //dp2dr2 /= reoh/xx;
+    dp1dr1 /= reoh/xx;
+    dp1dr2 /= reoh/xx;
+    dp2dr1 /= reoh/xx;
+    dp2dr2 /= reoh/xx;
 
     const double pc0 =
         a*(std::pow(dROH1, b) + std::pow(dROH2, b))*(c0 + pl1*c1 + pl2*c2);
 
-    //const double dpc0dr1 =
-    //    a*b*std::pow(dROH1, b - 1)*(c0 + pl1*c1 + pl2*c2)*xx2;
-    //const double dpc0dr2 =
-    //    a*b*std::pow(dROH2, b - 1)*(c0 + pl1*c1 + pl2*c2)*xx2;
-    //double dpc0dcabc =
-    //    a*(std::pow(dROH1, b) + std::pow(dROH2, b))*(c1 + 0.5*(6.0*pl1)*c2)*xx;
-    //
-    //const double defacdr1 = -2.0*b1D*(dROH1 - reoh)*efac*xx;
-    //const double defacdr2 = -2.0*b1D*(dROH2 - reoh)*efac*xx;
-    //
-    //dp1dr1 = dp1dr1*efac + p1*defacdr1 + dpc0dr1;
-    //dp1dr2 = dp1dr2*efac + p1*defacdr2 + dpc0dr2;
-    //dp1dcabc = dp1dcabc*efac + dpc0dcabc;
-    //dp2dr1 = dp2dr1*efac + p2*defacdr1 + dpc0dr1;
-    //dp2dr2 = dp2dr2*efac + p2*defacdr2 + dpc0dr2;
-    //dp2dcabc = dp2dcabc*efac + dpc0dcabc;
+    const double dpc0dr1 =
+        a*b*std::pow(dROH1, b - 1)*(c0 + pl1*c1 + pl2*c2)*xx2;
+    const double dpc0dr2 =
+        a*b*std::pow(dROH2, b - 1)*(c0 + pl1*c1 + pl2*c2)*xx2;
+    double dpc0dcabc =
+        a*(std::pow(dROH1, b) + std::pow(dROH2, b))*(c1 + 0.5*(6.0*pl1)*c2)*xx;
+
+    const double defacdr1 = -2.0*b1D*(dROH1 - reoh)*efac*xx;
+    const double defacdr2 = -2.0*b1D*(dROH2 - reoh)*efac*xx;
+
+    dp1dr1 = dp1dr1*efac + p1*defacdr1 + dpc0dr1;
+    dp1dr2 = dp1dr2*efac + p1*defacdr2 + dpc0dr2;
+    dp1dcabc = dp1dcabc*efac + dpc0dcabc;
+    dp2dr1 = dp2dr1*efac + p2*defacdr1 + dpc0dr1;
+    dp2dr2 = dp2dr2*efac + p2*defacdr2 + dpc0dr2;
+    dp2dcabc = dp2dcabc*efac + dpc0dcabc;
 
     p1 = coefD[0] + p1*efac + pc0*xx; // q^H1 in TTM2-F
     p2 = coefD[0] + p2*efac + pc0*xx; // q^H2 paper
@@ -751,10 +751,10 @@ namespace ps {
     //    printf("%10.6f %10.6f %10.6f\n",q3[0],q3[1],q3[2]);
 
 
-    //dp1dr1 /= xx;
-    //dp1dr2 /= xx;
-    //dp2dr1 /= xx;
-    //dp2dr2 /= xx;
+    dp1dr1 /= xx;
+    dp1dr2 /= xx;
+    dp2dr1 /= xx;
+    dp2dr2 /= xx;
 
     // if (ttm3) {
 

@@ -28,7 +28,7 @@ CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
 vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution
 
 OBJ = $(addprefix $(OBJDIR)/, \
-	scme_ps.o calc_derivs.o calc_higher_order.o \
+	scme.o calc_derivs.o calc_higher_order.o \
 	data_types.o parameters.o max_parameters.o \
 	multipole_parameters.o polariz_parameters.o \
 	calcEnergy_mod.o calc_lower_order.o \
@@ -73,7 +73,7 @@ $(OBJDIR)/%.o: %.cpp
 ######################################### Dependencies:
 # Single depdenden --- multiple prerequisites:
 
-$(OBJDIR)/scme_ps.o:		\
+$(OBJDIR)/scme.o:		\
 $(OBJDIR)/calc_derivs.o		\
 $(OBJDIR)/data_types.o		\
 $(OBJDIR)/max_parameters.o	\

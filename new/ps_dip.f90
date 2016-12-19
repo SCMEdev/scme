@@ -416,32 +416,46 @@ module ps_dip
          5.1929492676140D+02, -2.3951066467556D+02/
 ! END Dipole Data /////////////////////////////////////////////////////////
          
-      real*8,parameter :: reoh   = 0.958648999999999973d0*1.889725989d0   ! relaxed OH bond distance in bohr
+      real*8, parameter :: A2b     = 1.889725989d0 !Ångström to Bohr
+      real*8, parameter :: b2A     = 0.529177249d0
+      real*8, parameter :: au2deb  = 2.541746230211d0 !a.u. to debye
+      real*8, parameter :: h2eV    = 27.211396132d0 !hartree to eV
+
+
+      real*8,parameter :: reoh   = 0.958648999999999973d0*A2b   ! relaxed OH bond distance in bohr
       real*8,parameter :: thetae = 104.347499999999997d0                  ! HOH angle
-      real*8,parameter :: b1     = 1.5d0/1.889725989d0**2                 ! dunno
+      real*8,parameter :: b1     = 1.5d0/A2b**2                 ! dunno
       real*8,parameter :: rad    = acos(-1d0)/1.8d2                       ! pi/180
       real*8,parameter :: ce     = cos(thetae*rad)                        ! cos(u0) where uo is the relaxed angle in radians
+
 
       private
       public vibdip
 
+
+
 contains !//////////////////////////////////////////////////////////////
-      subroutine vibdip(x,d,n)
-      real*8 , intent(in)  :: x(:,:,:) ! x(n,3,3) = x(molecule:i=1,n , atom:O,H1,H2 = 1,2,3 , coordinates:x,y,z=1,2,3) !!!!!!!!!!!!! OLD:,x(n,3,3)  = x(n_molecules,xyz,HHO)
+      subroutine vibdip(x,d)!,n)
+      !-----------------------------------------------------------------
+      ! Warning thie SR expects Ångström input. 
+      !-----------------------------------------------------------------
+      real*8 , intent(in)  :: x(3,3)!x(3,3) x(OHH,xyz)  !x(:,:,:) ! x(n,3,3) = x(molecule:i=1,n , atom:O,H1,H2 = 1,2,3 , coordinates:x,y,z=1,2,3) !!!!!!!!!!!!! OLD:,x(n,3,3)  = x(n_molecules,xyz,HHO)
                                        ! gotta change the order of all incicies to make it column major!
-      real*8 , intent(out) :: d(:,:)   ! d(n,3) = d(n_h2o,dip_x,dip_y,dip_z),
-      integer, intent(in)  :: n        ! n = number of molecules
+      real*8 , intent(out) :: d(3)!d(:,:)   ! d(n,3) = d(n_h2o,dip_x,dip_y,dip_z),
+      !integer, intent(in)  :: n        ! n = number of molecules
 !JÖ internal:      
-      real*8  :: fmat(19,3),v1(3),v2(3)
+      real*8  :: fmat(19,3),v1(3),v2(3)          , x123(3)
       real*8  :: r1,r2,cabc,x1,x2,x3,p1,p2,damp1,damp2,term,term1,term2
       integer :: i, j
       
-      do i=1,n
+      
+          !x=x*A2b
+      !do i=1,n
           ! Compute the distances
-          v1 = x(i,2,:) - x(i,1,:) !JÖ changed order
-          r1 = sqrt(sum( v1**2 ))
+          v1 = ( x(2,:) - x(1,:) )*A2b  !x(i,2,:) - x(i,1,:) !JÖ changed order
+          v2 = ( x(3,:) - x(1,:) )*A2b !x(i,3,:) - x(i,1,:) !JÖ changed order
           
-          v2 = x(i,3,:) - x(i,1,:) !JÖ changed order
+          r1 = sqrt(sum( v1**2 ))
           r2 = sqrt(sum( v2**2 ))
           
           cabc = ( v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3) ) / (r1*r2)
@@ -450,14 +464,11 @@ contains !//////////////////////////////////////////////////////////////
           x2=(r2-reoh)/reoh
           x3=cabc-ce
           
-          fmat(1,1)=1d0
-          fmat(1,2)=1d0
-          fmat(1,3)=1d0
+          x123 = [x1,x2,x3]
           
+          fmat(1,:)=1d0
           do j=2,19 !isump
-              fmat(j,1)=fmat(j-1,1)*x1
-              fmat(j,2)=fmat(j-1,2)*x2
-              fmat(j,3)=fmat(j-1,3)*x3
+              fmat(j,:)=fmat(j-1,:)*x123(:)
           enddo
 
           p1=0d0
@@ -478,13 +489,36 @@ contains !//////////////////////////////////////////////////////////////
           enddo
           p1=p1*damp1
           p2=p2*damp2
-!           d(i,:) = p1*( x(i,:,2) - x(i,:,1))  +  p2*( x(i,:,3) - x(i,:,1) ) !JÖ changed indices
-          d(i,1) = p1*( x(i,2,1) - x(i,1,1))  +  p2*( x(i,3,1) - x(i,1,1) ) !JÖ changed indices
-          d(i,2) = p1*( x(i,2,2) - x(i,1,2))  +  p2*( x(i,3,2) - x(i,1,2) ) !JÖ changed indices
-          d(i,3) = p1*( x(i,2,3) - x(i,1,3))  +  p2*( x(i,3,3) - x(i,1,3) ) !JÖ changed indices
-      enddo
+          
+          d = p1*v1  +  p2*v2 !JÖ changed indices
+      !enddo
       
       end subroutine
 end module      
+
+
+
+
+
+          !fmat(1,1)=1d0
+          !fmat(1,2)=1d0
+          !fmat(1,3)=1d0
       
+
+              !fmat(j,1)=fmat(j-1,1)*x1
+              !fmat(j,2)=fmat(j-1,2)*x2
+              !fmat(j,3)=fmat(j-1,3)*x3
+
+
       
+!           d(i,:) = p1*( x(i,:,2) - x(i,:,1))  +  p2*( x(i,:,3) - x(i,:,1) ) !JÖ changed indices
+          
+          !d(:) = p1*( x(2,:) - x(1,:))  +  p2*( x(3,:) - x(1,:) ) !JÖ changed indices
+                   
+          !d(1) = p1*( x(2,1) - x(1,1))  +  p2*( x(3,1) - x(1,1) ) !JÖ changed indices
+          !d(2) = p1*( x(2,2) - x(1,2))  +  p2*( x(3,2) - x(1,2) ) !JÖ changed indices
+          !d(3) = p1*( x(2,3) - x(1,3))  +  p2*( x(3,3) - x(1,3) ) !JÖ changed indices
+          
+          !d(i,1) = p1*( x(i,2,1) - x(i,1,1))  +  p2*( x(i,3,1) - x(i,1,1) ) !JÖ changed indices
+          !d(i,2) = p1*( x(i,2,2) - x(i,1,2))  +  p2*( x(i,3,2) - x(i,1,2) ) !JÖ changed indices
+          !d(i,3) = p1*( x(i,2,3) - x(i,1,3))  +  p2*( x(i,3,3) - x(i,1,3) ) !JÖ changed indices
