@@ -2,8 +2,8 @@
       use ps_dip, only: vibdip
       implicit none
       integer, parameter :: n = 2
-      real*8 x(n,3,3), d(n,3)!, A2b, au2deb
-      integer i
+      real*8 x(n,3,3), d(3)!, A2b, au2deb
+      integer i,j
       real*8 , parameter :: A2b = 1.889725989d0 !Ångström to Bohr
       real*8 , parameter :: au2deb = 2.541746230211d0 !a.u. to debye
       !      x(n,xyz,HHO)
@@ -30,12 +30,12 @@
 !      x(6,2,:) = [ 2.674716d+00,  1.735342d+00, -2.379950d-01]*A2b ! H
 !      x(6,3,:) = [ 1.141637d+00,  1.532266d+00, -1.401210d-01]*A2b ! H
 
-      x(1,1,:) = [  0.000,  0.000,  0.000]*A2b ! O
-      x(1,2,:) = [  0.018, -0.739,  0.521]*A2b ! H
-      x(1,3,:) = [ -0.815, -0.673, -0.592]*A2b ! H 
-      x(2,1,:) = [  1.675, -2.803,  0.911]*A2b ! O
-      x(2,2,:) = [  1.942, -1.964,  1.223]*A2b ! H
-      x(2,3,:) = [  2.319, -3.450,  1.136]*A2b ! H
+      x(1,1,:) = [  0.000,  0.000,  0.000]!*A2b ! O
+      x(1,2,:) = [  0.018, -0.739,  0.521]!*A2b ! H
+      x(1,3,:) = [ -0.815, -0.673, -0.592]!*A2b ! H 
+      x(2,1,:) = [  1.675, -2.803,  0.911]!*A2b ! O
+      x(2,2,:) = [  1.942, -1.964,  1.223]!*A2b ! H
+      x(2,3,:) = [  2.319, -3.450,  1.136]!*A2b ! H
 
 
 !    coordinates(1)  =  0.018       ! x H1 on W1
@@ -57,11 +57,10 @@
 !    coordinates(17) = -2.803
 !    coordinates(18) =  0.911
 
-      call vibdip(x,d,n)
-      
       do i = 1,n
-          print*, sum(d(i,:)**2)*au2deb
-          print*, d(i,:)*au2deb
+          call vibdip(x(i,:,:),d)
+          print*, sqrt(sum(d(:)**2))*au2deb
+          print*, d(:)*au2deb
       enddo
     end program 
 

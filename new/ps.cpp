@@ -536,14 +536,14 @@ namespace ps {
     const double x2 = (dROH2 - reoh)/reoh;
     const double x3 = costh - costhe;
 
-    double fmat[3][16];
+    double fmat[3][8];
 
     for (size_t i = 0; i < 3; ++i) {
         fmat[i][0] = 0.0;
         fmat[i][1] = 1.0;
     }
 
-    for (size_t j = 2; j < 16; ++j) {
+    for (size_t j = 2; j < 8; ++j) {
         fmat[0][j] = fmat[0][j - 1]*x1;
         fmat[1][j] = fmat[1][j - 1]*x2;
         fmat[2][j] = fmat[2][j - 1]*x3;
@@ -617,18 +617,18 @@ namespace ps {
   //  extern "C" void dmsnasa2_(const double* dms_param1, const double* dms_param2, const double* dms_param3, 
   //  extern "C" void dmsnasa2_(const double* rr, double* q3, double* dq3, bool ttm3){
   //  extern "C" void dmsnasa2_(const double* rr, double* q3, double* dq3){
-  extern "C" void dmsnasa2_(const double* rr, double* q3){
+  extern "C" void dmsnasa2_(const double* rr, double* dd){ //JÖ q3 -> dd 
     //    return dmsnasa(dms_param1,dms_param2,dms_param3,rr,q3,dq3,ttm3);
     //    return dmsnasa(rr,q3,dq3,ttm3);
     //    return dmsnasa(rr,q3,dq3);
-    return dmsnasa(rr,q3);
+    return dmsnasa(rr,dd);//JÖ q3 -> dd 
   }
 
   //  void dmsnasa(const double& dms_param1, const double& dms_param2, const double& dms_param3,
   //  void dmsnasa(const double* dms_param1, const double* dms_param2, const double* dms_param3,
   //  void dmsnasa(const double* rr, double* q3, double* dq3, bool ttm3)
   //  void dmsnasa(const double* rr, double* q3, double* dq3)
-  void dmsnasa(const double* rr, double* q3)
+  void dmsnasa(const double* rr, double* dd)//JÖ q3 -> dd 
   {
 
     const double ath0 = 1.82400520401572996557;
@@ -663,14 +663,14 @@ namespace ps {
     const double x2 = (dROH2 - reoh)/reoh;
     const double x3 = costh - costhe;
 
-    double fmat[3][16];
+    double fmat[3][8]; //JÖ here 8 is enough and should save some computations 
 
     for (size_t i = 0; i < 3; ++i) {
         fmat[i][0] = 0.0;
         fmat[i][1] = 1.0;
     }
 
-    for (size_t j = 2; j < 16; ++j) {
+    for (size_t j = 2; j < 8; ++j) { //JÖ 8 is enough
         fmat[0][j] = fmat[0][j - 1]*x1;
         fmat[1][j] = fmat[1][j - 1]*x2;
         fmat[2][j] = fmat[2][j - 1]*x3;
@@ -745,11 +745,18 @@ namespace ps {
     p1 = coefD[0] + p1*efac + pc0*xx; // q^H1 in TTM2-F
     p2 = coefD[0] + p2*efac + pc0*xx; // q^H2 paper
 
-    q3[0] = -(p1 + p2);  // Oxygen
-    q3[1] = p1; // Hydrogen-1
-    q3[2] = p2; // Hydrogen-2
+    //q3[0] = -(p1 + p2);  // Oxygen
+    //q3[1] = p1; // Hydrogen-1
+    //q3[2] = p2; // Hydrogen-2
     //    printf("%10.6f %10.6f %10.6f\n",q3[0],q3[1],q3[2]);
-
+    
+    
+    
+    
+    //JÖ code snipped equivalent to the PS Fortran routine
+    dd[0] = (p1*ROH1[0] + p2*ROH2[0])/xx;
+    dd[1] = (p1*ROH1[1] + p2*ROH2[1])/xx;
+    dd[2] = (p1*ROH1[2] + p2*ROH2[2])/xx;
 
     //dp1dr1 /= xx;
     //dp1dr2 /= xx;

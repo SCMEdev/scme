@@ -234,11 +234,13 @@ contains
           print*, 'ps dipole components:',dms*au2deb
           
           
+          !qdms = 0
+          !call dmsnasa2(mol,qdms)
+          !print*, 'cpp total dipole     :',sqrt(sum(qdms**2))*au2deb
+          !print*, 'cpp dipole components:',qdms*au2deb
+          
           qdms = 0
           call dmsnasa2(mol,qdms)
-          print*, 'cpp total dipole     :',sqrt(sum(qdms**2))*au2deb
-          print*, 'cpp dipole components:',qdms*au2deb
-          
           
           ! Calculate dipole moment wrt center of mass.
           dipmom(:) = 0.0_dp
@@ -247,14 +249,17 @@ contains
           !   dipmom(p) = dipmom(p) + dms(1,2)*(ps_mol(1,2,p)-rCM(p,i))
           !   dipmom(p) = dipmom(p) + dms(1,3)*(ps_mol(1,3,p)-rCM(p,i))
              
-             dipmom(p) = dipmom(p) + qdms(1)*(mol(p)-rCM(p,i))
+             dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
              
              
              
           end do
-
+          
+          print*, 'cpp total dipole     :',sqrt(sum(dipmom**2))*au2deb*A2b
+          print*, 'cpp dipole components:',dipmom*au2deb*A2b
+          
           ! Set unpolarized dipoles to Partridge-Schwenke dipoles
           ! using conversion constants for eA -> D.
           do p=1,3
@@ -405,24 +410,24 @@ contains
           do p=1,3
              
              ! temporary to test the ps_grad
-             temp1 = fa(indO  + p)
-             temp2 = fa(indH1 + p)
-             temp3 = fa(indH2 + p)
+             !temp1 = fa(indO  + p)
+             !temp2 = fa(indH1 + p)
+             !temp3 = fa(indH2 + p)
              
              
              fa(indO  + p) = fa(indO  + p) - grad(p)
              fa(indH1 + p) = fa(indH1 + p) - grad(p+3)
              fa(indH2 + p) = fa(indH2 + p) - grad(p+6)
-             print*, 'orig FA', fa(indO  + p)
-             print*, 'orig FA', fa(indH1 + p)
-             print*, 'orig FA', fa(indH2 + p)
-             
-             fa(indO  + p) = temp1 - ps_grad(p)  !*h2eV*A2b
-             fa(indH1 + p) = temp2 - ps_grad(p+3)!*h2eV*A2b
-             fa(indH2 + p) = temp3 - ps_grad(p+6)!*h2eV*A2b
-             print*, 'new FA', fa(indO  + p)
-             print*, 'new FA', fa(indH1 + p)
-             print*, 'new FA', fa(indH2 + p)
+             !print*, 'orig FA', fa(indO  + p)
+             !print*, 'orig FA', fa(indH1 + p)
+             !print*, 'orig FA', fa(indH2 + p)
+             !
+             !fa(indO  + p) = temp1 - ps_grad(p)  !*h2eV*A2b
+             !fa(indH1 + p) = temp2 - ps_grad(p+3)!*h2eV*A2b
+             !fa(indH2 + p) = temp3 - ps_grad(p+6)!*h2eV*A2b
+             !print*, 'new FA', fa(indO  + p)
+             !print*, 'new FA', fa(indH1 + p)
+             !print*, 'new FA', fa(indH2 + p)
              
           end do
           

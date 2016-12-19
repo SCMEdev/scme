@@ -1,0 +1,6 @@
+har ändrat på ps.cpp som ligger i new/ men inte den som är i originalmappen. 
+
+Q: Ska jag skriva om den rutinen i Fortran, eftersom den är snyggare och snabbare än originalkoden, 
+    eller ska jag istället inkorporera LODIS dipolyta? 
+   Jag tror inte noggrannheten i Lodis yta är nödvändig, och koden var hemsk. 
+A: Jag skriver om ps.cpp i Fortran. Kanske till och med kan hitta en översättare. 

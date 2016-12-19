@@ -467,12 +467,13 @@ contains !//////////////////////////////////////////////////////////////
           x123 = [x1,x2,x3]
           
           fmat(1,:)=1d0
-          do j=2,19 !isump
+          do j=2,19 !isump  ! this is just powers of x123
               fmat(j,:)=fmat(j-1,:)*x123(:)
           enddo
 
           p1=0d0
           p2=0d0
+          
           damp1=exp(-b1*((r1-reoh)**2))  
           damp2=exp(-b1*((r2-reoh)**2))  
 
