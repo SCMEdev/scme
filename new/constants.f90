@@ -6,7 +6,7 @@ implicit none
   real(dp), parameter :: kcal_J      = 4184.0_dp                
   real(dp), parameter :: Eh_kcalmol  = Eh_J*Na/kcal_J;        
   real(dp), parameter :: Bohr_A      = 0.52917721092_dp         !! CODATA 2010
-  real(dp), parameter :: A_Bohr      = 1.0_dp
+  real(dp), parameter :: A_Bohr      = 1.0_dp/Bohr_A
   real(dp), parameter :: c0          = 299792458.0_dp           !! m/s CODATA 2010
   real(dp), parameter :: ea0         = 8.47835326e-30_dp        !! C*m CODATA 2010
   real(dp), parameter :: D_au        = (1.0_dp/c0)*1.0e-21_dp/ea0  !! e * Bohr

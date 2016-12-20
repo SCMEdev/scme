@@ -1,5 +1,6 @@
       
 module ps_pot      
+use constants, only:Bohr_A, A_Bohr,cm1_eV
 implicit none
 !-----------------------------------------------------------------------
 !      subroutine vibpot(rij,v,n)
@@ -404,9 +405,37 @@ implicit none
         0.0000000000000D+00, 0.0000000000000D+00, 0.0000000000000D+00, &
         0.0000000000000D+00, 0.0000000000000D+00]
 
-       !real*8, parameter :: A2b     = 1.0d0/0.529177249d0 !Angstr to Bohr
-       real*8, parameter :: A2b     = 1.889725989d0 !Ångström to Bohr       
-       real*8, parameter :: b2A     = 0.529177249d0 
+!       
+!       real*8, parameter :: b2A     = Bohr_A
+!       real*8, parameter :: A2b     = A_Bohr !Ångström to Bohr       
+!       real*8, parameter :: h2eV    = 27.211396132d0 !hartree to eV       
+!       real*8, parameter :: cm2au   = 4.556335d-6
+!       real*8, parameter :: f5z     = 0.99967788500000d0
+!       real*8, parameter :: fbasis  = 0.15860145369897d0
+!       real*8, parameter :: fcore   = -1.6351695982132d0
+!       real*8, parameter :: frest   = 1d0
+!
+!       real*8, parameter :: b1      = 2.0d0*b2A**2
+!       real*8, parameter :: roh     = 0.9519607159623009d0/b2A
+!       real*8, parameter :: alphaoh = 2.587949757553683d0*b2A
+!       real*8, parameter :: deoh    = 42290.92019288289d0*f5z*cm2au
+!       real*8, parameter :: reoh    = 0.958649d0/b2A
+!       real*8, parameter :: thetae  = 104.3475d0
+!       real*8, parameter :: rad     = dacos(-1d0)/1.8d2
+!       real*8, parameter :: ce      = dcos(thetae*rad)
+!       real*8, parameter :: phh2    = 12.66426998162947d0*b2A
+!       real*8, parameter :: phh1    = 16.94879431193463d0*cm2au*dexp(phh2/b2A)*f5z
+!       !real*8, parameter :: c5z(245) = &
+!       !     [ ( f5z*c5zt(1)*2d0 + fbasis*cbasis(1)*2d0 + fcore*ccore(1)*2d0 + frest*crest(1)*2d0 ),&
+!       !       ( f5z*c5zt(2:245) + fbasis*cbasis(2:245) + fcore*ccore(2:245) + frest*crest(2:245) )  ]*cm2au
+!       
+!       real*8, parameter :: c5z(245) = &                                                                             
+!              ( f5z*c5z_temp(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )*cm2au ! Down There is the twooo 2 !!
+!              !                                                                                                      \/
+!
+       
+       real*8, parameter :: b2A     = Bohr_A
+       real*8, parameter :: A2b     = A_Bohr !Ångström to Bohr       
        real*8, parameter :: h2eV    = 27.211396132d0 !hartree to eV       
        real*8, parameter :: cm2au   = 4.556335d-6
        real*8, parameter :: f5z     = 0.99967788500000d0
@@ -414,22 +443,22 @@ implicit none
        real*8, parameter :: fcore   = -1.6351695982132d0
        real*8, parameter :: frest   = 1d0
 
-       real*8, parameter :: b1      = 2.0d0*b2A**2
-       real*8, parameter :: roh     = 0.9519607159623009d0/b2A
-       real*8, parameter :: alphaoh = 2.587949757553683d0*b2A
-       real*8, parameter :: deoh    = 42290.92019288289d0*f5z*cm2au
-       real*8, parameter :: reoh    = 0.958649d0/b2A
+       real*8, parameter :: b1      = 2.0d0!*b2A**2
+       real*8, parameter :: roh     = 0.9519607159623009d0!/b2A
+       real*8, parameter :: alphaoh = 2.587949757553683d0!*b2A
+       real*8, parameter :: deoh    = 42290.92019288289d0*f5z!*cm2au
+       real*8, parameter :: reoh    = 0.958649d0!/b2A
        real*8, parameter :: thetae  = 104.3475d0
        real*8, parameter :: rad     = dacos(-1d0)/1.8d2
        real*8, parameter :: ce      = dcos(thetae*rad)
-       real*8, parameter :: phh2    = 12.66426998162947d0*b2A
-       real*8, parameter :: phh1    = 16.94879431193463d0*cm2au*dexp(phh2/b2A)*f5z
+       real*8, parameter :: phh2    = 12.66426998162947d0!*b2A
+       real*8, parameter :: phh1    = 16.94879431193463d0*dexp(phh2)*f5z!/b2A)*f5z*cm2au ! )*f5z!
        !real*8, parameter :: c5z(245) = &
        !     [ ( f5z*c5zt(1)*2d0 + fbasis*cbasis(1)*2d0 + fcore*ccore(1)*2d0 + frest*crest(1)*2d0 ),&
        !       ( f5z*c5zt(2:245) + fbasis*cbasis(2:245) + fcore*ccore(2:245) + frest*crest(2:245) )  ]*cm2au
        
        real*8, parameter :: c5z(245) = &                                                                             
-              ( f5z*c5z_temp(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )*cm2au ! Down There is the twooo 2 !!
+              ( f5z*c5z_temp(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )!*cm2au ! Down There is the twooo 2 !!
               !                                                                                                      \/
 
 
@@ -461,9 +490,9 @@ contains !//////////////////////////////////////////////////////////////
      !do i=1,n
           
           !OHH order:      
-          v1  = ( x(2,:) - x(1,:) )*A2b !x(i,2,:) - x(i,1,:) !H1-O
-          v2  = ( x(3,:) - x(1,:) )*A2b !x(i,3,:) - x(i,1,:) !H2-O
-          v12 = ( x(2,:) - x(3,:) )*A2b !H1-H2
+          v1  = ( x(2,:) - x(1,:) )!*A2b !x(i,2,:) - x(i,1,:) !H1-O
+          v2  = ( x(3,:) - x(1,:) )!*A2b !x(i,3,:) - x(i,1,:) !H2-O
+          v12 = ( x(2,:) - x(3,:) )!*A2b !H1-H2
           
           r1  = sqrt(sum( v1**2 ))
           r2  = sqrt(sum( v2**2 ))
@@ -496,9 +525,9 @@ contains !//////////////////////////////////////////////////////////////
          
          !v(i)=0d0
          
-         !inI = idx1[j]
-         !inJ = idx2[j]
-         !inK = idx3[j]
+         
+         
+         
          if (.not.do_grad) then
             sum0 = 0
             do j=2,245
@@ -515,9 +544,9 @@ contains !//////////////////////////////////////////////////////////////
                !v(i)=v(i)+c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
                !term
               !sum0 = sum0 + c5z[j]*(fmat[0][inI]    *fmat[1][inJ]     + fmat[0][inJ]    *fmat[1][inI])     * fmat[2][inK];
-               idx10 =  idx1(j)
-               idx20 =  idx2(j)
-               idx30 =  idx3(j)
+               idx10 =  idx1(j)    !inI = idx1[j]
+               idx20 =  idx2(j)    !inJ = idx2[j]
+               idx30 =  idx3(j)    !inK = idx3[j]
                idx11 = (idx1(j)-1)
                idx21 = (idx2(j)-1)
                idx31 = (idx3(j)-1)
@@ -552,8 +581,9 @@ contains !//////////////////////////////////////////////////////////////
             enddo
             
             !units out shoud be v[eV], dvdr[ev/A] ... 
-            dr=dr*h2eV*A2b !... Why is this unit correct? why not b2A? Because: dv/dr[eV/A] = dv/dr[h/b]*h2eV/b2A = dv/dr[h/b]*h2eV*A2b
-            v=v*h2eV
+            dr=dr*cm1_eV!*h2eV*A2b !... Why is this unit correct? why not b2A? Because: dv/dr[eV/A] = dv/dr[h/b]*h2eV/b2A = dv/dr[h/b]*h2eV*A2b
+            v = v + 0.44739574026257d0 !*e1 += 0.44739574026257; // correction !!! this is the supidest shit ever!!
+            v=v  *cm1_eV!*h2eV
             
          endif
          

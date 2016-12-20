@@ -536,14 +536,14 @@ namespace ps {
     const double x2 = (dROH2 - reoh)/reoh;
     const double x3 = costh - costhe;
 
-    double fmat[3][8];
+    double fmat[3][16]; //JÖ here the 16 is required
 
     for (size_t i = 0; i < 3; ++i) {
         fmat[i][0] = 0.0;
         fmat[i][1] = 1.0;
     }
 
-    for (size_t j = 2; j < 8; ++j) {
+    for (size_t j = 2; j < 16; ++j) {
         fmat[0][j] = fmat[0][j - 1]*x1;
         fmat[1][j] = fmat[1][j - 1]*x2;
         fmat[2][j] = fmat[2][j - 1]*x3;
@@ -715,7 +715,7 @@ namespace ps {
     }
 
     const double xx = constants::Bohr_A;
-    const double xx2 = xx*xx;
+    //const double xx2 = xx*xx;
 
     //dp1dr1 /= reoh/xx;
     //dp1dr2 /= reoh/xx;

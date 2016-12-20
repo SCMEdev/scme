@@ -1,30 +1,56 @@
+!-----------------------------------------------------------------------
+! This is text
+! Under this text is source code
+!-----------------------------------------------------------------------
+
+
 !newer:
 program ps_test
       use ps_pot, only: vibpot
       implicit none
       integer, parameter :: n = 2
-      real*8 pot(n), x(n,3,3)!n,OHH,xyz
+      real*8 pot, x(n,3,3),dpot(9)!n,OHH,xyz
       !real*8 A2b!, pi, deg2rad, conv(3)
-      integer p, i
+      integer i, j
       !pi = 3.1415926535d0
       real*8, parameter :: A2b = 1.0d0/0.529177249d0 !Angstr to Bohr
       
       !conversion to bohr happens here, in the code, bohr should come in too
       
-      x(1,2,:) = [  0.018, -0.739,  0.521]*A2b ! H
-      x(1,3,:) = [ -0.815, -0.673, -0.592]*A2b ! H 
-      x(2,2,:) = [  1.942, -1.964,  1.223]*A2b ! H
-      x(2,3,:) = [  2.319, -3.450,  1.136]*A2b ! H
-      x(1,1,:) = [  0.000,  0.000,  0.000]*A2b ! O
-      x(2,1,:) = [  1.675, -2.803,  0.911]*A2b ! O
+      x(1,2,:) = [  0.018d0, -0.739d0,  0.521d0]!*A2b ! H
+      x(1,3,:) = [ -0.815d0, -0.673d0, -0.592d0]!*A2b ! H 
+      x(2,2,:) = [  1.942d0, -1.964d0,  1.223d0]!*A2b ! H
+      x(2,3,:) = [  2.319d0, -3.450d0,  1.136d0]!*A2b ! H
+      x(1,1,:) = [  0.000d0,  0.000d0,  0.000d0]!*A2b ! O
+      x(2,1,:) = [  1.675d0, -2.803d0,  0.911d0]!*A2b ! O
 
       
-      call vibpot(x,pot,n)
       do i = 1,n
-          print*, 'pot = ',pot(i), "a.u. = ",(pot(i))*27.211396132+0.44739574026257*1.23981d-4, "eV" 
-          !the last terms give rise to equivalence with the cpp file, the value 0.44739574026257 was taken from there, 1.23981d-4 is cm-1 to eV  
+          
+          call vibpot(x(i,:,:),pot,dpot)
+          
+          
+          do j = 1,9,3
+              print*, dpot(j), dpot(j+1), dpot(j+2)
+          enddo
+          print*, '---------------'
+          print*, 'pot:', pot
+          print*, '---------------'
+          
       enddo
+      
 end program
+
+
+
+
+
+
+
+
+
+
+
 
 !program ps_test
 !      use ps_pot, only: vibpot
