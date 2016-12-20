@@ -70,8 +70,8 @@ contains
 
     ! Constants and parameters.
     real(dp), parameter :: pi = 3.14159265358979324_dp
-    real(dp), parameter :: kk1 = 2.5417709_dp
-    real(dp), parameter :: kk2 = 1.88972666351031921149_dp
+    real(dp), parameter :: kk1 = 2.5417709_dp !au2deb
+    real(dp), parameter :: kk2 = 1.88972666351031921149_dp !au2Angstrom
     real(dp), parameter :: convFactor = 14.39975841_dp / 4.803206799_dp**2
     real(dp), parameter :: rMax = 11.0_dp
     real(dp), parameter :: rMax2 = rMax*rMax
@@ -365,6 +365,7 @@ contains
           enddo
           print*, 'uPES1', uPES1
           
+          ! comment to use the fortran routine
           uPES(i) = uPES1
           u_tot = u_tot + uPES1
           
@@ -397,9 +398,9 @@ contains
           
           
           
-          
-          uPES(i) = ps_pes
-          u_tot = u_tot + ps_pes
+          ! uncomment to use the fortran routine
+          !uPES(i) = ps_pes
+          !u_tot = u_tot + ps_pes
           
           
           

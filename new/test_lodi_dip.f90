@@ -35,7 +35,7 @@
 
       
       do i = 1,n
-          print*, sum(d(i,:)**2)*au2deb
+          print*, sqrt(sum(d(i,:)**2))*au2deb
           print*, d(i,:)*au2deb
       enddo
     end program 

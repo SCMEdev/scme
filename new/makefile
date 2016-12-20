@@ -8,10 +8,16 @@ potr:
 	gfortran mod_ps_potr.f90 -o ppotr && ./ppotr
 
 cpp_dip_test:
-	g++ -c ps.cpp && gfortran -c test_ps_cpp.f90 && gfortran ps.o test_ps_cpp.o -o cppdip && ./cppdip
+	g++ -Ofast -c ps.cpp && gfortran -Ofast -c test_ps_cpp.f90 && gfortran -Ofast ps.o test_ps_cpp.o -o cppdip && ./cppdip
 
 lodi_dip_test:
 	gfortran lodi_dip.f90 test_lodi_dip.f90 -o plodi && ./plodi
+
+dms: constants.o
+	gfortran -Ofast ps_dms.f90 test_ps_dms.f90 constants.o -o pdms && ./pdms
+
+constants.o:
+	gfortran -c ../src/data_types.f90 constants.f90  
 
 clean: 
 	rm ppot pdip *.mod
