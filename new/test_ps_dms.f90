@@ -1,5 +1,5 @@
-    program testdip
-      use ps_dms, only: dmsnasa
+program testdip
+      use ps_dms, only: vibdms
       implicit none
       integer, parameter :: n = 2
       real*8 x(n,3,3), d(3)!, A2b, au2deb
@@ -17,8 +17,9 @@
 
 
       do i = 1,n
-          call dmsnasa(x(i,:,:),d)
-          print*, sqrt(sum(d(:)**2))*au2deb
-          print*, d(:)*au2deb
+          call vibdms(x(i,:,:),d)
+          print*, sqrt(sum(d(:)**2)) *au2deb*A2b
+          print*,               d(:) *au2deb*A2b
       enddo
-    end program 
+      
+end program 

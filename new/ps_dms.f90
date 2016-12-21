@@ -1,5 +1,5 @@
 module ps_dms
-use constants, only:Bohr_A
+use constants, only:a0_A
 implicit none
 
 integer, parameter, dimension(84) :: idxD1 = [&
@@ -72,11 +72,11 @@ real*8,parameter :: c2  =  0.0892d0
 real*8,parameter :: costhe = -0.24780227221366464506d0
 
 private
-public dmsnasa
+public vibdms
 
 contains !//////////////////////////////////////////////////////////////
 
-   subroutine dmsnasa(rr,dd)
+   subroutine vibdms(rr,dd)
     real*8 , intent(in)  :: rr(3,3)!x(3,3) x(OHH,xyz)
     real*8 , intent(out) :: dd(3)
     real*8 :: efac, xpow(3,7) !,x1,x2,x3 !7 should be enough
@@ -124,12 +124,16 @@ contains !//////////////////////////////////////////////////////////////
       pl2 = 0.5d0*(3d0*pl1*pl1 - 1d0)
       pc0 = a*( r1**b + r2**b )*(c0 + pl1*c1 + pl2*c2)
       
-      p1 = coefD(1) + p1*efac + pc0*Bohr_A !; // q^H1 in TTM2-F
-      p2 = coefD(1) + p2*efac + pc0*Bohr_A !; // q^H2 paper
+      p1 = coefD(1) + p1*efac + pc0*a0_A !; // q^H1 in TTM2-F
+      p2 = coefD(1) + p2*efac + pc0*a0_A !; // q^H2 paper
           
-!          //JÖ code snipped equivalent to the PS Fortran routine
-      dd = ( p1*v1 + p2*v2 )/Bohr_A
+      !Dipole moment:         
+      dd = ( p1*v1 + p2*v2 )!/a0_A
       
+      !Partial charges:
+      !dd(1) = -(p1 + p2);  
+      !dd(2) = p1;          
+      !dd(3) = p2;          
    end subroutine
 end module
 

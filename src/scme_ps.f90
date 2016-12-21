@@ -33,8 +33,9 @@ module scme
   use dispersion_mod, only: dispersion
   
  ! the new PS surfaces: 
-  use ps_dip, only: vibdip
+  use ps_dms, only: vibdms
   use ps_pot, only: vibpot
+  use constants, only:A_a0, ea0_Deb
 
   implicit none
   private
@@ -70,9 +71,10 @@ contains
 
     ! Constants and parameters.
     real(dp), parameter :: pi = 3.14159265358979324_dp
-    real(dp), parameter :: kk1 = 2.5417709_dp !au2deb
-    real(dp), parameter :: kk2 = 1.88972666351031921149_dp !au2Angstrom
-    real(dp), parameter :: convFactor = 14.39975841_dp / 4.803206799_dp**2
+    !real(dp), parameter :: kk1 = ea0_Deb!2.5417709_dp !au2deb
+    !real(dp), parameter :: au2deb = kk1 !1.88972612456506198632=A_a0
+    !real(dp), parameter :: kk2 = A_a0    !1.88972666351031921149_dp !A2b
+    real(dp), parameter :: convFactor = 14.39975841_dp / 4.803206799_dp**2 ! e**2[eVÅ]=[eVm / (e*10**10[statcol])**2
     real(dp), parameter :: rMax = 11.0_dp
     real(dp), parameter :: rMax2 = rMax*rMax
     integer, parameter :: NC = num_cells
@@ -159,15 +161,16 @@ contains
     real(dp) ps_grad(9)
     real(dp) ps_pes
     
-    real*8, parameter :: A2b     = 1.889725989d0 !Ångström to Bohr
-    real*8, parameter :: b2A     = 0.529177249d0
-    real*8, parameter :: au2deb  = 2.541746230211d0 !a.u. to debye
-    real*8, parameter :: h2eV  = 27.211396132d0 !a.u. to debye
+    !real*8, parameter :: A2b     = 1.889725989d0 !Ångström to Bohr
+    !real*8, parameter :: b2A     = 0.529177249d0
+    !real*8, parameter :: au2deb  = 2.541746230211d0 !a.u. to debye
+    !real*8, parameter :: h2eV  = 27.211396132d0 !a.u. to debye
       
     real*8 temp1,temp2,temp3
     
     real(dp) :: qdms(3)
     real(dp) :: dms(3)
+    real(dp), save :: dipmom2(3)
     
     ! ----------------------------
     ! Set initial Intitial values.
@@ -220,50 +223,56 @@ contains
              mol(p+6) = ra(indH2  + p)
           end do
           
-          print*, 'position ps_mol(1,1,:)  O', ps_mol_dip(1,:)
-          print*, 'position mol(1:3)       O', mol(1:3)
-          
-          print*, 'position ps_mol(1,2,:) H1', ps_mol_dip(2,:)
-          print*, 'position mol(4:6)      H1', mol(4:6)
+          !print*, 'position ps_mol(1,1,:)  O', ps_mol_dip(1,:)
+          !print*, 'position mol(1:3)       O', mol(1:3)
+          !
+          !print*, 'position ps_mol(1,2,:) H1', ps_mol_dip(2,:)
+          !print*, 'position mol(4:6)      H1', mol(4:6)
           
           
           
           dms = 0
-          call vibdip(ps_mol_dip,dms) !the coordinates in , the dipole out, an one of them only
-          print*, 'ps total dipole     :',sqrt(sum(dms**2))*au2deb
-          print*, 'ps dipole components:',dms*au2deb
+          call vibdms(ps_mol_dip,dms) !the coordinates in , the dipole out, an one of them only
+          print*, ' norm(dms):',sqrt(sum(dms**2))*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
+          print*, '       dms:',              dms*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
           
           
-          !qdms = 0
-          !call dmsnasa2(mol,qdms)
-          !print*, 'cpp total dipole     :',sqrt(sum(qdms**2))*au2deb
-          !print*, 'cpp dipole components:',qdms*au2deb
           
           qdms = 0
           call dmsnasa2(mol,qdms)
+          !print*, 'norm(qdms):',sqrt(sum(qdms**2))*au2deb
+          !print*, '      qdms:',qdms*au2deb
           
           ! Calculate dipole moment wrt center of mass.
           dipmom(:) = 0.0_dp
+          dipmom2(:) = 0.0_dp
+          
           do p=1,3
-          !   dipmom(p) = dipmom(p) + dms(1,1)*(ps_mol(1,1,p)-rCM(p,i))
-          !   dipmom(p) = dipmom(p) + dms(1,2)*(ps_mol(1,2,p)-rCM(p,i))
-          !   dipmom(p) = dipmom(p) + dms(1,3)*(ps_mol(1,3,p)-rCM(p,i))
+          !   dipmom2(p) = dipmom2(p) + dms(1)*(ps_mol_dip(1,p)-rCM(p,i))
+          !   dipmom2(p) = dipmom2(p) + dms(2)*(ps_mol_dip(2,p)-rCM(p,i))
+          !   dipmom2(p) = dipmom2(p) + dms(3)*(ps_mol_dip(3,p)-rCM(p,i))
              
              dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
              dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
+          
              
              
              
           end do
           
-          print*, 'cpp total dipole     :',sqrt(sum(dipmom**2))*au2deb*A2b
-          print*, 'cpp dipole components:',dipmom*au2deb*A2b
+          
+          
+          !print*, 'norm(dipmom2):',sqrt(sum(dipmom2**2))*kk1*kk2!au2deb*A2b
+          !print*, '      dipmom2:',              dipmom2*kk1*kk2!au2deb*A2b
+          
+          print*, ' norm(dipmom):',sqrt(sum(dipmom**2))*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
+          print*, '       dipmom:',              dipmom*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
           
           ! Set unpolarized dipoles to Partridge-Schwenke dipoles
           ! using conversion constants for eA -> D.
           do p=1,3
-             dpole0(p,i) = dipmom(p)*kk1*kk2
+             dpole0(p,i) = dms(p)*ea0_Deb*A_a0! dipmom(p)*ea0_Deb*A_a0!*kk1*kk2   dms(p)*ea0_Deb*A_a0! 
           end do
        end do
     end if
@@ -360,14 +369,16 @@ contains
           grad(:) = 0.0_dp
           call potnasa2(mol,grad,uPES1)
           
+          !> Debug --------------------------------------
           do jjj=1,9
              print*, 'grad:',grad(jjj)
           enddo
           print*, 'uPES1', uPES1
+          !< --------------------------------------------
           
           ! comment to use the fortran routine
-          uPES(i) = uPES1
-          u_tot = u_tot + uPES1
+          !uPES(i) = uPES1
+          !u_tot = u_tot + uPES1
           
              
           ! NEW
@@ -389,18 +400,18 @@ contains
           ps_grad(:) = 0.0_dp
           call vibpot(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
-          
+          !> Debug --------------------------------------
           do jjj=1,9
              print*, 'ps_grad:',ps_grad(jjj)!*h2eV*A2b
           enddo
-          
           print*, 'ps_pes:', ps_pes!*h2eV
+          !< --------------------------------------------
           
           
           
           ! uncomment to use the fortran routine
-          !uPES(i) = ps_pes
-          !u_tot = u_tot + ps_pes
+          uPES(i) = ps_pes
+          u_tot = u_tot + ps_pes
           
           
           

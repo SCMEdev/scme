@@ -745,18 +745,40 @@ namespace ps {
     p1 = coefD[0] + p1*efac + pc0*xx; // q^H1 in TTM2-F
     p2 = coefD[0] + p2*efac + pc0*xx; // q^H2 paper
 
-    //q3[0] = -(p1 + p2);  // Oxygen
-    //q3[1] = p1; // Hydrogen-1
-    //q3[2] = p2; // Hydrogen-2
-    //    printf("%10.6f %10.6f %10.6f\n",q3[0],q3[1],q3[2]);
+    dd[0] = -(p1 + p2);  // Oxygen
+    dd[1] = p1;          // Hydrogen-1
+    dd[2] = p2;          // Hydrogen-2
+       // printf("%10.6f %10.6f %10.6f\n",q3[0],q3[1],q3[2]);
     
     
     
     
     //JÖ code snipped equivalent to the PS Fortran routine
-    dd[0] = (p1*ROH1[0] + p2*ROH2[0])/xx;
-    dd[1] = (p1*ROH1[1] + p2*ROH2[1])/xx;
-    dd[2] = (p1*ROH1[2] + p2*ROH2[2])/xx;
+    //dd[0] = (p1*ROH1[0] + p2*ROH2[0])/xx;
+    //dd[1] = (p1*ROH1[1] + p2*ROH2[1])/xx;
+    //dd[2] = (p1*ROH1[2] + p2*ROH2[2])/xx;
+
+// Here the used code ends
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     //dp1dr1 /= xx;
     //dp1dr2 /= xx;

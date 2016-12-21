@@ -7,10 +7,11 @@
 OBJDIR = obj
 MODDIR = mod
 SRCDIR = src/
+NEW = new
 
 #have added the "new/" directory and PS-files
 vpath %.f90 $(SRCDIR)
-vpath %.f90 new/
+vpath %.f90 $(NEW)
 vpath %.cpp $(SRCDIR)
 
 FC = gfortran
@@ -35,7 +36,7 @@ OBJ = $(addprefix $(OBJDIR)/, \
 	inducePoles.o forceCM_mod.o torqueCM_mod.o \
 	atomicForces_mod.o molforce.o tang_toennies.o mdutil.o \
 	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o\
-	ps_pot.o ps_dip.o)
+	ps_pot.o ps_dms.o constants.o)
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
@@ -91,8 +92,8 @@ $(OBJDIR)/coreInt_mod.o		\
 $(OBJDIR)/dispersion_mod.o	\
 $(OBJDIR)/multipole_parameters.o\
 $(OBJDIR)/ps.o \
-$(OBJDIR)/ps_pot.o \
-$(OBJDIR)/ps_dip.o
+$(NEW)/ps_pot.o \
+$(NEW)/ps_dms.o \
 
 $(OBJDIR)/atomicForces_mod.o:	\
 $(OBJDIR)/data_types.o		\
@@ -127,27 +128,32 @@ $(OBJDIR)/parameters.o		\
 
 
 # multiple dependents --- few prerequisite:
+$(NEW)/ps_dms.o	\
+$(NEW)/ps_pot.o:	\
+$(NEW)/constants.o	\
+
+
 $(OBJDIR)/mdutil.o		\
 $(OBJDIR)/polariz_parameters.o	\
 $(OBJDIR)/multipole_parameters.o\
 $(OBJDIR)/max_parameters.o	\
-$(OBJDIR)/parameters.o		\
-:$(OBJDIR)/data_types.o		\
+$(OBJDIR)/parameters.o:		\
+$(OBJDIR)/data_types.o		\
 
 
 $(OBJDIR)/dispersion_mod.o	\
 $(OBJDIR)/torqueCM_mod.o	\
 $(OBJDIR)/forceCM_mod.o		\
 $(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/calcEnergy_mod.o	\
-:$(OBJDIR)/data_types.o		\
+$(OBJDIR)/calcEnergy_mod.o:	\
+$(OBJDIR)/data_types.o		\
 $(OBJDIR)/max_parameters.o	\
 
 
 $(OBJDIR)/calc_derivs.o		\
 $(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o	\
-:$(OBJDIR)/data_types.o		\
+$(OBJDIR)/calc_higher_order.o:	\
+$(OBJDIR)/data_types.o		\
 $(OBJDIR)/max_parameters.o	\
 $(OBJDIR)/molecProperties.o	\
 
