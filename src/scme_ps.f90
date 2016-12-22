@@ -34,7 +34,7 @@ module scme
   
  ! the new PS surfaces: 
   use ps_dms, only: vibdms
-  use ps_pot, only: vibpot
+  use ps_pot, only: vibpes
   use constants, only:A_a0, ea0_Deb, eA_Deb
 
   implicit none
@@ -394,7 +394,7 @@ contains
           end do
           
           ps_grad(:) = 0.0_dp
-          call vibpot(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
+          call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
           !> Debug --------------------------------------
           do jjj=1,9,3
