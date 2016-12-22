@@ -35,7 +35,7 @@ module scme
  ! the new PS surfaces: 
   use ps_dms, only: vibdms
   use ps_pot, only: vibpot
-  use constants, only:A_a0, ea0_Deb
+  use constants, only:A_a0, ea0_Deb, eA_Deb
 
   implicit none
   private
@@ -238,41 +238,37 @@ contains
           
           
           
-          qdms = 0
-          call dmsnasa2(mol,qdms)
+          !qdms = 0
+          !call dmsnasa2(mol,qdms)
           !print*, 'norm(qdms):',sqrt(sum(qdms**2))*au2deb
           !print*, '      qdms:',qdms*au2deb
           
           ! Calculate dipole moment wrt center of mass.
-          dipmom(:) = 0.0_dp
-          dipmom2(:) = 0.0_dp
+          !dipmom(:) = 0.0_dp
+          !dipmom2(:) = 0.0_dp
           
-          do p=1,3
-          !   dipmom2(p) = dipmom2(p) + dms(1)*(ps_mol_dip(1,p)-rCM(p,i))
-          !   dipmom2(p) = dipmom2(p) + dms(2)*(ps_mol_dip(2,p)-rCM(p,i))
-          !   dipmom2(p) = dipmom2(p) + dms(3)*(ps_mol_dip(3,p)-rCM(p,i))
-             
-             dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
-             dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
-             dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
-          
-             
-             
-             
-          end do
+          !do p=1,3
+          !!   dipmom2(p) = dipmom2(p) + dms(1)*(ps_mol_dip(1,p)-rCM(p,i))
+          !!   dipmom2(p) = dipmom2(p) + dms(2)*(ps_mol_dip(2,p)-rCM(p,i))
+          !!   dipmom2(p) = dipmom2(p) + dms(3)*(ps_mol_dip(3,p)-rCM(p,i))
+          !   
+          !   dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
+          !   dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
+          !   dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
+          !end do
           
           
           
           !print*, 'norm(dipmom2):',sqrt(sum(dipmom2**2))*kk1*kk2!au2deb*A2b
           !print*, '      dipmom2:',              dipmom2*kk1*kk2!au2deb*A2b
           
-          print*, ' norm(dipmom):',sqrt(sum(dipmom**2))*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
-          print*, '       dipmom:',              dipmom*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
+          !print*, ' norm(dipmom):',sqrt(sum(dipmom**2))*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
+          !print*, '       dipmom:',              dipmom*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
           
           ! Set unpolarized dipoles to Partridge-Schwenke dipoles
           ! using conversion constants for eA -> D.
           do p=1,3
-             dpole0(p,i) = dms(p)*ea0_Deb*A_a0! dipmom(p)*ea0_Deb*A_a0!*kk1*kk2   dms(p)*ea0_Deb*A_a0! 
+             dpole0(p,i) = dms(p)*eA_Deb! dipmom(p)*ea0_Deb*A_a0!*kk1*kk2   dms(p)*ea0_Deb*A_a0! 
           end do
        end do
     end if
@@ -370,8 +366,8 @@ contains
           call potnasa2(mol,grad,uPES1)
           
           !> Debug --------------------------------------
-          do jjj=1,9
-             print*, 'grad:',grad(jjj)
+          do jjj=1,9,3
+             print*, 'grad:',grad(jjj),grad(jjj+1),grad(jjj+2)
           enddo
           print*, 'uPES1', uPES1
           !< --------------------------------------------
@@ -401,8 +397,8 @@ contains
           call vibpot(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
           !> Debug --------------------------------------
-          do jjj=1,9
-             print*, 'ps_grad:',ps_grad(jjj)!*h2eV*A2b
+          do jjj=1,9,3
+             print*, 'ps_grad:',ps_grad(jjj),ps_grad(jjj+1),ps_grad(jjj+2)!*h2eV*A2b
           enddo
           print*, 'ps_pes:', ps_pes!*h2eV
           !< --------------------------------------------

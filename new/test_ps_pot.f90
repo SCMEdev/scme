@@ -6,7 +6,7 @@
 
 !newer:
 program ps_test
-      use ps_pot, only: vibpot
+      use ps_pot, only: vibpes
       implicit none
       integer, parameter :: n = 2
       real*8 pot, x(n,3,3),dpot(9)!n,OHH,xyz

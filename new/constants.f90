@@ -12,6 +12,7 @@ implicit none
   real(dp), parameter :: Deb_ea0     = (1.0_dp/c0)*1.0e-21_dp/ea0  !! Debye to e * Bohr
   real(dp), parameter :: ea0_Deb     = 1.0_dp/Deb_ea0               !kk1 
   real(dp), parameter :: Deb_eA      = Deb_ea0*a0_A;           !! Debye to e * A
+  real(dp), parameter :: eA_Deb      = ea0_Deb*A_a0           !! Debye to e * A
   real(dp), parameter :: h_Js        = 6.62606957e-34_dp        !! J*s CODATA 2010
   real(dp), parameter :: hbar_Js     = 1.054571726e-34_dp       !! J*s CODATA 2010
   real(dp), parameter :: Eh_cm1      = 1.0e-2_dp*Eh_J/(c0*h_Js) !! cm-1

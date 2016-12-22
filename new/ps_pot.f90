@@ -1,6 +1,6 @@
       
 module ps_pot      
-use constants, only:Bohr_A, A_Bohr,cm1_eV
+use constants, only:a0_A, A_a0,cm1_eV
 implicit none
 !-----------------------------------------------------------------------
 !      subroutine vibpot(rij,v,n)
@@ -405,6 +405,165 @@ implicit none
         0.0000000000000D+00, 0.0000000000000D+00, 0.0000000000000D+00, &
         0.0000000000000D+00, 0.0000000000000D+00]
 
+       
+       real*8, parameter :: f5z     = 0.99967788500000d0
+       real*8, parameter :: fbasis  = 0.15860145369897d0
+       real*8, parameter :: fcore   = -1.6351695982132d0
+       real*8, parameter :: frest   = 1d0
+
+       real*8, parameter :: b1      = 2.0d0!*b2A**2
+       real*8, parameter :: roh     = 0.9519607159623009d0!/b2A
+       real*8, parameter :: alphaoh = 2.587949757553683d0!*b2A
+       real*8, parameter :: deoh    = 42290.92019288289d0*f5z!*cm2au
+       real*8, parameter :: reoh    = 0.958649d0!/b2A
+       real*8, parameter :: thetae  = 104.3475d0
+       real*8, parameter :: rad     = dacos(-1d0)/1.8d2
+       real*8, parameter :: ce      = dcos(thetae*rad)
+       real*8, parameter :: phh2    = 12.66426998162947d0!*b2A
+       real*8, parameter :: phh1    = 16.94879431193463d0*dexp(phh2)*f5z!/b2A)*f5z*cm2au ! )*f5z!
+       real*8, parameter :: c5z(245) = &                                                                             
+              ( f5z*c5z_temp(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) ) !Below is the 2 (present in vibpot)
+
+private
+public vibpes
+
+contains !//////////////////////////////////////////////////////////////
+
+   subroutine vibpes(x,v,dvdr)
+   !--------------------------------------------------------------------
+   !> Description 
+   !   x(3,3) is the input coordinates of O, H1, H2. [in Angstrom]
+   !   x(1,:) is the coords. of O
+   !   x(2,:) is the coords. of H1
+   !   x(2,1) is the x-coord. of H1
+   !   x(2,2) is the y-coord. of H1 etc
+   !    etc.
+   !   
+   !   v is the scalar potential energy result [in eV]
+   !   
+   !   dvdr(9)   is the pot. energy gradient result [in eV/Angstrom]
+   !   dvdr(1:3) is the x,y,z conmponents of the O gradient
+   !   dvdr(4:6) is the x,y,z conmponents of the H1 gradient
+   !   dvdr(1)   is the x conmponent of the O gradient
+   !    etc.
+   !
+   !> Author
+   ! This routine is "written" by Jonatan Öström.                        
+   ! It is built from the 'vibpot' routine of H Partridge and D Schwenke
+   ! and the gradient calculation from the 'potnasa' routine by ...?
+   ! The first lines converting from coordinates to internal coordinates
+   ! was taken from 'vibdip' by P and S.  
+   ! It is numerically equivalent to 'potnasa', if the "correction" 
+   ! below is kept, to the 14th decimal point. 
+   ! The discrepancy to full double precision equivalence, 
+   ! materialized in the summation order the terms in 'v' below.
+   ! The reason for that I am not sure of.                         
+   !--------------------------------------------------------------------
+     real*8 , intent(in)  :: x(3,3)    !x(OHH,xyz)
+     real*8 , intent(out) :: v,dvdr(9) !v(n),dr(9,n) 
+     
+     
+   !internal variables       
+     real*8 :: x1,x2,x3,xx(3)  
+     real*8 :: xpow(15,3),cos_hoh
+     real*8 :: rr1(3),rr2(3),rr12(3), r1,r2,rhh
+     real*8 :: sum0,sum3,sum1,sum2
+     real*8 :: efac,exp1,exp2
+     real*8 :: dvoh1,dvoh2,dvhh,dVcdr1,dVcdr2,dVcdcth 
+     real*8 :: voh12,vhh
+     integer ii, j
+     integer idx10,idx20,idx30,idx11,idx21,idx31
+     logical, parameter :: do_grad = .true.!.false.
+     
+     !do i=1,n
+     
+     !OHH order; rr is vector distance      
+     rr1  = ( x(2,:) - x(1,:) ) !H1-O
+     rr2  = ( x(3,:) - x(1,:) ) !H2-O
+     rr12 = ( x(2,:) - x(3,:) ) !H1-H2
+     
+     !r=norm(rr) is scalara distance
+     r1  = sqrt(sum( rr1**2 ))
+     r2  = sqrt(sum( rr2**2 ))
+     rhh = sqrt(sum( rr12**2 ))
+     
+     cos_hoh = ( rr1(1)*rr2(1) + rr1(2)*rr2(2) + rr1(3)*rr2(3) ) / (r1*r2) !=cos(HOH) 
+     
+     !PES coordinates
+     x1 = (r1-reoh)/reoh 
+     x2 = (r2-reoh)/reoh
+     x3 = cos_hoh-ce
+     xx = [x1,x2,x3]
+     
+     
+     exp1=dexp(-alphaoh*(r1-roh))
+     exp2=dexp(-alphaoh*(r2-roh))
+     
+     voh12=deoh*( exp1*(exp1-2d0) + exp2*(exp2-2d0) ) !Va in potnasa & voh1+voh2 in "vibpot" 
+     vhh=phh1*dexp(-phh2*rhh)                         !Vb in potnasa
+     
+     efac = dexp(-b1*(  (r1-reoh)**2 + (r2-reoh)**2  ))
+     
+     xpow(1,:)=1d0 !fmat in vibpot & potnasa
+     do j=2,15
+        xpow(j,:)=xpow(j-1,:)*xx(:)
+     enddo
+        
+     if (.not.do_grad)then
+        sum0 = 0
+        do j=2,245
+            sum0 = sum0 + c5z(j)*(xpow(idx1(j),1)*xpow(idx2(j),2) + xpow(idx2(j),1)*xpow(idx1(j),2)) * xpow(idx3(j),3)
+        enddo
+        !Potential:
+        v=sum0*efac + (voh12+vhh) + c5z(1)*2d0 !here is the 2 
+     else 
+        sum0 = 0
+        sum1 = 0
+        sum2 = 0
+        sum3 = 0
+        do j=2,245
+           idx10 =  idx1(j)    !inI = idx1[j] (in potnasa)
+           idx20 =  idx2(j)    !inJ = idx2[j]
+           idx30 =  idx3(j)    !inK = idx3[j]
+           idx11 = (idx10-1)
+           idx21 = (idx20-1)
+           idx31 = (idx30-1)
+           
+           sum0  = sum0 + c5z(j)*( xpow(idx10,1)*xpow(idx20,2) + xpow(idx20,1)*xpow(idx10,2) )*xpow(idx30,3)
+           sum3  = sum3 + c5z(j)*( xpow(idx10,1)*xpow(idx20,2) + xpow(idx20,1)*xpow(idx10,2) )*idx31*xpow(idx31,3)
+           sum1  = sum1 + c5z(j)*( idx11*xpow(idx11,1)*xpow(idx20,2) + idx21*xpow(idx21,1)*xpow(idx10,2) )*xpow(idx30,3)
+           sum2  = sum2 + c5z(j)*( idx21*xpow(idx10,1)*xpow(idx21,2) + idx11*xpow(idx20,1)*xpow(idx11,2) )*xpow(idx30,3)
+     
+        enddo
+        
+        !Gradient:
+        dvoh1= 2d0*alphaoh*deoh*exp1*(1d0 - exp1)/r1; !dVa1 in potnasa
+        dvoh2= 2d0*alphaoh*deoh*exp2*(1d0 - exp2)/r2; !dVa2 in potnasa
+        dvhh = -phh2*vhh/rhh                          !Vb   in potnasa
+          
+        dVcdr1 = (-2d0*b1*efac*(r1 - reoh)*sum0 + efac*sum1/reoh)/r1 ! same as potnasa
+        dVcdr2 = (-2d0*b1*efac*(r2 - reoh)*sum0 + efac*sum2/reoh)/r2 ! same as potnasa 
+        dVcdcth = efac*sum3                                          ! same as potnasa
+        
+        do ii = 1,3 !ii=xyz
+             dvdr(3 + ii) = dvoh1*rr1(ii) + dvhh*rr12(ii) + dVcdr1*rr1(ii) + dVcdcth*(rr2(ii)/(r1*r2) - cos_hoh*rr1(ii)/(r1*r1)) !H1
+             dvdr(6 + ii) = dvoh2*rr2(ii) - dvhh*rr12(ii) + dVcdr2*rr2(ii) + dVcdcth*(rr1(ii)/(r1*r2) - cos_hoh*rr2(ii)/(r2*r2)) !H2
+             dvdr(0 + ii) = -( dvdr(3 + ii) + dvdr(6 + ii) ) ! O 
+             
+        enddo
+        dvdr=dvdr*cm1_eV
+        
+        !Potentail:
+        v=sum0*efac + (voh12+vhh) + c5z(1)*2d0 !here is 2 again
+        v = v + 0.44739574026257d0 !// correction ??? 
+        v=v  *cm1_eV!*h2eV
+        
+     endif
+     !enddo
+   end subroutine
+end module
+
+
 !       
 !       real*8, parameter :: b2A     = Bohr_A
 !       real*8, parameter :: A2b     = A_Bohr !Ångström to Bohr       
@@ -434,162 +593,11 @@ implicit none
 !              !                                                                                                      \/
 !
        
-       real*8, parameter :: b2A     = Bohr_A
-       real*8, parameter :: A2b     = A_Bohr !Ångström to Bohr       
-       real*8, parameter :: h2eV    = 27.211396132d0 !hartree to eV       
-       real*8, parameter :: cm2au   = 4.556335d-6
-       real*8, parameter :: f5z     = 0.99967788500000d0
-       real*8, parameter :: fbasis  = 0.15860145369897d0
-       real*8, parameter :: fcore   = -1.6351695982132d0
-       real*8, parameter :: frest   = 1d0
+       !real*8, parameter :: b2A     = a0_A
+       !real*8, parameter :: A2b     = A_a0 !Ångström to Bohr       
+       !real*8, parameter :: h2eV    = 27.211396132d0 !hartree to eV       
+       !real*8, parameter :: cm2au   = 4.556335d-6
 
-       real*8, parameter :: b1      = 2.0d0!*b2A**2
-       real*8, parameter :: roh     = 0.9519607159623009d0!/b2A
-       real*8, parameter :: alphaoh = 2.587949757553683d0!*b2A
-       real*8, parameter :: deoh    = 42290.92019288289d0*f5z!*cm2au
-       real*8, parameter :: reoh    = 0.958649d0!/b2A
-       real*8, parameter :: thetae  = 104.3475d0
-       real*8, parameter :: rad     = dacos(-1d0)/1.8d2
-       real*8, parameter :: ce      = dcos(thetae*rad)
-       real*8, parameter :: phh2    = 12.66426998162947d0!*b2A
-       real*8, parameter :: phh1    = 16.94879431193463d0*dexp(phh2)*f5z!/b2A)*f5z*cm2au ! )*f5z!
-       !real*8, parameter :: c5z(245) = &
-       !     [ ( f5z*c5zt(1)*2d0 + fbasis*cbasis(1)*2d0 + fcore*ccore(1)*2d0 + frest*crest(1)*2d0 ),&
-       !       ( f5z*c5zt(2:245) + fbasis*cbasis(2:245) + fcore*ccore(2:245) + frest*crest(2:245) )  ]*cm2au
-       
-       real*8, parameter :: c5z(245) = &                                                                             
-              ( f5z*c5z_temp(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) )!*cm2au ! Down There is the twooo 2 !!
-              !                                                                                                      \/
-
-
-
-contains !//////////////////////////////////////////////////////////////
-
-   subroutine vibpot(x,v,dr)!,n
-     !integer, intent(in)  :: n
-     real*8 , intent(in)  :: x(3,3)!x(OHH,xyz)                   !x(n,3,3)!h20,OHH,xyz
-     real*8 , intent(out) :: v,dr(9) !v(n),dr(9,n)
-     
-     
-   !internal variables       
-     real*8 ex, x1,x2,x3,vhh,voh1,voh2, x123(3)  !,rhh
-     integer j
-     real*8 fmat(15,3)!, c5z(245)
-     
-     real*8 v1(3),v2(3),r1,r2,cos_hoh 
-    !new: 
-     real*8 sum0,sum3,sum1,sum2,temp
-     integer idx10,idx20,idx30,idx11,idx21,idx31
-     logical, parameter :: do_grad = .true.!.false.
-     real*8 :: efac,exp1,exp2,dVa1,dVa2,Vb,dVb,dVcdr1,dVcdr2,dVcdcth,v12(3)   ,r12!   , cos_hoh !remove costh OR cos_hoh
-     integer ii
-     !------------------------------------------------------------------
-     ! Warning: This SR expepcts Units of Ångstöm in the configuration data
-     !------------------------------------------------------------------
-     
-     !do i=1,n
-          
-          !OHH order:      
-          v1  = ( x(2,:) - x(1,:) )!*A2b !x(i,2,:) - x(i,1,:) !H1-O
-          v2  = ( x(3,:) - x(1,:) )!*A2b !x(i,3,:) - x(i,1,:) !H2-O
-          v12 = ( x(2,:) - x(3,:) )!*A2b !H1-H2
-          
-          r1  = sqrt(sum( v1**2 ))
-          r2  = sqrt(sum( v2**2 ))
-          r12 = sqrt(sum( v12**2 ))
-          
-          cos_hoh = ( v1(1)*v2(1) + v1(2)*v2(2) + v1(3)*v2(3) ) / (r1*r2) !=cos(HOH) 
-          
-          
-          x1=(r1-reoh)/reoh
-          x2=(r2-reoh)/reoh
-          x3=cos_hoh-ce
-          x123 = [x1,x2,x3]
-          
-         
-         vhh=phh1*dexp(-phh2*r12)
-
-         !print*, "r1,r2, acos(cos_hoh):", r1*b2A,',',r2*b2A,',',acos(cos_hoh)*180d0/3.141592653589793238d0
-         ex=dexp(-alphaoh*(r1-roh))
-         voh1=deoh*ex*(ex-2d0)
-         
-         ex=dexp(-alphaoh*(r2-roh))
-         voh2=deoh*ex*(ex-2d0)
-         
-         
-         fmat(1,:)=1d0
-         do j=2,15
-            fmat(j,:)=fmat(j-1,:)*x123(:)
-            
-         enddo
-         
-         !v(i)=0d0
-         
-         
-         
-         
-         if (.not.do_grad) then
-            sum0 = 0
-            do j=2,245
-                sum0 = sum0 + c5z(j)*(fmat(idx1(j),1)*fmat(idx2(j),2) + fmat(idx2(j),1)*fmat(idx1(j),2)) * fmat(idx3(j),3)
-            enddo
-            v=sum0*dexp(-b1*((r1-reoh)**2+(r2-reoh)**2)) + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 ((withour the parenthesis  (voh1+v...) the order this term and c5z mattered in the 14th decimal of he outpot
-            !v(i)
-         else
-            sum0 = 0
-            sum1 = 0
-            sum2 = 0
-            sum3 = 0
-            do j=2,245
-               !v(i)=v(i)+c5z(j)*(fmat(idx(j,1),1)*fmat(idx(j,2),2) + fmat(idx(j,2),1)*fmat(idx(j,1),2)) * fmat(idx(j,3),3)
-               !term
-              !sum0 = sum0 + c5z[j]*(fmat[0][inI]    *fmat[1][inJ]     + fmat[0][inJ]    *fmat[1][inI])     * fmat[2][inK];
-               idx10 =  idx1(j)    !inI = idx1[j]
-               idx20 =  idx2(j)    !inJ = idx2[j]
-               idx30 =  idx3(j)    !inK = idx3[j]
-               idx11 = (idx1(j)-1)
-               idx21 = (idx2(j)-1)
-               idx31 = (idx3(j)-1)
-               
-               sum0  = sum0 + c5z(j)*( fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2) )*fmat(idx30,3)
-               sum3  = sum3 + c5z(j)*( fmat(idx10,1)*fmat(idx20,2) + fmat(idx20,1)*fmat(idx10,2) )*idx31*fmat(idx31,3)
-               sum1  = sum1 + c5z(j)*( idx11*fmat(idx11,1)*fmat(idx20,2) + idx21*fmat(idx21,1)*fmat(idx10,2) )*fmat(idx30,3)
-               sum2  = sum2 + c5z(j)*( idx21*fmat(idx10,1)*fmat(idx21,2) + idx11*fmat(idx20,1)*fmat(idx11,2) )*fmat(idx30,3)
-   
-            enddo
-            efac = dexp(-b1*(    (r1-reoh)**2 + (r2-reoh)**2   ))
-            exp1 = dexp(-alphaoh*(r1 - roh));
-            exp2 = dexp(-alphaoh*(r2 - roh));
-            dVa1= 2d0*alphaoh*deoh*exp1*(1d0 - exp1)/r1;
-            dVa2= 2d0*alphaoh*deoh*exp2*(1d0 - exp2)/r2;
-            Vb = phh1*dexp(-phh2*r12)!rhh);
-            dVb = -phh2*Vb/r12!rhh;
-              
-            v=sum0*efac + (voh1+voh2+vhh) + c5z(1)*2d0! here is the twooo 2 AGAINNNNNNNNNNNNNNNNNNN
-            !v(i)
-            
-             
-            dVcdr1 = (-2d0*b1*efac*(r1 - reoh)*sum0 + efac*sum1/reoh)/r1
-            dVcdr2 = (-2d0*b1*efac*(r2 - reoh)*sum0 + efac*sum2/reoh)/r2; 
-            dVcdcth = efac*sum3 
-            
-            do ii = 1,3 !(size_t i = 0; i < 3; ++i) {
-                 dr(3 + ii) = dVa1*v1(ii) + dVb*v12(ii) + dVcdr1*v1(ii) + dVcdcth*(v2(ii)/(r1*r2) - cos_hoh*v1(ii)/(r1*r1)) !H1
-                 dr(6 + ii) = dVa2*v2(ii) - dVb*v12(ii) + dVcdr2*v2(ii) + dVcdcth*(v1(ii)/(r1*r2) - cos_hoh*v2(ii)/(r2*r2)) !H2
-                 dr(0 + ii) = -( dr(3 + ii) + dr(6 + ii) ) ! O 
-                 
-            enddo
-            
-            !units out shoud be v[eV], dvdr[ev/A] ... 
-            dr=dr*cm1_eV!*h2eV*A2b !... Why is this unit correct? why not b2A? Because: dv/dr[eV/A] = dv/dr[h/b]*h2eV/b2A = dv/dr[h/b]*h2eV*A2b
-            v = v + 0.44739574026257d0 !*e1 += 0.44739574026257; // correction !!! this is the supidest shit ever!!
-            v=v  *cm1_eV!*h2eV
-            
-         endif
-         
-      !enddo
-   end subroutine
-end module
 
          !x1=(rij(i,1)-reoh)/reoh
          !x2=(rij(i,2)-reoh)/reoh

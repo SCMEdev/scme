@@ -12,6 +12,7 @@ print*, "ea0        :", ea0
 print*, "Deb_ea0    :", Deb_ea0    
 print*, "ea0_Deb    :", ea0_Deb    
 print*, "Deb_eA     :", Deb_eA     
+print*, "eA_Deb     :", eA_Deb     
 print*, "h_Js       :", h_Js       
 print*, "hbar_Js    :", hbar_Js    
 print*, "Eh_cm1     :", Eh_cm1     
@@ -23,4 +24,8 @@ print*, "E_cc       :", E_cc
 print*, "CHARGECON  :", CHARGECON  
 print*, "H_mass     :", H_mass     
 print*, "O_mass     :", O_mass     
+
+print*, ea0_Deb*A_a0
+print*, eA_Deb
 end program
+
