@@ -114,6 +114,7 @@ contains
     d3v = 0
     d4v = 0
     d5v = 0
+  print*, 0,d1v(:,1)
     
     !$$$      t1 = 0.0_dp
     !$$$      t2 = 0.0_dp
@@ -246,6 +247,7 @@ contains
     
     !     Copy all the permutations. (Is this really necessary??)
     !$$$      ti = irtc()
+  print*, 1,d1v(:,1)
     
     !$omp do 
     !!!!&
@@ -314,6 +316,7 @@ contains
     end do
     !$omp end do
     !$omp end parallel 
+  print*, 2,d1v(:,1)
     
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9
@@ -323,6 +326,7 @@ contains
     return
     
   end subroutine calcDv
+  
   
   !-----------------------------------------------------------------------
   pure subroutine insertIN(i, n) !JÖ pure

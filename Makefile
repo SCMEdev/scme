@@ -16,7 +16,8 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-opti = -O2 -fopenmp
+opti = -O0 
+#-fopenmp
 ## Flags for 49 passes at work:
 #-O2 -fopenmp 
 ## Flags for mor optimizations and 49 passes at home:
