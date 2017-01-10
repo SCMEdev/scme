@@ -16,10 +16,11 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-opti = -O0 
+opti = -O1 -fopenmp 
+#-O0 gives 13 errors at work 
 #-fopenmp
 ## Flags for 49 passes at work:
-#-O2 -fopenmp 
+#-O2 -fopenmp  
 ## Flags for mor optimizations and 49 passes at home:
 #-Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
 # -Ofast
@@ -27,7 +28,7 @@ FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR)
 CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
 #-fopenmp
 #-floop-unroll-and-jam -ftree-loop-if-convert
-vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution
+#vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution
 
 OBJ = $(addprefix $(OBJDIR)/, \
 	scme_ps.o calc_derivs.o calc_higher_order.o \

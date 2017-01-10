@@ -4,7 +4,7 @@ scme_src = ../src
 #test_build = build
 
 FC = gfortran
-FFLAGS = -Ofast -cpp -pg -I$(scme_mod) -fopenmp
+FFLAGS = -O0 -cpp -pg -I$(scme_mod) -fopenmp
 ## flags for home:
 #-Ofast -cpp -pg -I$(scme_mod) -fopenmp
 #-fopenmp 

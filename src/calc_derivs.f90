@@ -114,7 +114,8 @@ contains
     d3v = 0
     d4v = 0
     d5v = 0
-  print*, 0,d1v(:,1)
+  print*, "some tensor in calcDv"
+  print*, 0,d1v(:,2)
     
     !$$$      t1 = 0.0_dp
     !$$$      t2 = 0.0_dp
@@ -140,7 +141,7 @@ contains
                 crescent:do nz = -NCz, NCz
                    re(3) = a(3) * nz
                    
-                   if ( (n.eq.m) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) cycle crescent!goto 11
+                   if ( (n.eq.m) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) exit crescent!goto 11
                    
                    do i = 1, 3
                       dr(i) = rCM(i,n) - rCM(i,m)
@@ -152,7 +153,7 @@ contains
                    
                    r2 = sum(dr**2) !JÖ dr(1)**2 + dr(2)**2 + dr(3)**2
                    
-                   if (r2 .gt. rMax2) cycle crescent!JÖ goto 11
+                   if (r2 .gt. rMax2) exit crescent!JÖ goto 11
                    r1 = dsqrt(r2)
                    call SFdsf(r1, swFunc, dSdr)
                    
@@ -247,7 +248,7 @@ contains
     
     !     Copy all the permutations. (Is this really necessary??)
     !$$$      ti = irtc()
-  print*, 1,d1v(:,1)
+  print*, 1,d1v(:,2)
     
     !$omp do 
     !!!!&
@@ -316,7 +317,7 @@ contains
     end do
     !$omp end do
     !$omp end parallel 
-  print*, 2,d1v(:,1)
+  print*, 2,d1v(:,2)
     
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9

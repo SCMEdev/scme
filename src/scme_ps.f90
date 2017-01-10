@@ -442,6 +442,8 @@ contains
           
        end do
     end if
+    print*, "fafafafafafa: "
+    print*, fa
 
 
 ! ML: These print-statements makes up half the CPU usage for a
