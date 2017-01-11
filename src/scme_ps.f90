@@ -36,6 +36,7 @@ module scme
   use ps_dms, only: vibdms
   use ps_pot, only: vibpes
   use constants, only:A_a0, ea0_Deb, eA_Deb
+  use printer_mod!, only: printer
 
   implicit none
   private
@@ -74,6 +75,8 @@ contains
     !real(dp), parameter :: kk1 = ea0_Deb!2.5417709_dp !au2deb
     !real(dp), parameter :: au2deb = kk1 !1.88972612456506198632=A_a0
     !real(dp), parameter :: kk2 = A_a0    !1.88972666351031921149_dp !A2b
+    real(dp), parameter :: kk1 = 2.5417709_dp
+    real(dp), parameter :: kk2 = 1.88972666351031921149_dp
     real(dp), parameter :: convFactor = 14.39975841_dp / 4.803206799_dp**2 ! e**2[eVÅ]=[eVm / (e*10**10[statcol])**2
     real(dp), parameter :: rMax = 11.0_dp
     real(dp), parameter :: rMax2 = rMax*rMax
@@ -171,6 +174,7 @@ contains
     real(dp) :: qdms(3)
     real(dp) :: dms(3)
     real(dp), save :: dipmom2(3)
+    integer iteration
     
     ! ----------------------------
     ! Set initial Intitial values.
@@ -205,7 +209,7 @@ contains
     call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
 
     ! call Partridge-Schwenke dipole moment surface routine.
-    print*, "DIPOLE"
+!    print*, "DIPOLE"
     if (useDMS) then
        do i = 1,nM
           indH1 = 6*(i-1)
@@ -233,29 +237,29 @@ contains
           
           dms = 0
           call vibdms(ps_mol_dip,dms) !the coordinates in , the dipole out, an one of them only
-          print*, ' norm(dms):',sqrt(sum(dms**2))*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
-          print*, '       dms:',              dms*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
+!          print*, ' norm(dms):',sqrt(sum(dms**2))*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
+!          print*, '       dms:',              dms*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
           
           
           
-          !qdms = 0
-          !call dmsnasa2(mol,qdms)
-          !print*, 'norm(qdms):',sqrt(sum(qdms**2))*au2deb
-          !print*, '      qdms:',qdms*au2deb
+          qdms = 0
+          call dmsnasa2(mol,qdms)
+!          print*, 'norm(qdms):',sqrt(sum(qdms**2))*au2deb
+!          print*, '      qdms:',qdms*au2deb
           
           ! Calculate dipole moment wrt center of mass.
-          !dipmom(:) = 0.0_dp
+          dipmom(:) = 0.0_dp
           !dipmom2(:) = 0.0_dp
           
-          !do p=1,3
-          !!   dipmom2(p) = dipmom2(p) + dms(1)*(ps_mol_dip(1,p)-rCM(p,i))
-          !!   dipmom2(p) = dipmom2(p) + dms(2)*(ps_mol_dip(2,p)-rCM(p,i))
-          !!   dipmom2(p) = dipmom2(p) + dms(3)*(ps_mol_dip(3,p)-rCM(p,i))
-          !   
-          !   dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
-          !   dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
-          !   dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
-          !end do
+          do p=1,3
+          !   dipmom2(p) = dipmom2(p) + dms(1)*(ps_mol_dip(1,p)-rCM(p,i))
+          !   dipmom2(p) = dipmom2(p) + dms(2)*(ps_mol_dip(2,p)-rCM(p,i))
+          !   dipmom2(p) = dipmom2(p) + dms(3)*(ps_mol_dip(3,p)-rCM(p,i))
+             
+             dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
+             dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
+             dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
+          end do
           
           
           
@@ -268,7 +272,7 @@ contains
           ! Set unpolarized dipoles to Partridge-Schwenke dipoles
           ! using conversion constants for eA -> D.
           do p=1,3
-             dpole0(p,i) = dms(p)*eA_Deb! dipmom(p)*ea0_Deb*A_a0!*kk1*kk2   dms(p)*ea0_Deb*A_a0! 
+             dpole0(p,i) =  dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!    dms(p)*eA_Deb! 
           end do
        end do
     end if
@@ -284,25 +288,52 @@ contains
 
     ! Here's where the induction loop begins.
     converged = .false.
+    iteration = 0
     do while (.not. converged)
+    iteration = iteration + 1
 
        ! NEEDS DOCUMENTATION
        call calcEdip_quad(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+call printer(iteration,'HHHHHHHHHHHHHHHHHH iteration')
+!call printer(uD,'uD')
+!call printer(uQ,'uQ')
+!call printer(eD,'eD')
+!call printer(dEddr,'dEddr')
+
+!call printer(qpole,'qpole')
+
 
        call addFields(eH, eD, eT, nM)
        call addDfields(dEhdr, dEddr, dEtdr, nM)
+call printer(eD, 'eD')
+call printer(eT, 'eT')
+call printer(eH, 'eH')
+call printer(dEhdr, 'dEhdr')
+call printer(dEddr, 'dEddr')
+call printer(dEtdr, 'dEtdr')
+       
 
        ! Induce dipoles and quadrupoles.
        converged = .true.
+
+!call printer(dpole,'dpole before induce')
        call induceDipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+!call printer(dpole,'dpole after ind.')
+
+!print*, '>>>>>>dpole after HERE', dpole
+!call printer(qpole,'qpole before induce')
        call induceQpole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+!call printer(qpole,'qpole after ind.')
 
     end do
 
     ! With the polarized multipoles, calculate the derivarives of the
     ! electrostatic potential, up to 5th order.
+!print*, 'dpole before calcDv: ', dpole
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)
 
+!print*, 'calcDv derivs: ', d1v,d2v,d3v
+!print*, 'fsf after calcdv:', fsf
     ! Compute the force on the center of mass.
     call forceCM(dpole, qpole, opole, hpole, d2v, d3v, d4v, d5v, nM, fsf, fCM)
 
@@ -366,10 +397,10 @@ contains
           call potnasa2(mol,grad,uPES1)
           
           !> Debug --------------------------------------
-          do jjj=1,9,3
-             print*, 'grad:',grad(jjj),grad(jjj+1),grad(jjj+2)
-          enddo
-          print*, 'uPES1', uPES1
+       !   do jjj=1,9,3
+       !      print*, 'grad:',grad(jjj),grad(jjj+1),grad(jjj+2)
+       !   enddo
+       !   print*, 'uPES1', uPES1
           !< --------------------------------------------
           
           ! comment to use the fortran routine
@@ -397,10 +428,10 @@ contains
           call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
           !> Debug --------------------------------------
-          do jjj=1,9,3
-             print*, 'ps_grad:',ps_grad(jjj),ps_grad(jjj+1),ps_grad(jjj+2)!*h2eV*A2b
-          enddo
-          print*, 'ps_pes:', ps_pes!*h2eV
+       !   do jjj=1,9,3
+       !      print*, 'ps_grad:',ps_grad(jjj),ps_grad(jjj+1),ps_grad(jjj+2)!*h2eV*A2b
+       !   enddo
+       !   print*, 'ps_pes:', ps_pes!*h2eV
           !< --------------------------------------------
           
           
@@ -442,8 +473,8 @@ contains
           
        end do
     end if
-    print*, "fafafafafafa: "
-    print*, fa
+!    print*, "fa in the end: "
+!    print*, fa
 
 
 ! ML: These print-statements makes up half the CPU usage for a

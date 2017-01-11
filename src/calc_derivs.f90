@@ -23,6 +23,8 @@ contains
     real(dp), intent(in) ::  opole(:,:,:,:), hpole(:,:,:,:,:)
     !, target :: dpole(:,:), qpole(:,:,:)
     !, target :: opole(:,:,:,:), hpole(:,:,:,:,:)
+
+
     
     real(dp), intent(in) ::   rMax2
     logical*1, intent(in) ::  iSlab
@@ -30,6 +32,9 @@ contains
     real(dp), intent(out) ::  fsf(:,:)
     real(dp), intent(out) ::  d1v(:,:), d2v(:,:,:), d3v(:,:,:,:)
     real(dp), intent(out) ::  d4v(:,:,:,:,:), d5v(:,:,:,:,:,:) 
+
+                  
+
 
 !JÖ internal: (trying the save option)     
     real(dp), save :: d1d(3), d2d(3,3), d3d(3,3,3)
@@ -114,8 +119,8 @@ contains
     d3v = 0
     d4v = 0
     d5v = 0
-  print*, "some tensor in calcDv"
-  print*, 0,d1v(:,2)
+!  print*, "some tensor in calcDv"
+!  print*, 0,d1v(:,2)
     
     !$$$      t1 = 0.0_dp
     !$$$      t2 = 0.0_dp
@@ -126,11 +131,17 @@ contains
     NCz = NC
     if (iSlab) NCz = 0
     
-    !$omp parallel &
-    !$omp default(private) &
-    !$omp shared(nM, NC, a, NCz, rCM, a2, rMax2, d1v, d2v, d3v, d4v, d5v,dpole,qpole,opole,hpole,iSlab,fsf)
+    !!$omp parallel &
+    !!$omp default(none) &
+    !!$omp private(d1d,d2d,d3d,d4d,d5d,  d1a,d2a,d3a,d4a,d5a, d1v,d2v,d3v,d4v,d5v,  re, dr, r1, r2, &
+    !!$omp         swFunc, dSdr, i, j, k, l, s, m, n, ii, nx, ny, nz, in2,in3,in4,in5  ) &   !,d,q,o,h
+    !!$omp shared(nM, NC, a, NCz, rCM, a2, rMax2,dpole,qpole,opole,hpole,iSlab,fsf)
+! d,q,o,h
+!    !$omp default(private) &
+
     
-    !$omp do
+    !!$omp do
+    !JÖ loop over all water pairs:
     do n = 1, nM
        do m = 1, nM
           
@@ -141,7 +152,8 @@ contains
                 crescent:do nz = -NCz, NCz
                    re(3) = a(3) * nz
                    
-                   if ( (n.eq.m) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) exit crescent!goto 11
+                   !JÖ is same particle in same box, skip calculation:
+                   if ( (n.eq.m) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) cycle crescent!goto 11
                    
                    do i = 1, 3
                       dr(i) = rCM(i,n) - rCM(i,m)
@@ -153,7 +165,9 @@ contains
                    
                    r2 = sum(dr**2) !JÖ dr(1)**2 + dr(2)**2 + dr(3)**2
                    
-                   if (r2 .gt. rMax2) exit crescent!JÖ goto 11
+                   !JÖ Also if the distance is larger than the cutoff, skip calculation:
+                   if (r2 .gt. rMax2) cycle crescent!JÖ goto 11
+                   
                    r1 = dsqrt(r2)
                    call SFdsf(r1, swFunc, dSdr)
                    
@@ -162,7 +176,7 @@ contains
                    !   d(i) = dpole(i,m)
                    !end do
                    !                     call dDpole(d, dr, d1d, d2d, d3d, d4d, d5d)
-                   !d => dpole(:,m)
+                   !d = dpole(:,m)
                    !call dDpole(d, dr, d1a, d2a, d3a, d4a, d5a)
                    call dDpole(dpole(:,m), dr, d1a, d2a, d3a, d4a, d5a)
                    
@@ -181,7 +195,7 @@ contains
                    !   end do
                    !end do
                    
-                   !q => qpole(:,:,m)
+                   !q = qpole(:,:,m)
                    !call dQpole(q, dr, d1d, d2d, d3d, d4d, d5d)
                    call dQpole(qpole(:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
@@ -196,7 +210,7 @@ contains
                    !      end do
                    !   end do
                    !end do
-                   !o => opole(:,:,:,m)
+                   !o = opole(:,:,:,m)
                    !call dOpole(o, dr, d1d, d2d, d3d, d4d, d5d)
                    call dOpole(opole(:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
@@ -213,7 +227,7 @@ contains
                    !      end do
                    !   end do
                    !end do
-                   !h => hpole(:,:,:,:,m)
+                   !h = hpole(:,:,:,:,m)
                    !call dHpole(h, dr, d1d, d2d, d3d, d4d, d5d)
                    call dHpole(hpole(:,:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
@@ -233,7 +247,8 @@ contains
           end do
        end do
     end do
-    !$omp end do 
+    !!$omp end do 
+    !!$omp end parallel
     
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9
@@ -248,13 +263,18 @@ contains
     
     !     Copy all the permutations. (Is this really necessary??)
     !$$$      ti = irtc()
-  print*, 1,d1v(:,2)
+!  print*, 1,d1v(:,2)
     
-    !$omp do 
+    !!$omp parallel do &
+    !!$omp private
+    
+    
     !!!!&
     !!!!!$omp default(private) &
     !!!!!$omp shared(d2v, d3v, d4v, d5v)
-
+    
+    
+    !!$omp do
     do i = 1, 3
        do j = 1, 3
           !in2(1) = i
@@ -315,9 +335,9 @@ contains
           end do
        end do
     end do
-    !$omp end do
-    !$omp end parallel 
-  print*, 2,d1v(:,2)
+    !!$omp end do
+    !!$omp end parallel 
+!  print*, 2,d1v(:,2)
     
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9
@@ -396,27 +416,27 @@ contains
 !    integer n, i, j, k, l, s
 
     
-    !do i = 1, 3
-    !   d1v(i,n) = d1v(i,n) + d1d(i) * swFunc
-    !   do j = i, 3
-    !      d2v(i,j,n) = d2v(i,j,n) + d2d(i,j) * swFunc
-    !      do k = j, 3
-    !         d3v(i,j,k,n) = d3v(i,j,k,n) + d3d(i,j,k) * swFunc
-    !         do l = k, 3
-    !            d4v(i,j,k,l,n) = d4v(i,j,k,l,n) + d4d(i,j,k,l) * swFunc
-    !            do s = l, 3
-    !               d5v(i,j,k,l,s,n) = d5v(i,j,k,l,s,n) + d5d(i,j,k,l,s ) * swFunc
-    !            end do
-    !         end do
-    !      end do
-    !   end do
-    !end do
+    do i = 1, 3
+       d1v(i,n) = d1v(i,n) + d1d(i) * swFunc
+       do j = i, 3
+          d2v(i,j,n) = d2v(i,j,n) + d2d(i,j) * swFunc
+          do k = j, 3
+             d3v(i,j,k,n) = d3v(i,j,k,n) + d3d(i,j,k) * swFunc
+             do l = k, 3
+                d4v(i,j,k,l,n) = d4v(i,j,k,l,n) + d4d(i,j,k,l) * swFunc
+                do s = l, 3
+                   d5v(i,j,k,l,s,n) = d5v(i,j,k,l,s,n) + d5d(i,j,k,l,s ) * swFunc
+                end do
+             end do
+          end do
+       end do
+    end do
     
-    d1v(:,n)          = d1v(:,n)         + d1d * swFunc
-    d2v(:,:,n)        = d2v(:,:,n)       + d2d * swFunc
-    d3v(:,:,:,n)      = d3v(:,:,:,n)     + d3d * swFunc
-    d4v(:,:,:,:,n)    = d4v(:,:,:,:,n)   + d4d * swFunc
-    d5v(:,:,:,:,:,n)  = d5v(:,:,:,:,:,n) + d5d * swFunc
+    !d1v(:,n)          = d1v(:,n)         + d1d * swFunc
+    !d2v(:,:,n)        = d2v(:,:,n)       + d2d * swFunc
+    !d3v(:,:,:,n)      = d3v(:,:,:,n)     + d3d * swFunc
+    !d4v(:,:,:,:,n)    = d4v(:,:,:,:,n)   + d4d * swFunc
+    !d5v(:,:,:,:,:,n)  = d5v(:,:,:,:,:,n) + d5d * swFunc
     
     return
     
@@ -444,27 +464,27 @@ contains
 !    integer n, i, j, k, l, s
 
     
-    !do i = 1, 3
-    !   d1a(i) = d1a(i) + d1d(i)
-    !   do j = i, 3
-    !      d2a(i,j) = d2a(i,j) + d2d(i,j)
-    !      do k = j, 3
-    !         d3a(i,j,k) = d3a(i,j,k) + d3d(i,j,k)
-    !         do l = k, 3
-    !            d4a(i,j,k,l) = d4a(i,j,k,l) + d4d(i,j,k,l)
-    !            do s = l, 3
-    !               d5a(i,j,k,l,s) = d5a(i,j,k,l,s) + d5d(i,j,k,l,s)
-    !            end do
-    !         end do
-    !      end do
-    !   end do
-    !end do
+    do i = 1, 3
+       d1a(i) = d1a(i) + d1d(i)
+       do j = i, 3
+          d2a(i,j) = d2a(i,j) + d2d(i,j)
+          do k = j, 3
+             d3a(i,j,k) = d3a(i,j,k) + d3d(i,j,k)
+             do l = k, 3
+                d4a(i,j,k,l) = d4a(i,j,k,l) + d4d(i,j,k,l)
+                do s = l, 3
+                   d5a(i,j,k,l,s) = d5a(i,j,k,l,s) + d5d(i,j,k,l,s)
+                end do
+             end do
+          end do
+       end do
+    end do
 
-    d1a = d1a + d1d !* swFunc
-    d2a = d2a + d2d !* swFunc
-    d3a = d3a + d3d !* swFunc
-    d4a = d4a + d4d !* swFunc
-    d5a = d5a + d5d !* swFunc
+    !d1a = d1a + d1d !* swFunc
+    !d2a = d2a + d2d !* swFunc
+    !d3a = d3a + d3d !* swFunc
+    !d4a = d4a + d4d !* swFunc
+    !d5a = d5a + d5d !* swFunc
 
     
     return
@@ -499,29 +519,29 @@ contains
     !     Copy all the permutations.
     do i = 1, 3
        do j = 1, 3
-          !in2(1) = i
-          !in2(2) = j
-          in2 = [i,j]
+          in2(1) = i
+          in2(2) = j
+          !in2 = [i,j]
           call insertIN(in2, 2)
           
           d2a(i,j) = d2a(in2(1), in2(2))
           
           do k = 1, 3
-             !do ii = 1, 2
-             !   in3(ii) = in2(ii)
-             !end do
-             !in3(3) = k
-             in3 = [in2, k]
+             do ii = 1, 2
+                in3(ii) = in2(ii)
+             end do
+             in3(3) = k
+             !in3 = [in2, k]
              call insertIN(in3, 3)
              
              d3a(i,j,k) = d3a(in3(1),in3(2),in3(3))
              
              do l = 1, 3
-                !do ii = 1, 3
-                !   in4(ii) = in3(ii)
-                !end do
-                !in4(4) = l
-                in4 = [in3, l]
+                do ii = 1, 3
+                   in4(ii) = in3(ii)
+                end do
+                in4(4) = l
+                !in4 = [in3, l]
                 call insertIN(in4, 4)
                 
                 d4a(i,j,k,l) = d4a(in4(1),in4(2),in4(3),in4(4))
@@ -531,33 +551,33 @@ contains
        end do
     end do
     
-!JÖ    u = 0.0_dp
-!JÖ    do i = 1, 3
-!JÖ       u = u + d1a(i) * dpole(i,n)
-!JÖ       do j = 1, 3
-!JÖ          u = u + d2a(i,j) * qpole(i,j,n) / 3.0_dp
-!JÖ          do k = 1, 3
-!JÖ             u = u + d3a(i,j,k) * opole(i,j,k,n) / 15.0_dp
-!JÖ             do l = 1, 3
-!JÖ                u = u + d4a(i,j,k,l) * hpole(i,j,k,l,n) / 105.0_dp
-!JÖ             end do
-!JÖ          end do
-!JÖ       end do
-!JÖ    end do
-
     u = 0.0_dp
     do i = 1, 3
        u = u + d1a(i) * dpole(i,n)
        do j = 1, 3
-          u = u + d2a(j,i) * qpole(j,i,n) / 3.0_dp
+          u = u + d2a(i,j) * qpole(i,j,n) / 3.0_dp
           do k = 1, 3
-             u = u + d3a(k,j,i) * opole(k,j,i,n) / 15.0_dp
+             u = u + d3a(i,j,k) * opole(i,j,k,n) / 15.0_dp
              do l = 1, 3
-                u = u + d4a(l,k,j,i) * hpole(l,k,j,i,n) / 105.0_dp
+                u = u + d4a(i,j,k,l) * hpole(i,j,k,l,n) / 105.0_dp
              end do
           end do
        end do
     end do
+
+!JÖ my version, its baed, or not, we'll see    u = 0.0_dp !JÖ is this chit correct, check it!
+!JÖ my version, its baed, or not, we'll see    do i = 1, 3
+!JÖ my version, its baed, or not, we'll see       u = u + d1a(i) * dpole(i,n)
+!JÖ my version, its baed, or not, we'll see       do j = 1, 3
+!JÖ my version, its baed, or not, we'll see          u = u + d2a(j,i) * qpole(j,i,n) / 3.0_dp
+!JÖ my version, its baed, or not, we'll see          do k = 1, 3
+!JÖ my version, its baed, or not, we'll see             u = u + d3a(k,j,i) * opole(k,j,i,n) / 15.0_dp
+!JÖ my version, its baed, or not, we'll see             do l = 1, 3
+!JÖ my version, its baed, or not, we'll see                u = u + d4a(l,k,j,i) * hpole(l,k,j,i,n) / 105.0_dp
+!JÖ my version, its baed, or not, we'll see             end do
+!JÖ my version, its baed, or not, we'll see          end do
+!JÖ my version, its baed, or not, we'll see       end do
+!JÖ my version, its baed, or not, we'll see    end do
 
     
     u = -u * dSdr / r1
@@ -611,7 +631,7 @@ contains
 !    real(dp) ddy3ls, dz2s, dy3s, dz3s
 
     
-    r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
+    r2 = r(1)**2 + r(2)**2 + r(3)**2 !sum(r**2) !JÖ 
     r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2
@@ -626,7 +646,7 @@ contains
     r11 =      945.0_dp / r11
     r13 =   -10395.0_dp / r13
     
-    rd = sum(r*d) !JÖ r(1)*d(1) + r(2)*d(2) + r(3)*d(3)
+    rd = r(1)*d(1) + r(2)*d(2) + r(3)*d(3) !sum(r*d) !JÖ 
     
     do i = 1, 3
        d1d(i) = d(i) * r3 + rd * r(i) * r5
@@ -757,7 +777,7 @@ contains
     real(dp) :: dddt3kls, dt2s, ddt2ls, ddy2ls, ddt2ks, dy1s, dz2s
     real(dp) :: ddt3ks, dy2s, ddt3ls, dt3s, ddy3ls, dz3s, dy3s, dz4s
     
-    r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
+    r2 =  r(1)**2 + r(2)**2 + r(3)**2 !sum(r**2) !JÖ
     r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2
@@ -943,7 +963,7 @@ contains
          dz3s, dy4s, dz4s
     
     
-    r2 = sum(r**2) !JÖ r(1)**2 + r(2)**2 + r(3)**2
+    r2 = r(1)**2 + r(2)**2 + r(3)**2 !sum(r**2) !JÖ 
     r3 = dsqrt(r2) * r2
     r5 = r3 * r2
     r7 = r5 * r2

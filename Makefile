@@ -16,7 +16,8 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-opti = -O1 -fopenmp 
+opti = -O0
+#-fopenmp 
 #-O0 gives 13 errors at work 
 #-fopenmp
 ## Flags for 49 passes at work:
@@ -38,7 +39,7 @@ OBJ = $(addprefix $(OBJDIR)/, \
 	inducePoles.o forceCM_mod.o torqueCM_mod.o \
 	atomicForces_mod.o molforce.o tang_toennies.o mdutil.o \
 	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o\
-	ps_pot.o ps_dms.o constants.o)
+	ps_pot.o ps_dms.o constants.o printer_mod.o)
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
@@ -96,6 +97,8 @@ $(OBJDIR)/multipole_parameters.o\
 $(OBJDIR)/ps.o \
 $(NEW)/ps_pot.o \
 $(NEW)/ps_dms.o \
+$(OBJDIR)/printer_mod.o \
+
 
 $(OBJDIR)/atomicForces_mod.o:	\
 $(OBJDIR)/data_types.o		\

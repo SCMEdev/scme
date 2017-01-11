@@ -47,10 +47,9 @@ contains
     
     uD = 0.0_dp
     uQ = 0.0_dp
-    !$omp parallel do shared(rCM, a, a2, NC, uD, uQ, NCz,rMax2, dEdr, nM) &
-    !$omp private(eT, jj, kk, nx, i, j, k, re, ny, nz, dr, r2, r1, swFunc, r3, r5, r7, eD, dpole, u, dEdr1, eq, qpole) &
-    !$omp default(none)
-    !default(private)
+!    !$omp parallel do shared(rCM, a, a2, NC, uD, uQ, NCz,rMax2, dEdr, nM) &
+!    !$omp private(eT, jj, kk, nx, i, j, k, re, ny, nz, dr, r2, r1, swFunc, r3, r5, r7, eD, dpole, u, dEdr1, eq, qpole) &
+!    !$omp default(none)
     do i = 1, nM
        do jj = 1, 3
           eT(jj,i) = 0.0_dp
@@ -65,8 +64,8 @@ contains
              do nz = -NCz, NCz
                 re(3) = a(3) * nz
                 
-                do j = 1, nM
-                   if ( (j.eq.i) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) goto 11
+                bike:do j = 1, nM
+                   if ( (j.eq.i) .and. (nx.eq.0) .and. (ny.eq.0) .and. (nz.eq.0)) cycle bike !goto 11
                    do k = 1, 3
                       dr(k) = rCM(k,i) - rCM(k,j)
                       if (dr(k) .gt. a2(k)) then
@@ -78,7 +77,7 @@ contains
                    end do
                    r2 = dr(1)**2 + dr(2)**2 + dr(3)**2
                    
-                   if (r2 .gt. rMax2) goto 11
+                   if (r2 .gt. rMax2) cycle bike !goto 11
                    r1 = sqrt(r2)
                    call SF(r1, swFunc)
                    
@@ -89,18 +88,18 @@ contains
                    !     Dipole Field
                    call dField(dr, r2, r3, r5, eD, dpole, u, dEdr1, j)
                    uD = uD + u
-                   !do k = 1, 3
-                   !   eT(k,i) = eT(k,i) + eD(k) * swFunc
-                   !   do l = 1, 3
-                   !      dEdr(k,l,i) = dEdr(k,l,i) + dEdr1(k,l) * swFunc
-                   !   end do
-                   !end do
+                   do k = 1, 3
+                      eT(k,i) = eT(k,i) + eD(k) * swFunc
+                      do l = 1, 3
+                         dEdr(k,l,i) = dEdr(k,l,i) + dEdr1(k,l) * swFunc
+                      end do
+                   end do
                    
-                   !for i = 1:3
-                     eT(:,i)     = eT(:,i)     + eD(:)*swFunc
-                       !for j=1:3
-                       dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:)*swFunc
-                   !endfor**2
+                !   !for i = 1:3
+                !     eT(:,i)     = eT(:,i)     + eD(:)*swFunc
+                !       !for j=1:3
+                !       dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:)*swFunc
+                !   !endfor**2
                    
                    
                    !     Quadrupole Field
@@ -116,12 +115,13 @@ contains
                          dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:) * swFunc
                    
                    
-11              end do
+!11              end do
+                end do bike
              end do
           end do
        end do
     end do
-    !$omp end parallel do 
+!    !$omp end parallel do 
     return
     
   end subroutine calcEdip_quad
@@ -150,28 +150,30 @@ contains
 !, save  
 !, save      
     mDr = dpole(1,m)*dr(1) + dpole(2,m)*dr(2) + dpole(3,m)*dr(3)
-    !do i = 1, 3
-    !   eD(i) = (3.0_dp * mDr * dr(i) / r2 - dpole(i,m)) / r3
-    !   do j = i, 3
-    !      dEdr(i,j) = (dpole(i,m) * dr(j) + dpole(j,m) * dr(i) - 5.0_dp &
-    !           * mDr * dr(i) * dr(j) / r2) * 3.0_dp / r5
-    !      if (i.eq.j) then
-    !         dEdr(i,j) = dEdr(i,j) + mDr * 3.0_dp / r5
-    !      end if
-    !   end do
-    !end do
-    !JÖ>>
-    eD(:) = (3.0_dp * mDr * dr(:) / r2 - dpole(:,m)) / r3
-    do i = 1, 3
-      do j = i, 3
-        dEdr(i,j) = (dpole(i,m) * dr(j) + dpole(j,m) * dr(i) - 5.0_dp * mDr * dr(i) * dr(j) / r2) * 3.0_dp / r5
-      enddo
-    enddo
     
-    temp = mDr * 3.0_dp / r5
-    dEdr(1,1) = dEdr(1,1) + temp ! + mDr * 3.0_dp / r5
-    dEdr(2,2) = dEdr(2,2) + temp ! + mDr * 3.0_dp / r5
-    dEdr(3,3) = dEdr(3,3) + temp ! + mDr * 3.0_dp / r5
+    do i = 1, 3
+       eD(i) = (3.0_dp * mDr * dr(i) / r2 - dpole(i,m)) / r3
+       do j = i, 3
+          dEdr(i,j) = (dpole(i,m) * dr(j) + dpole(j,m) * dr(i) - 5.0_dp &
+               * mDr * dr(i) * dr(j) / r2) * 3.0_dp / r5
+          if (i.eq.j) then
+             dEdr(i,j) = dEdr(i,j) + mDr * 3.0_dp / r5
+          end if
+       end do
+    end do
+    
+    !JÖ>>
+    !eD(:) = (3.0_dp * mDr * dr(:) / r2 - dpole(:,m)) / r3
+    !do i = 1, 3
+    !  do j = i, 3
+    !    dEdr(i,j) = (dpole(i,m) * dr(j) + dpole(j,m) * dr(i) - 5.0_dp * mDr * dr(i) * dr(j) / r2) * 3.0_dp / r5
+    !  enddo
+    !enddo
+    
+    !temp = mDr * 3.0_dp / r5
+    !dEdr(1,1) = dEdr(1,1) + temp ! + mDr * 3.0_dp / r5
+    !dEdr(2,2) = dEdr(2,2) + temp ! + mDr * 3.0_dp / r5
+    !dEdr(3,3) = dEdr(3,3) + temp ! + mDr * 3.0_dp / r5
     !enddo
     !<<JÖ
     
@@ -217,31 +219,31 @@ contains
        end do
     end do
     
-    eq(:) = 2.0_dp * (2.5_dp * rQr / r2 * dr(:) - v(:)) / r5
-
-!JÖ    do i = 1, 3
-!JÖ       eq(i) = 2.0_dp * (2.5_dp * rQr / r2 * dr(i) - v(i)) / r5
-!JÖ       do j = i, 3
-!JÖ          dEdr(i,j) = (-2.0_dp * qpole(i,j,m) * r2 + 10.0_dp * (v(j) &
-!JÖ               * dr(i) + v(i) * dr(j)) - 35.0_dp * rQr * dr(i) * dr(j) / r2) / r7
-!JÖ          if (i.eq.j) then
-!JÖ             dEdr(i,j) = dEdr(i,j) + 5.0_dp * rQr / r7
-!JÖ          end if
-!JÖ       end do
-!JÖ    end do
+!oJÖ    eq(:) = 2.0_dp * (2.5_dp * rQr / r2 * dr(:) - v(:)) / r5 !JÖ
 
     do i = 1, 3
+       eq(i) = 2.0_dp * (2.5_dp * rQr / r2 * dr(i) - v(i)) / r5
        do j = i, 3
           dEdr(i,j) = (-2.0_dp * qpole(i,j,m) * r2 + 10.0_dp * (v(j) &
                * dr(i) + v(i) * dr(j)) - 35.0_dp * rQr * dr(i) * dr(j) / r2) / r7
+          if (i.eq.j) then
+             dEdr(i,j) = dEdr(i,j) + 5.0_dp * rQr / r7
+          end if
        end do
     end do
 
+!oJÖ    do i = 1, 3
+!oJÖ       do j = i, 3
+!oJÖ          dEdr(i,j) = (-2.0_dp * qpole(i,j,m) * r2 + 10.0_dp * (v(j) &
+!oJÖ               * dr(i) + v(i) * dr(j)) - 35.0_dp * rQr * dr(i) * dr(j) / r2) / r7
+!oJÖ       end do
+!oJÖ    end do
+
     
-    temp = 5.0_dp * rQr / r7
-    dEdr(1,1) = dEdr(1,1) + temp
-    dEdr(2,2) = dEdr(2,2) + temp
-    dEdr(3,3) = dEdr(3,3) + temp
+!    temp = 5.0_dp * rQr / r7
+!    dEdr(1,1) = dEdr(1,1) + temp
+!    dEdr(2,2) = dEdr(2,2) + temp
+!    dEdr(3,3) = dEdr(3,3) + temp
     
     
     !      u = rQr / r5

@@ -1,6 +1,15 @@
-har ändrat på ps.cpp som ligger i new/ men inte den som är i originalmappen. 
+Jag håller på att testa calcDv. 
 
-Q: Ska jag skriva om den rutinen i Fortran, eftersom den är snyggare och snabbare än originalkoden, 
-    eller ska jag istället inkorporera LODIS dipolyta? 
-   Jag tror inte noggrannheten i Lodis yta är nödvändig, och koden var hemsk. 
-A: Jag skriver om ps.cpp i Fortran. Kanske till och med kan hitta en översättare. 
+det är openMP som ger NaN men även utan detta så är det lite skillnad mot originalrutinen. 
+Har originalrutinen i /home/git1/
+
+, onsdag: 
+i vilket koordinatsystem får vi ut tau? 
+Den kanske måste vridas på för nu är inte längre multipolens koordinatsystem desamma som massans koordinatsystem. 
+Så vi måste gå genom det globala koordinatsystemet för att få till det. 
+
+probably my change in the swiching force is incorrect!!!!!!!!!!!!!!!!!!!
+
+
+----
+now i am looking at the error in calcDv, and narrowed it down to where the 'call printer()' statements are in scme_ps.f90 scme.f90
