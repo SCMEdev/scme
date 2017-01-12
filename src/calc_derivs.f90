@@ -1,8 +1,9 @@
 module calc_derivs
   
   use data_types
-  use max_parameters
-  use molecProperties, only: SFdsf
+!  use max_parameters
+  !use molecProperties, only: SFdsf
+  use sf_disp_tangtoe, only: SFdsf
   
   implicit none
   

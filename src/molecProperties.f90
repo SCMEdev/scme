@@ -9,12 +9,13 @@
 module molecProperties
 
   use data_types
-  use max_parameters
-  use tang_toennies, only: Tang_ToenniesN, Tang_ToenniesNdF
+!  use max_parameters
+  !use tang_toennies, only: Tang_ToenniesN, Tang_ToenniesNdF
+  use sf_disp_tangtoe, only: SF, SFdsf
 
   private
   public recoverMolecules, calcCentersOfMass, findPpalAxes, rotatePoles,&
-       rotatePolariz, setUnpolPoles, addFields, addDfields, SF, SFdsf
+       rotatePolariz, setUnpolPoles, addFields, addDfields !, SF, SFdsf
 
 contains
 
@@ -520,139 +521,139 @@ contains
   !        end subroutine applyPBC
 
   !-----------------------------------------------------------------------
-  pure subroutine SF(r, swFunc)
-
-    implicit none
-    real(dp), intent(in) :: r !JÖ
-    real(dp), intent(out) :: swFunc !JÖ
-    real(dp) x, x2, x3, rSW, rCut, dr     !JÖ r, swFunc, 
-    !JÖ , save ::
-!JÖ    real(dp), save :: rL1, rL2, rH1, rH2
-    real(dp), parameter :: rL1 = 0.0_dp
-    real(dp), parameter :: rL2 = 9.0_dp
-    real(dp), parameter :: rH1 = 5.0_dp
-    real(dp), parameter :: rH2 = 11.0_dp
-    
-    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-!JÖ    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
-    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
-!JÖ     save
-
-
-    !     Kroes
-    !$$$      rSW = 8.d0
-    !$$$      rCut = 9.d0
-    !$$$
-    !$$$      x = (r - rSW)/(rCut - rSW)
-    !$$$
-    !$$$      if (r. lt. rSW) then
-    !$$$         swFunc = 1.0d0
-    !$$$      else if(r .lt. rCut) then
-    !$$$         x2 = x * x
-    !$$$         x3 = x2 * x
-    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    !$$$      else
-    !$$$         swFunc = 0.0d0
-    !$$$      end if
-
-    if ((r .ge. rH2) .or. (r .le. rL1)) then
-       swFunc = 0.0_dp
-    else if ((r .ge. rH1) .and. (r .le. rL2)) then
-       swFunc = 1.0_dp
-    else if (r .lt. rH1) then
-
-       call tang_toenniesN(r, swFunc, 6)
-
-       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
-       !$$$         x2 = x * x
-       !$$$         x3 = x2 * x
-       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    else
-       x = (r - rL2)/(rH2 - rL2)
-       x2 = x * x
-       x3 = x2 * x
-       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
-    end if
-
-    !      swFunc = 1.0_dp
-
-    return
-
-  end subroutine SF
-
-  !-----------------------------------------------------------------------
-  pure subroutine SFdsf(r, swFunc, dSdr)!JÖ pure
-
-    implicit none
-    real(dp), intent(in) :: r !JÖ stated intents
-    real(dp), intent(out) :: swFunc, dSdr !JÖ
-    real(dp) :: x, x2, x3, rSW, rCut, dr
-!JÖ pure    real(dp) :: rL1, rL2, rH1, rH2  !JÖ pure: ^, dr
-    
-    real(dp), parameter :: rL1 = 0.0_dp   !JÖ pure
-    real(dp), parameter :: rH1 = 5.0_dp   !JÖ pure
-    real(dp), parameter :: rL2 = 9.0_dp   !JÖ pure
-    real(dp), parameter :: rH2 = 11.0_dp  !JÖ pure
-!, save
-!, save
-    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-!JÖ pure    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
-    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
-    !JÖ save
-
-    !     Kroes
-    !$$$      rSW = 8.d0
-    !$$$      rCut = 9.d0
-
-
-    !$$$      x = (r - rSW)/(rCut - rSW)
-    !$$$
-    !$$$      if (r. lt. rSW) then
-    !$$$         swFunc = 1.0d0
-    !$$$         dSdr = 0.0d0
-    !$$$      else if(r .lt. rCut) then
-    !$$$         x2 = x * x
-    !$$$         x3 = x2 * x
-    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) / (rCut-rSW)
-    !$$$      else
-    !$$$         swFunc = 0.0d0
-    !$$$         dSdr = 0.0d0
-    !$$$      end if
-
-
-    if ((r .ge. rH2) .or. (r .le. rL1)) then
-       swFunc = 0.0_dp
-       dSdr = 0.0_dp
-    else if ((r .ge. rH1) .and. (r .le. rL2)) then
-       swFunc = 1.0_dp
-       dSdr = 0.0_dp
-    else if (r .lt. rH1) then
-
-       !c         call switchCloseDsf(r, swFunc, dSdr)
-       call tang_toenniesNdF(r, swFunc, dSdr, 6)
-
-       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
-       !$$$         dr = - 1.d0 / (rH1 - rL1)
-       !$$$         x2 = x * x
-       !$$$         x3 = x2 * x
-       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-       !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
-    else
-       x = (r - rL2)/(rH2 - rL2)
-       dr = 1.0_dp / (rH2 - rL2)
-       x2 = x * x
-       x3 = x2 * x
-       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
-       dSdr = 30.0_dp * x2 * (- x2 + 2.0_dp * x - 1.0_dp) * dr
-    end if
-
-    !      swFunc = 1.d0
-    !      dSdr = 0.d0
-
-    return
-
-  end subroutine SFdsf
-
+!  pure subroutine SF(r, swFunc)
+!
+!    implicit none
+!    real(dp), intent(in) :: r !JÖ
+!    real(dp), intent(out) :: swFunc !JÖ
+!    real(dp) x, x2, x3, rSW, rCut, dr     !JÖ r, swFunc, 
+!    !JÖ , save ::
+!!JÖ    real(dp), save :: rL1, rL2, rH1, rH2
+!    real(dp), parameter :: rL1 = 0.0_dp
+!    real(dp), parameter :: rL2 = 9.0_dp
+!    real(dp), parameter :: rH1 = 5.0_dp
+!    real(dp), parameter :: rH2 = 11.0_dp
+!    
+!    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
+!!JÖ    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+!    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
+!!JÖ     save
+!
+!
+!    !     Kroes
+!    !$$$      rSW = 8.d0
+!    !$$$      rCut = 9.d0
+!    !$$$
+!    !$$$      x = (r - rSW)/(rCut - rSW)
+!    !$$$
+!    !$$$      if (r. lt. rSW) then
+!    !$$$         swFunc = 1.0d0
+!    !$$$      else if(r .lt. rCut) then
+!    !$$$         x2 = x * x
+!    !$$$         x3 = x2 * x
+!    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!    !$$$      else
+!    !$$$         swFunc = 0.0d0
+!    !$$$      end if
+!
+!    if ((r .ge. rH2) .or. (r .le. rL1)) then
+!       swFunc = 0.0_dp
+!    else if ((r .ge. rH1) .and. (r .le. rL2)) then
+!       swFunc = 1.0_dp
+!    else if (r .lt. rH1) then
+!
+!       call tang_toenniesN(r, swFunc, 6)
+!
+!       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
+!       !$$$         x2 = x * x
+!       !$$$         x3 = x2 * x
+!       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!    else
+!       x = (r - rL2)/(rH2 - rL2)
+!       x2 = x * x
+!       x3 = x2 * x
+!       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
+!    end if
+!
+!    !      swFunc = 1.0_dp
+!
+!    return
+!
+!  end subroutine SF
+!
+!  !-----------------------------------------------------------------------
+!  pure subroutine SFdsf(r, swFunc, dSdr)!JÖ pure
+!
+!    implicit none
+!    real(dp), intent(in) :: r !JÖ stated intents
+!    real(dp), intent(out) :: swFunc, dSdr !JÖ
+!    real(dp) :: x, x2, x3, rSW, rCut, dr
+!!JÖ pure    real(dp) :: rL1, rL2, rH1, rH2  !JÖ pure: ^, dr
+!    
+!    real(dp), parameter :: rL1 = 0.0_dp   !JÖ pure
+!    real(dp), parameter :: rH1 = 5.0_dp   !JÖ pure
+!    real(dp), parameter :: rL2 = 9.0_dp   !JÖ pure
+!    real(dp), parameter :: rH2 = 11.0_dp  !JÖ pure
+!!, save
+!!, save
+!    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
+!!JÖ pure    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+!    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
+!    !JÖ save
+!
+!    !     Kroes
+!    !$$$      rSW = 8.d0
+!    !$$$      rCut = 9.d0
+!
+!
+!    !$$$      x = (r - rSW)/(rCut - rSW)
+!    !$$$
+!    !$$$      if (r. lt. rSW) then
+!    !$$$         swFunc = 1.0d0
+!    !$$$         dSdr = 0.0d0
+!    !$$$      else if(r .lt. rCut) then
+!    !$$$         x2 = x * x
+!    !$$$         x3 = x2 * x
+!    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!    !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) / (rCut-rSW)
+!    !$$$      else
+!    !$$$         swFunc = 0.0d0
+!    !$$$         dSdr = 0.0d0
+!    !$$$      end if
+!
+!
+!    if ((r .ge. rH2) .or. (r .le. rL1)) then
+!       swFunc = 0.0_dp
+!       dSdr = 0.0_dp
+!    else if ((r .ge. rH1) .and. (r .le. rL2)) then
+!       swFunc = 1.0_dp
+!       dSdr = 0.0_dp
+!    else if (r .lt. rH1) then
+!
+!       !c         call switchCloseDsf(r, swFunc, dSdr)
+!       call tang_toenniesNdF(r, swFunc, dSdr, 6)
+!
+!       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
+!       !$$$         dr = - 1.d0 / (rH1 - rL1)
+!       !$$$         x2 = x * x
+!       !$$$         x3 = x2 * x
+!       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!       !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
+!    else
+!       x = (r - rL2)/(rH2 - rL2)
+!       dr = 1.0_dp / (rH2 - rL2)
+!       x2 = x * x
+!       x3 = x2 * x
+!       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
+!       dSdr = 30.0_dp * x2 * (- x2 + 2.0_dp * x - 1.0_dp) * dr
+!    end if
+!
+!    !      swFunc = 1.d0
+!    !      dSdr = 0.d0
+!
+!    return
+!
+!  end subroutine SFdsf
+!
 
 end module molecProperties

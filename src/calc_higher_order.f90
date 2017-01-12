@@ -1,8 +1,9 @@
 module calc_higher_order
   
   use data_types
-  use max_parameters
-  use molecProperties, only: SF
+  !use max_parameters
+  !use molecProperties, only: SF
+  use sf_disp_tangtoe, only: SF
   
   implicit none
   
@@ -31,7 +32,7 @@ contains
     real(dp), intent(out)   ::  eT(:,:)
 
 !JÖ internal: 
-    integer itagl(maxatoms), i, j, k, l, NCz, nx, ny, nz
+    integer  i, j, k, l, NCz, nx, ny, nz !itagl(maxatoms),
 !JÖ    real(dp), dimension(size(eT,1),size(eT,2)) :: eoT, ehT !JÖ automatic array
 !    real(dp) 
     

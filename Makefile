@@ -33,13 +33,15 @@ CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
 
 OBJ = $(addprefix $(OBJDIR)/, \
 	scme_ps.o calc_derivs.o calc_higher_order.o \
-	data_types.o parameters.o max_parameters.o \
+	data_types.o parameters.o \
 	multipole_parameters.o polariz_parameters.o \
 	calcEnergy_mod.o calc_lower_order.o \
-	inducePoles.o forceCM_mod.o torqueCM_mod.o \
-	atomicForces_mod.o molforce.o tang_toennies.o mdutil.o \
-	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o\
-	ps_pes.o ps_dms.o constants.o printer_mod.o)
+	inducePoles.o \
+	atomicForces_mod.o molforce.o mdutil.o \
+	molecProperties.o  ps.o\
+	ps_pes.o ps_dms.o constants.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o)
+	
+#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
@@ -98,8 +100,12 @@ $(OBJDIR)/ps.o \
 $(NEW)/ps_pes.o \
 $(NEW)/ps_dms.o \
 $(OBJDIR)/printer_mod.o \
+$(OBJDIR)/sf_disp_tangtoe.o \
+
 
 $(OBJDIR)/printer_mod.o:$(OBJDIR)/data_types.o
+$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/data_types.o $(OBJDIR)/parameters.o
+$(OBJDIR)/force_torqueCM.o:$(OBJDIR)/data_types.o 
 
 
 $(OBJDIR)/atomicForces_mod.o:	\
@@ -127,6 +133,8 @@ $(OBJDIR)/molecProperties.o:	\
 $(OBJDIR)/data_types.o		\
 $(OBJDIR)/max_parameters.o 	\
 $(OBJDIR)/tang_toennies.o	\
+$(OBJDIR)/sf_disp_tangtoe.o \
+
 
 $(OBJDIR)/tang_toennies.o:	\
 $(OBJDIR)/data_types.o		\

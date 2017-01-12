@@ -1,8 +1,9 @@
 module calc_lower_order
   
   use data_types
-  use max_parameters
-  use molecProperties, only: SF
+!  use max_parameters
+  !use molecProperties, only: SF
+  use sf_disp_tangtoe, only: SF
   
   implicit none
   

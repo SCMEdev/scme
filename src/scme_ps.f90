@@ -34,7 +34,7 @@
 module scme
 
   use data_types
-  use max_parameters
+  !use max_parameters
   use parameters, only: num_cells
   use multipole_parameters, only: d0, q0, o0, h0
   use polariz_parameters, only: dd0, dq0, hp0, qq0
@@ -44,12 +44,13 @@ module scme
   use calc_higher_order, only: calcEhigh
   use calc_derivs, only: calcDv
   use inducePoles, only: induceDipole, induceQpole
-  use forceCM_mod, only: forceCM
-  use torqueCM_mod, only: torqueCM
+  !use forceCM_mod, only: forceCM
+  !use torqueCM_mod, only: torqueCM
   use atomicForces_mod, only: atomicForces
   use calcEnergy_mod, only: calcEnergy
-  use coreInt_mod, only: coreInt
-  use dispersion_mod, only: dispersion
+  !use coreInt_mod, only: coreInt
+  use sf_disp_tangtoe, only: dispersion
+  use force_torqueCM, only: forceCM, torqueCM
   
  ! the new PS surfaces: 
   use ps_dms, only: vibdms
@@ -89,7 +90,7 @@ contains
     logical*1, parameter :: irigidmolecules = .false.
     logical*1, parameter :: debug = .false.
     logical*1, parameter :: iSlab = .false.
-    logical*1, parameter :: addCore = .false.
+    !logical*1, parameter :: addCore = .false.
     logical*1, parameter :: useDMS = .true.
 
     ! Local flag for controlling behavior.
@@ -306,10 +307,10 @@ call printer(dEhdr, 'dEhdr')
     u_tot = u_tot + uDisp
 
     ! Calculate the core contribution to the energy. (only to the energy ??? ML)
-    if (addCore) then
-       call coreInt(ra, fa, uCore, nM, a, a2)
-       u_tot = u_tot + uCore
-    end if
+    !if (addCore) then
+    !   call coreInt(ra, fa, uCore, nM, a, a2)
+    !   u_tot = u_tot + uCore
+    !end if
     
     print*, 
     print*, "PES"

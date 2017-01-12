@@ -1,7 +1,7 @@
 module calcEnergy_mod
   
   use data_types
-  use max_parameters
+!  use max_parameters
   
   implicit none
   
