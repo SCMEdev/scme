@@ -27,7 +27,7 @@ program ps_test
       
       do i = 1,n
           
-          call vibpot(x(i,:,:),pot,dpot)
+          call vibpes(x(i,:,:),pot,dpot)
           
           
           do j = 1,9,3

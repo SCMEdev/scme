@@ -394,21 +394,21 @@ implicit none
         0.0000000000000e+00_dp, 0.0000000000000e+00_dp, 0.0000000000000e+00_dp, &
         0.0000000000000e+00_dp, 0.0000000000000e+00_dp]
        
-       real(dp), parameter :: f5z     =   0.99967788500000_dp
-       real(dp), parameter :: fbasis  =   0.15860145369897_dp
-       real(dp), parameter :: fcore   =  -1.6351695982132_dp
-       real(dp), parameter :: frest   =   1.0_dp
-       real(dp), parameter :: b1      =   2.0_dp!*b2A**2
-       real(dp), parameter :: roh     =   0.9519607159623009_dp!/b2A
-       real(dp), parameter :: alphaoh =   2.587949757553683_dp!*b2A
-       real(dp), parameter :: deoh    = 42290.92019288289_dp*f5z!*cm2au
-       real(dp), parameter :: reoh    =   0.958649_dp!/b2A
-       real(dp), parameter :: thetae  = 104.3475_dp
-       real(dp), parameter :: rad     = dacos(-1.0_dp)/1.8e2_dp
-       real(dp), parameter :: ce      = dcos(thetae*rad)
-       real(dp), parameter :: phh2    =  12.66426998162947_dp!*b2A
-       real(dp), parameter :: phh1    =  16.94879431193463_dp*dexp(phh2)*f5z!/b2A)*f5z*cm2au ! )*f5z!
-       real(dp), parameter :: c5z(245) = &                                                                             
+       real(dp), parameter :: f5z        =     0.99967788500000_dp
+       real(dp), parameter :: fbasis     =     0.15860145369897_dp
+       real(dp), parameter :: fcore      =    -1.6351695982132_dp
+       real(dp), parameter :: frest      =     1.0_dp
+       real(dp), parameter :: b1         =     2.0_dp!*b2A**2
+       real(dp), parameter :: roh        =     0.9519607159623009_dp!/b2A
+       real(dp), parameter :: alphaoh    =     2.587949757553683_dp!*b2A
+       real(dp), parameter :: deoh       = 42290.92019288289_dp*f5z!*cm2au
+       real(dp), parameter :: reoh       =     0.958649_dp!/b2A
+       real(dp), parameter :: thetae     =   104.3475_dp
+       !real(dp), parameter :: rad        = dacos(-1.0_dp)/1.8e2_dp                   !took value from potnasa
+       real(dp), parameter :: cos_thetae =    -0.24780227221366464506_dp!dcos(thetae*rad) !took value from potnasa !if thetae changes this must change too!
+       real(dp), parameter :: phh2       =    12.66426998162947_dp!*b2A
+       real(dp), parameter :: phh1       =    16.94879431193463_dp*dexp(phh2)*f5z!/b2A)*f5z*cm2au ! )*f5z!
+       real(dp), parameter :: c5z(245)   = &                                                                             
               ( f5z*c5z_temp(:) + fbasis*cbasis(:) + fcore*ccore(:) + frest*crest(:) ) !Below is the 2 (present in vibpot)
 
 private
@@ -449,7 +449,6 @@ contains !//////////////////////////////////////////////////////////////
      real(dp) , intent(in)  :: x(3,3)    !x(OHH,xyz)
      real(dp) , intent(out) :: v,dvdr(9) !v(n),dr(9,n) 
      
-     
    !internal variables       
      real(dp) :: x1,x2,x3,xx(3)  
      real(dp) :: xpow(15,3),cos_hoh
@@ -463,6 +462,7 @@ contains !//////////////////////////////////////////////////////////////
      logical, parameter :: do_grad = .true.!.false.
      
      !do i=1,n
+     !print*, ce
      
      !OHH order; rr is vector distance      
      rr1  = ( x(2,:) - x(1,:) ) !H1-O
@@ -479,7 +479,7 @@ contains !//////////////////////////////////////////////////////////////
      !PES coordinates
      x1 = (r1-reoh)/reoh 
      x2 = (r2-reoh)/reoh
-     x3 = cos_hoh-ce
+     x3 = cos_hoh-cos_thetae
      xx = [x1,x2,x3]
      
      
