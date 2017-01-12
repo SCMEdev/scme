@@ -99,6 +99,8 @@ $(NEW)/ps_pot.o \
 $(NEW)/ps_dms.o \
 $(OBJDIR)/printer_mod.o \
 
+$(OBJDIR)/printer_mod.o:$(OBJDIR)/data_types.o
+
 
 $(OBJDIR)/atomicForces_mod.o:	\
 $(OBJDIR)/data_types.o		\

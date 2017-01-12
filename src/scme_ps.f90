@@ -12,6 +12,25 @@
 !!      Phys. Chem. Chem. Phys., 2013, 15, 16542
 !!
 !! Please cite this work if you use the SCME potential in you research.
+
+!should be on top of scme_calculate
+  !> The main routine for the SCME potential. Calculates the total energy and
+  !! forces on a set of water molecules.
+  !!
+  !! @param[in] n_atoms : The number of atoms. The number of atoms is assumed
+  !!                      to be 3 times the number of water molecules.
+  !! @param[in] coords  : The coordinates of the water molecules.
+  !!                  coords(l+6*(i-1)) stores the l-th coordinate of the first
+  !!                      hydrogen in the i-th molecule
+  !!                  coords(l+3+6*(i-1)) stores the l-th coordinate of the second
+  !!                      hydrogen in the i-th molecule
+  !!                  coords(l+3*(i-1+nHydrogens)) stores the l-th coordinate of the
+  !!                      oxygen in the i-th molecule. (nHydrogens is
+  !!                      the total number of hydrogen atoms).
+  !! @param[in] lattice : The x,y,z dimensions of the rectangular box.
+  !! @param[out] fa     : The forces. The array must have space for n_atoms forces.
+  !! @param[out] u_tot  : The total energy calculated with the SCME potential.
+
 module scme
 
   use data_types
@@ -44,22 +63,6 @@ module scme
 
 contains
 
-  !> The main routine for the SCME potential. Calculates the total energy and
-  !! forces on a set of water molecules.
-  !!
-  !! @param[in] n_atoms : The number of atoms. The number of atoms is assumed
-  !!                      to be 3 times the number of water molecules.
-  !! @param[in] coords  : The coordinates of the water molecules.
-  !!                  coords(l+6*(i-1)) stores the l-th coordinate of the first
-  !!                      hydrogen in the i-th molecule
-  !!                  coords(l+3+6*(i-1)) stores the l-th coordinate of the second
-  !!                      hydrogen in the i-th molecule
-  !!                  coords(l+3*(i-1+nHydrogens)) stores the l-th coordinate of the
-  !!                      oxygen in the i-th molecule. (nHydrogens is
-  !!                      the total number of hydrogen atoms).
-  !! @param[in] lattice : The x,y,z dimensions of the rectangular box.
-  !! @param[out] fa     : The forces. The array must have space for n_atoms forces.
-  !! @param[out] u_tot  : The total energy calculated with the SCME potential.
   subroutine scme_calculate(n_atoms, coords, lattice, fa, u_tot)
 
     implicit none
@@ -221,61 +224,17 @@ contains
              ps_mol_dip(1,p) = ra(indO  + p)
              ps_mol_dip(2,p) = ra(indH1 + p)
              ps_mol_dip(3,p) = ra(indH2 + p)
-             
-             mol(p) = ra(indO  + p)
-             mol(p+3) = ra(indH1  + p)
-             mol(p+6) = ra(indH2  + p)
           end do
-          
-          !print*, 'position ps_mol(1,1,:)  O', ps_mol_dip(1,:)
-          !print*, 'position mol(1:3)       O', mol(1:3)
-          !
-          !print*, 'position ps_mol(1,2,:) H1', ps_mol_dip(2,:)
-          !print*, 'position mol(4:6)      H1', mol(4:6)
-          
-          
           
           dms = 0
-          call vibdms(ps_mol_dip,dms) !the coordinates in , the dipole out, an one of them only
-!          print*, ' norm(dms):',sqrt(sum(dms**2))*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
-!          print*, '       dms:',              dms*ea0_Deb*A_a0!*kk1!*kk2!*au2deb
-          
-          
-          
-          qdms = 0
-          call dmsnasa2(mol,qdms)
-!          print*, 'norm(qdms):',sqrt(sum(qdms**2))*au2deb
-!          print*, '      qdms:',qdms*au2deb
-          
-          ! Calculate dipole moment wrt center of mass.
-          dipmom(:) = 0.0_dp
-          !dipmom2(:) = 0.0_dp
+          call vibdms(ps_mol_dip,dms) 
           
           do p=1,3
-          !   dipmom2(p) = dipmom2(p) + dms(1)*(ps_mol_dip(1,p)-rCM(p,i))
-          !   dipmom2(p) = dipmom2(p) + dms(2)*(ps_mol_dip(2,p)-rCM(p,i))
-          !   dipmom2(p) = dipmom2(p) + dms(3)*(ps_mol_dip(3,p)-rCM(p,i))
-             
-             dipmom(p) = dipmom(p) + qdms(1)*(mol(p)  -rCM(p,i))
-             dipmom(p) = dipmom(p) + qdms(2)*(mol(p+3)-rCM(p,i))
-             dipmom(p) = dipmom(p) + qdms(3)*(mol(p+6)-rCM(p,i))
-          end do
-          
-          
-          
-          !print*, 'norm(dipmom2):',sqrt(sum(dipmom2**2))*kk1*kk2!au2deb*A2b
-          !print*, '      dipmom2:',              dipmom2*kk1*kk2!au2deb*A2b
-          
-          !print*, ' norm(dipmom):',sqrt(sum(dipmom**2))*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
-          !print*, '       dipmom:',              dipmom*ea0_Deb*A_a0!*kk1*kk2!au2deb*A2b
-          
-          ! Set unpolarized dipoles to Partridge-Schwenke dipoles
-          ! using conversion constants for eA -> D.
-          do p=1,3
-             dpole0(p,i) =  dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!    dms(p)*eA_Deb! 
+             dpole0(p,i) = dms(p)*kk1*kk2!*eA_Deb! dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!     When we fix units this shuld be fixed. 
           end do
        end do
     end if
+call printer(dpole0, 'dpole0')
     
     !print*, sqrt(sum(dpole0(:,1)**2))
     !print*, sqrt(sum(dpole0(:,1)**2))
@@ -285,6 +244,12 @@ contains
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x)
 
     call calcEhigh(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab)
+call printer(eH, 'eH')
+call printer(uH, 'uH')
+call printer(dEhdr, 'dEhdr')
+!call printer(opole, 'opole')
+!call printer(hpole, 'hpole')
+
 
     ! Here's where the induction loop begins.
     converged = .false.
@@ -294,46 +259,23 @@ contains
 
        ! NEEDS DOCUMENTATION
        call calcEdip_quad(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-call printer(iteration,'HHHHHHHHHHHHHHHHHH iteration')
-!call printer(uD,'uD')
-!call printer(uQ,'uQ')
-!call printer(eD,'eD')
-!call printer(dEddr,'dEddr')
-
-!call printer(qpole,'qpole')
 
 
        call addFields(eH, eD, eT, nM)
        call addDfields(dEhdr, dEddr, dEtdr, nM)
-call printer(eD, 'eD')
-call printer(eT, 'eT')
-call printer(eH, 'eH')
-call printer(dEhdr, 'dEhdr')
-call printer(dEddr, 'dEddr')
-call printer(dEtdr, 'dEtdr')
        
 
        ! Induce dipoles and quadrupoles.
        converged = .true.
 
-!call printer(dpole,'dpole before induce')
        call induceDipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-!call printer(dpole,'dpole after ind.')
-
-!print*, '>>>>>>dpole after HERE', dpole
-!call printer(qpole,'qpole before induce')
        call induceQpole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
-!call printer(qpole,'qpole after ind.')
-
     end do
 
     ! With the polarized multipoles, calculate the derivarives of the
     ! electrostatic potential, up to 5th order.
-!print*, 'dpole before calcDv: ', dpole
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)
 
-!print*, 'calcDv derivs: ', d1v,d2v,d3v
-!print*, 'fsf after calcdv:', fsf
     ! Compute the force on the center of mass.
     call forceCM(dpole, qpole, opole, hpole, d2v, d3v, d4v, d5v, nM, fsf, fCM)
 
@@ -454,16 +396,16 @@ call printer(dEtdr, 'dEtdr')
              !temp3 = fa(indH2 + p)
              
              
-             fa(indO  + p) = fa(indO  + p) - grad(p)
-             fa(indH1 + p) = fa(indH1 + p) - grad(p+3)
-             fa(indH2 + p) = fa(indH2 + p) - grad(p+6)
+             !fa(indO  + p) = fa(indO  + p) - grad(p)
+             !fa(indH1 + p) = fa(indH1 + p) - grad(p+3)
+             !fa(indH2 + p) = fa(indH2 + p) - grad(p+6)
              !print*, 'orig FA', fa(indO  + p)
              !print*, 'orig FA', fa(indH1 + p)
              !print*, 'orig FA', fa(indH2 + p)
              !
-             !fa(indO  + p) = temp1 - ps_grad(p)  !*h2eV*A2b
-             !fa(indH1 + p) = temp2 - ps_grad(p+3)!*h2eV*A2b
-             !fa(indH2 + p) = temp3 - ps_grad(p+6)!*h2eV*A2b
+             fa(indO  + p) = fa(indO  + p) - ps_grad(p)  !*h2eV*A2b
+             fa(indH1 + p) = fa(indH1 + p) - ps_grad(p+3)!*h2eV*A2b
+             fa(indH2 + p) = fa(indH2 + p) - ps_grad(p+6)!*h2eV*A2b
              !print*, 'new FA', fa(indO  + p)
              !print*, 'new FA', fa(indH1 + p)
              !print*, 'new FA', fa(indH2 + p)
@@ -473,6 +415,9 @@ call printer(dEtdr, 'dEtdr')
           
        end do
     end if
+call printer(u_tot,'u_tot')
+call printer(fa,'fa')
+
 !    print*, "fa in the end: "
 !    print*, fa
 
