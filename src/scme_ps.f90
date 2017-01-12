@@ -53,7 +53,7 @@ module scme
   
  ! the new PS surfaces: 
   use ps_dms, only: vibdms
-  use ps_pot, only: vibpes
+  use ps_pes, only: vibpes
   use constants, only:A_a0, ea0_Deb, eA_Deb
   use printer_mod!, only: printer
 

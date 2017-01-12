@@ -39,7 +39,7 @@ OBJ = $(addprefix $(OBJDIR)/, \
 	inducePoles.o forceCM_mod.o torqueCM_mod.o \
 	atomicForces_mod.o molforce.o tang_toennies.o mdutil.o \
 	molecProperties.o dispersion_mod.o coreInt_mod.o rho.o ps.o\
-	ps_pot.o ps_dms.o constants.o printer_mod.o)
+	ps_pes.o ps_dms.o constants.o printer_mod.o)
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
@@ -95,7 +95,7 @@ $(OBJDIR)/coreInt_mod.o		\
 $(OBJDIR)/dispersion_mod.o	\
 $(OBJDIR)/multipole_parameters.o\
 $(OBJDIR)/ps.o \
-$(NEW)/ps_pot.o \
+$(NEW)/ps_pes.o \
 $(NEW)/ps_dms.o \
 $(OBJDIR)/printer_mod.o \
 
@@ -136,7 +136,7 @@ $(OBJDIR)/parameters.o		\
 
 # multiple dependents --- few prerequisite:
 $(NEW)/ps_dms.o	\
-$(NEW)/ps_pot.o:	\
+$(NEW)/ps_pes.o:	\
 $(NEW)/constants.o	\
 
 

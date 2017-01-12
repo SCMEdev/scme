@@ -10,7 +10,8 @@ test/*.out
 
 new/*.mod
 new/*.o
-new/ppot*
+new/ppes
+new/ppotr
 new/pdip
 new/plodi
 new/cppdip

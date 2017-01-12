@@ -9,9 +9,9 @@ potr:
 	gfortran mod_ps_potr.f90 -o ppotr && ./ppotr
 
 #///////////////////////////////////////////////////////////////////////
-pot: constants.o
-	gfortran ps_pot.f90 test_ps_pot.f90 constants.o -o ppot 
-	./ppot
+pes: constants.o
+	gfortran ps_pes.f90 test_ps_pes.f90 constants.o -o ppes 
+	./ppes
 
 dms: constants.o
 	gfortran ps_dms.f90 test_ps_dms.f90 constants.o -o pdms 
