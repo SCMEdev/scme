@@ -39,17 +39,19 @@ module scme
   use multipole_parameters, only: d0, q0, o0, h0
   use polariz_parameters, only: dd0, dq0, hp0, qq0
   use molecProperties, only: recoverMolecules, calcCentersOfMass,&
-       findPpalAxes, rotatePoles, rotatePolariz, setUnpolPoles, addFields, addDfields
+       findPpalAxes, rotatePoles, rotatePolariz, setUnpolPoles, addFields, addDfields, create_rw, calc_cm
   use calc_lower_order, only: calcEdip_quad
   use calc_higher_order, only: calcEhigh
   use calc_derivs, only: calcDv
   use inducePoles, only: induceDipole, induceQpole
   !use forceCM_mod, only: forceCM
   !use torqueCM_mod, only: torqueCM
-  use atomicForces_mod, only: atomicForces
+  
+  use atomicForces_mod, only: atomicForces, stillAtomicForces
+  
   use calcEnergy_mod, only: calcEnergy
   !use coreInt_mod, only: coreInt
-  use sf_disp_tangtoe, only: dispersion
+  use sf_disp_tangtoe, only: dispersion, new_dispersion
   use force_torqueCM, only: forceCM, torqueCM
   
  ! the new PS surfaces: 
@@ -152,33 +154,32 @@ contains
     integer, save :: indO, indH1, indH2
 
     ! Local arrays for ??? ML
-    real(dp) :: uPES(n_atoms*3)
+    !real(dp) :: uPES(n_atoms*3)
     real(dp), save :: dipmom(3)
     !real(dp), save :: qdms(3)
     
 
     ! Input for the potnasa potential.
-    real(dp), save :: mol(9)
-    real(dp), save :: grad(9)
-    real(dp), save :: uPES1
+    !real(dp), save :: mol(9)
+    !real(dp), save :: grad(9)
+    !real(dp), save :: uPES1
    !new shit: 
     integer jjj
     real(dp) ps_mol(3,3) !fix this  !!!  ! ps(O,H1,H1 ; x,y,z)
     real(dp) ps_mol_dip(3,3)
     real(dp) ps_grad(9)
     real(dp) ps_pes
-    
-    !real*8, parameter :: A2b     = 1.889725989d0 !Ångström to Bohr
-    !real*8, parameter :: b2A     = 0.529177249d0
-    !real*8, parameter :: au2deb  = 2.541746230211d0 !a.u. to debye
-    !real*8, parameter :: h2eV  = 27.211396132d0 !a.u. to debye
       
-    real*8 temp1,temp2,temp3
-    
+   
     real(dp) :: qdms(3)
     real(dp) :: dms(3)
-    real(dp), save :: dipmom2(3)
+    !real(dp), save :: dipmom2(3)
     integer iteration
+    type(h2o) :: rw(n_atoms/3)
+    real(dp) :: rwCM(3,n_atoms/3)
+    integer m
+    real(dp) :: uPES(n_atoms/3)
+    type(h2o) :: aforces(n_atoms/3)
     
     ! ----------------------------
     ! Set initial Intitial values.
@@ -200,10 +201,20 @@ contains
     a2(3) = lattice(3)/2.0_dp
 
     ! Recover broken molecules due to periodic boundary conditions.
-    call recoverMolecules(coords, ra, nH, nO, a, a2)
+    call recoverMolecules(coords, ra, nH, nO, a, a2,   rw) !JÖ rw
+    call create_rw(ra,rw,nM)
+
+!call printer(ra, 'ra')
+!call printer(rw, 'rw')
+
+    call calc_cm(rw,rCM,nM)
+!call printer(rwCM, 'rwCM')
 
     ! Calculate the center of mass for each molecule.
-    call calcCentersOfMass(ra, nM, rCM)
+    !call calcCentersOfMass(ra, nM, rCM)
+!call printer(rCM, 'rCM')
+
+
 
     ! Find the rotation matrix x that defines the principal axis.
     call findPpalAxes(ra, nM, x)
@@ -215,24 +226,17 @@ contains
     ! call Partridge-Schwenke dipole moment surface routine.
 !    print*, "DIPOLE"
     if (useDMS) then
-       do i = 1,nM
-          indH1 = 6*(i-1)
-          indO  = 3*(i-1+2*nM)
-          indH2 = 3+6*(i-1)
+       do m = 1,nM
 
-          ! Get x, y, z coordinates for H and O.
-          do p=1,3
-             ps_mol_dip(1,p) = ra(indO  + p)
-             ps_mol_dip(2,p) = ra(indH1 + p)
-             ps_mol_dip(3,p) = ra(indH2 + p)
-          end do
+          !OHH order in ps_dms: 
+          ps_mol_dip(1,:) = rw(m)%o 
+          ps_mol_dip(2,:) = rw(m)%h1 
+          ps_mol_dip(3,:) = rw(m)%h2
           
           dms = 0
           call vibdms(ps_mol_dip,dms) 
           
-          do p=1,3
-             dpole0(p,i) = dms(p)*kk1*kk2!*eA_Deb! dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!     When we fix units this shuld be fixed. 
-          end do
+          dpole0(:,m) = dms(:)*kk1*kk2!*eA_Deb! dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!     When we fix units this shuld be fixed. 
        end do
     end if
 call printer(dpole0, 'dpole0')
@@ -288,23 +292,39 @@ call printer(dEhdr, 'dEhdr')
     ! for the multipoles.
     ! NOTE: This is where 'fa' is calculated.
     call atomicForces(fCM, tau, ra, rCM, nM, fa)
+    call stillAtomicForces(fCM,tau,rw,rCM,nM,aforces)
 
     ! Calculate the energy of interaction between the multipole moments
     ! and the electric field of the other molecules.
     call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_tot)
-
+    
+    !/////////////////////////////////////////////////////////////////// CHanging units, why?
     ! Convert the forces and total energy to correct units.
-    do i = 1,(3*n_atoms)
-       fa(i) = convFactor * fa(i)
-    end do
+    !do i = 1,(3*n_atoms)
+    !   fa(i) = convFactor * fa(i)
+    !end do
+    do m = 1,nM
+       aforces(m)%h1 = aforces(m)%h1*convFactor
+       aforces(m)%h2 = aforces(m)%h2*convFactor
+       aforces(m)%o = aforces(m)%o*convFactor
+    enddo
+    fa(:) = fa(:)*convFactor
     u_tot = u_tot * convFactor
 
     ! Store the energy this far for debug printout.
     uES = u_tot
 
     ! Calculate dispersion forces ??? ML
+    call new_dispersion(rw, aforces, uDisp, nM, a, a2)
+!call printer(uDisp, 'uDisp new')    
     call dispersion(ra, fa, uDisp, nM, a, a2)
     u_tot = u_tot + uDisp
+!call printer(uDisp, 'uDisp old')    
+
+
+!call printer(fa,'fa')    
+!call printer(aforces,'aforces')    
+    
 
     ! Calculate the core contribution to the energy. (only to the energy ??? ML)
     !if (addCore) then
@@ -312,127 +332,74 @@ call printer(dEhdr, 'dEhdr')
     !   u_tot = u_tot + uCore
     !end if
     
-    print*, 
-    print*, "PES"
-    print*, 
     ! Adding intramolecular energy from Partridge-Schwenke PES.
     uPES(:) = 0.0_dp
     if (.not. irigidmolecules) then
-       do i=1,nM
-          mol(:) = 0.0_dp
+       do m=1,nM
+          !mol(:) = 0.0_dp
           
-          indH1 = 6*(i-1)
-          indO  = 3*(i-1+2*nM)
-          indH2 = 3+6*(i-1)
-          ! Get x, y, z coordinates for H and O.
-          do p=1,3
-             mol(p) = ra(indO  + p)
-             mol(p+3) = ra(indH1  + p)
-             mol(p+6) = ra(indH2  + p)
-          end do
+!          indH1 = 6*(m-1)
+!          indO  = 3*(m-1+2*nM)
+!          indH2 = 3+6*(m-1)
+!
+!          do p=1,3
+!             ps_mol(1,p) = ra(indO  + p)
+!             ps_mol(2,p) = ra(indH1 + p)
+!             ps_mol(3,p) = ra(indH2 + p)
+!             
+!          end do
           
-          !print*, 'mol1:',mol(1:3)
-          !print*, 'mol2:',mol(4:6)
-          !print*, 'mol3:',mol(7:9)
-          
-          ! ORIGINAL
-          grad(:) = 0.0_dp
-          call potnasa2(mol,grad,uPES1)
-          
-          !> Debug --------------------------------------
-       !   do jjj=1,9,3
-       !      print*, 'grad:',grad(jjj),grad(jjj+1),grad(jjj+2)
-       !   enddo
-       !   print*, 'uPES1', uPES1
-          !< --------------------------------------------
-          
-          ! comment to use the fortran routine
-          !uPES(i) = uPES1
-          !u_tot = u_tot + uPES1
-          
-             
-          ! NEW
+          !OHH order in ps_pes
+          ps_mol(1,:) = rw(m)%o!(indO  + p)
+          ps_mol(2,:) = rw(m)%h1!(indH1 + p)
+          ps_mol(3,:) = rw(m)%h2!(indH2 + p)
 
-!    real(dp) ps_mol(3,3) !fix this  !!!  ! ps(O,H1,H1 ; x,y,z)
-!    real(dp) ps_grad(9)
-!    real(dp) ps_pes
-!    real(dp) :: dms(3)
-    
-
-
-          do p=1,3
-             ps_mol(1,p) = ra(indO  + p)
-             ps_mol(2,p) = ra(indH1 + p)
-             ps_mol(3,p) = ra(indH2 + p)
-             
-          end do
           
           ps_grad(:) = 0.0_dp
           call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
-          !> Debug --------------------------------------
-       !   do jjj=1,9,3
-       !      print*, 'ps_grad:',ps_grad(jjj),ps_grad(jjj+1),ps_grad(jjj+2)!*h2eV*A2b
-       !   enddo
-       !   print*, 'ps_pes:', ps_pes!*h2eV
-          !< --------------------------------------------
-          
-          
-          
-          ! uncomment to use the fortran routine
-          uPES(i) = ps_pes
           u_tot = u_tot + ps_pes
           
+          uPES(m) = ps_pes
           
-          
-          !print*, 'grad2:',grad(4:6)
-          !print*, 'grad3:',grad(7:9)
-          !print*, 'uPES1:', uPES1
-          
+
+
+          indH1 = 6*(m-1)
+          indO  = 3*(m-1+2*nM)
+          indH2 = 3+6*(m-1)
           do p=1,3
              
-             ! temporary to test the ps_grad
-             !temp1 = fa(indO  + p)
-             !temp2 = fa(indH1 + p)
-             !temp3 = fa(indH2 + p)
-             
-             
-             !fa(indO  + p) = fa(indO  + p) - grad(p)
-             !fa(indH1 + p) = fa(indH1 + p) - grad(p+3)
-             !fa(indH2 + p) = fa(indH2 + p) - grad(p+6)
-             !print*, 'orig FA', fa(indO  + p)
-             !print*, 'orig FA', fa(indH1 + p)
-             !print*, 'orig FA', fa(indH2 + p)
              !
              fa(indO  + p) = fa(indO  + p) - ps_grad(p)  !*h2eV*A2b
              fa(indH1 + p) = fa(indH1 + p) - ps_grad(p+3)!*h2eV*A2b
              fa(indH2 + p) = fa(indH2 + p) - ps_grad(p+6)!*h2eV*A2b
-             !print*, 'new FA', fa(indO  + p)
-             !print*, 'new FA', fa(indH1 + p)
-             !print*, 'new FA', fa(indH2 + p)
              
           end do
-          
+          aforces(m)%o  = aforces(m)%o   - ps_grad(1:3)  
+          aforces(m)%h1 = aforces(m)%h1  - ps_grad(4:6)
+          aforces(m)%h2 = aforces(m)%h2  - ps_grad(7:9)
           
        end do
     end if
 call printer(u_tot,'u_tot')
 call printer(fa,'fa')
+call printer(aforces,'aforces')
 
-!    print*, "fa in the end: "
-!    print*, fa
-
-
-! ML: These print-statements makes up half the CPU usage for a
-!     dimer input.
-!
-!ktw    print '(5f16.10)', uTot, uES, uDisp, uCore, sum(uPES)
-!    print '(4f16.10)', uTot, uES, uDisp, sum(uPES)
-!    print*, size(ra), "is size ra" !JÖ
 
     return
 
   end subroutine scme_calculate
 
 end module scme
+
+!          indH1 = 6*(i-1)
+!          indO  = 3*(i-1+2*nM)
+!          indH2 = 3+6*(i-1)
+!
+!          ! Get x, y, z coordinates for H and O.
+!          do p=1,3
+!             ps_mol_dip(1,p) = ra(indO  + p)
+!             ps_mol_dip(2,p) = ra(indH1 + p)
+!             ps_mol_dip(3,p) = ra(indH2 + p)
+!          end do
 

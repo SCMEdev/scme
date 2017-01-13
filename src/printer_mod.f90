@@ -1,16 +1,16 @@
 ! This module print tensors of rank 1 to 5 with the generic interface "printer of all the s ranks. 
 module printer_mod
 
-  use data_types
+  use data_types, only: dp, h2o
   
   implicit none
   integer, parameter :: un=6
   character(*), parameter :: intf='(I7)'
-  character(*), parameter :: dblf='f24.15'
+  character(*), parameter :: dblf='f24.15' !double format
 !  character(*), parameter :: dblf='(f24.16)'
   
 interface printer
- module procedure p_real, p_int, p_real_vec, p_real_mat, p_real_3d, p_real_4d, p_real_5d
+ module procedure p_real, p_int, p_real_vec, p_real_mat, p_real_3d, p_real_4d, p_real_5d, p_h2o, p_h2os
 end interface
 
   !private
@@ -21,6 +21,32 @@ contains !/////////////////////////////////////////////
 
 !subroutine the_printer(a,
 ! call printer_text(text)
+
+subroutine p_h2o(a,text)
+  character(*) text
+  type(h2o) :: a
+   call printer_text(text)
+   write(un,'(a,3'//dblf//')') '   H1:',a%h1(:)
+   write(un,'(a,3'//dblf//')') '   H2:',a%h2(:)
+   write(un,'(a,3'//dblf//')') '   O :',a%o(:)
+end subroutine 
+
+subroutine p_h2os(a,text)
+  character(*) text
+  type(h2o) :: a(:)
+  integer l, m
+   call printer_text(text)
+   l = size(a)
+   do m = 1,l
+     write(un,'(a,I3)') '   H2O Nr:',m
+     write(un,'(a,3'//dblf//')') '   H1:',a(m)%h1(:)
+     write(un,'(a,3'//dblf//')') '   H2:',a(m)%h2(:)
+     write(un,'(a,3'//dblf//')') '   O :',a(m)%o(:)
+   enddo
+end subroutine 
+   
+     
+  
 
 subroutine p_int(a,text)
   character(*) text
