@@ -13,14 +13,44 @@ interface printer
  module procedure p_real, p_int, p_real_vec, p_real_mat, p_real_3d, p_real_4d, p_real_5d, p_h2o, p_h2os
 end interface
 
-  !private
-  !public printer
+  private
+  public printer, printer_h2o_linear
 
 
 contains !/////////////////////////////////////////////
 
-!subroutine the_printer(a,
-! call printer_text(text)
+!////////////////////////////////////////////////////// Special Printers:
+
+! Prints h2o type in fa order. 
+! It takes type(h2o) and outputs a vector: [H1x H1y H1z H2x H2y H2z H1x H1y H1z H2x H2y H2z ... Ox Oy Oz ...]
+subroutine printer_h2o_linear(a,text)
+  character(*) text
+  type(h2o) :: a(:)
+  integer l, m, xyz
+   call printer_text(text)
+   l = size(a)
+   
+   do m = 1,l
+     do xyz = 1,3
+       write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' H1:',a(m)%h1(xyz)
+       write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' H2:',a(m)%h2(xyz)
+     enddo
+   enddo
+   do m = 1,l
+     do xyz = 1,3
+       write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' O :',a(m)%o(xyz)
+     enddo
+   enddo
+
+end subroutine 
+ 
+
+
+!//////////////////////////////////////////////////// Tensor Printers for "printer" interface above:
+! p_ means printer
+! printer_text is at the bottom
+! printers for: tensors of rank 1-5, type(h2o) objects, 
+
 
 subroutine p_h2o(a,text)
   character(*) text

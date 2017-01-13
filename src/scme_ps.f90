@@ -383,7 +383,8 @@ call printer(dEhdr, 'dEhdr')
     end if
 call printer(u_tot,'u_tot')
 call printer(fa,'fa')
-call printer(aforces,'aforces')
+call printer_h2o_linear(aforces,'aforces linear')
+!call printer(aforces,'aforces')
 
 
     return
