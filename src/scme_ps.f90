@@ -89,11 +89,10 @@ contains
     integer, parameter :: NC = num_cells
 
     ! Parameter flags for controlling behavior.
-    logical*1, parameter :: irigidmolecules = .false.
-    logical*1, parameter :: debug = .false.
+    logical*1, parameter :: usePS_PES = .true.
+    logical*1, parameter :: usePS_DMS = .true.
     logical*1, parameter :: iSlab = .false.
     !logical*1, parameter :: addCore = .false.
-    logical*1, parameter :: useDMS = .true.
 
     ! Local flag for controlling behavior.
     logical*1, save :: converged
@@ -106,17 +105,16 @@ contains
     real(dp), save :: a2(3)
 
     ! Center of mass forces and torque.
-    real(dp) :: fCM(3,n_atoms/3)
-    real(dp) :: fsf(3,n_atoms/3)
-    real(dp) :: tau(3,n_atoms/3)
+    real(dp) :: fCM(3,n_atoms/3) ! center of mass force
+    real(dp) :: fsf(3,n_atoms/3) 
+    real(dp) :: tau(3,n_atoms/3) !center of mass torque
 
-    ! Atomic positions, centers of mass, principal axes.
-    real(dp) :: ra(n_atoms*3) 
-    real(dp) :: rCM(3,n_atoms/3)
-    real(dp) :: x(3,3,n_atoms/3)
+    real(dp) :: ra(n_atoms*3)    ! atomic positioins in stupid format
+    real(dp) :: rCM(3,n_atoms/3) ! center of mass positions
+    real(dp) :: x(3,3,n_atoms/3) ! rotation matrix
 
     ! Electric fields.
-    real(dp) :: eD(3,n_atoms/3)
+    real(dp) :: eD(3,n_atoms/3) !
     real(dp) :: eQ(3,n_atoms/3)
     real(dp) :: eH(3,n_atoms/3)
     real(dp) :: eT(3,n_atoms/3)
@@ -136,6 +134,8 @@ contains
 
     ! Work multipoles. They start unpolarized and with the induction
     ! loop we induce dipoles and quadrupoles.
+    
+    ! Multipoles (0 referes to the unpolarized di- and quadrupole)
     real(dp) :: dpole0(3,n_atoms/3)
     real(dp) :: qpole0(3,3,n_atoms/3)
     real(dp) :: opole(3,3,3,n_atoms/3)
@@ -143,7 +143,7 @@ contains
     real(dp) :: dpole(3,n_atoms/3)
     real(dp) :: qpole(3,3,n_atoms/3)
 
-    ! Polarizabilities.
+    ! Polarizabilities (defined in polariz_parameters)
     real(dp) :: dd(3,3,n_atoms/3)
     real(dp) :: dq(3,3,3,n_atoms/3)
     real(dp) :: hp(3,3,3,n_atoms/3)
@@ -155,23 +155,21 @@ contains
 
     ! Local arrays for ??? ML
     !real(dp) :: uPES(n_atoms*3)
-    real(dp), save :: dipmom(3)
+    !real(dp), save :: dipmom(3)
     !real(dp), save :: qdms(3)
     
 
-    ! Input for the potnasa potential.
+    ! For Partridge-Schwenke surfaces
     !real(dp), save :: mol(9)
     !real(dp), save :: grad(9)
     !real(dp), save :: uPES1
    !new shit: 
-    integer jjj
+    !integer jjj
     real(dp) ps_mol(3,3) !fix this  !!!  ! ps(O,H1,H1 ; x,y,z)
     real(dp) ps_mol_dip(3,3)
     real(dp) ps_grad(9)
     real(dp) ps_pes
-      
-   
-    real(dp) :: qdms(3)
+    !real(dp) :: qdms(3)
     real(dp) :: dms(3)
     !real(dp), save :: dipmom2(3)
     integer iteration
@@ -225,7 +223,7 @@ contains
 
     ! call Partridge-Schwenke dipole moment surface routine.
 !    print*, "DIPOLE"
-    if (useDMS) then
+    if (usePS_DMS) then
        do m = 1,nM
 
           !OHH order in ps_dms: 
@@ -334,22 +332,10 @@ call printer(dEhdr, 'dEhdr')
     
     ! Adding intramolecular energy from Partridge-Schwenke PES.
     uPES(:) = 0.0_dp
-    if (.not. irigidmolecules) then
+    if (usePS_PES) then
        do m=1,nM
-          !mol(:) = 0.0_dp
           
-!          indH1 = 6*(m-1)
-!          indO  = 3*(m-1+2*nM)
-!          indH2 = 3+6*(m-1)
-!
-!          do p=1,3
-!             ps_mol(1,p) = ra(indO  + p)
-!             ps_mol(2,p) = ra(indH1 + p)
-!             ps_mol(3,p) = ra(indH2 + p)
-!             
-!          end do
-          
-          !OHH order in ps_pes
+          !OHH order in vibpes
           ps_mol(1,:) = rw(m)%o!(indO  + p)
           ps_mol(2,:) = rw(m)%h1!(indH1 + p)
           ps_mol(3,:) = rw(m)%h2!(indH2 + p)
@@ -359,22 +345,9 @@ call printer(dEhdr, 'dEhdr')
           call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
           u_tot = u_tot + ps_pes
-          
           uPES(m) = ps_pes
           
-
-
-          indH1 = 6*(m-1)
-          indO  = 3*(m-1+2*nM)
-          indH2 = 3+6*(m-1)
-          do p=1,3
-             
-             !
-             fa(indO  + p) = fa(indO  + p) - ps_grad(p)  !*h2eV*A2b
-             fa(indH1 + p) = fa(indH1 + p) - ps_grad(p+3)!*h2eV*A2b
-             fa(indH2 + p) = fa(indH2 + p) - ps_grad(p+6)!*h2eV*A2b
-             
-          end do
+          
           aforces(m)%o  = aforces(m)%o   - ps_grad(1:3)  
           aforces(m)%h1 = aforces(m)%h1  - ps_grad(4:6)
           aforces(m)%h2 = aforces(m)%h2  - ps_grad(7:9)
@@ -382,7 +355,7 @@ call printer(dEhdr, 'dEhdr')
        end do
     end if
 call printer(u_tot,'u_tot')
-call printer(fa,'fa')
+!call printer(fa,'fa')
 call printer_h2o_linear(aforces,'aforces linear')
 !call printer(aforces,'aforces')
 
@@ -404,3 +377,16 @@ end module scme
 !             ps_mol_dip(3,p) = ra(indH2 + p)
 !          end do
 
+
+! fran vibpes loop
+          !indH1 = 6*(m-1)
+          !indO  = 3*(m-1+2*nM)
+          !indH2 = 3+6*(m-1)
+          !do p=1,3
+          !   
+          !   !
+          !   fa(indO  + p) = fa(indO  + p) - ps_grad(p)  !*h2eV*A2b
+          !   fa(indH1 + p) = fa(indH1 + p) - ps_grad(p+3)!*h2eV*A2b
+          !   fa(indH2 + p) = fa(indH2 + p) - ps_grad(p+6)!*h2eV*A2b
+          !   
+          !end do
