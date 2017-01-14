@@ -38,12 +38,12 @@ OBJ = $(addprefix $(OBJDIR)/, \
 	calcEnergy_mod.o calc_lower_order.o \
 	inducePoles.o \
 	atomicForces_mod.o molforce.o mdutil.o \
-	molecProperties.o  ps.o\
+	molecProperties.o \
 	ps_pes.o ps_dms.o constants.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o)
 	
-#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o
+#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
-HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
+#HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
 #all: $(OBJDIR)/scme.o
 all:
@@ -71,137 +71,64 @@ $(OBJDIR)/libscme.a: $(OBJ)
 $(OBJDIR)/%.o: %.f90
 	$(FC) $(FFLAGS) -c -o $@ $<
 
-$(OBJDIR)/%.o: %.cpp
-	$(CC) $(CFLAGS) -c -o $@ $<
+#$(OBJDIR)/%.o: %.cpp
+#	$(CC) $(CFLAGS) -c -o $@ $<
 
-#clean:
+#/////////////////////////////////////////////////// Dependencies //////
+# special dependencies:
+$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/parameters.o
+$(OBJDIR)/atomicForces_mod.o:$(OBJDIR)/molforce.o
+$(OBJDIR)/molforce.o:$(OBJDIR)/mdutil.o
+$(OBJDIR)/ps_dms.o	$(OBJDIR)/ps_pes.o:$(OBJDIR)/constants.o
 
-######################################### Dependencies:
-# Single depdenden --- multiple prerequisites:
+$(OBJDIR)/molecProperties.o	\
+$(OBJDIR)/calc_derivs.o		\
+$(OBJDIR)/calc_lower_order.o	\
+$(OBJDIR)/calc_higher_order.o:	\
+$(OBJDIR)/sf_disp_tangtoe.o \
 
+
+# scme dep. on most
 $(OBJDIR)/scme_ps.o:		\
 $(OBJDIR)/calc_derivs.o		\
 $(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o	\
 $(OBJDIR)/parameters.o		\
 $(OBJDIR)/polariz_parameters.o	\
 $(OBJDIR)/molecProperties.o	\
 $(OBJDIR)/calc_lower_order.o	\
 $(OBJDIR)/calc_higher_order.o	\
 $(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/forceCM_mod.o		\
-$(OBJDIR)/torqueCM_mod.o	\
 $(OBJDIR)/atomicForces_mod.o	\
 $(OBJDIR)/calcEnergy_mod.o	\
-$(OBJDIR)/coreInt_mod.o		\
-$(OBJDIR)/dispersion_mod.o	\
 $(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/ps.o \
-$(NEW)/ps_pes.o \
-$(NEW)/ps_dms.o \
+$(OBJDIR)/ps_pes.o \
+$(OBJDIR)/ps_dms.o \
 $(OBJDIR)/printer_mod.o \
 $(OBJDIR)/sf_disp_tangtoe.o \
+$(OBJDIR)/force_torqueCM.o \
 
-
-$(OBJDIR)/printer_mod.o:$(OBJDIR)/data_types.o
-$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/data_types.o $(OBJDIR)/parameters.o
-$(OBJDIR)/force_torqueCM.o:$(OBJDIR)/data_types.o 
-
-
-$(OBJDIR)/atomicForces_mod.o:	\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o	\
-$(OBJDIR)/molforce.o		\
-
-
-$(OBJDIR)/molforce.o:	\
-$(OBJDIR)/data_types.o	\
-$(OBJDIR)/mdutil.o	\
-
-$(OBJDIR)/coreInt_mod.o:	\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o	\
-$(OBJDIR)/parameters.o 		\
-$(OBJDIR)/rho.o			\
-
-$(OBJDIR)/rho.o:		\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o	\
-$(OBJDIR)/parameters.o		\
-
-$(OBJDIR)/molecProperties.o:	\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o 	\
-$(OBJDIR)/tang_toennies.o	\
+# most dep. on data_types
+$(OBJDIR)/molecProperties.o	\
+$(OBJDIR)/calc_derivs.o		\
+$(OBJDIR)/calc_lower_order.o	\
+$(OBJDIR)/calc_higher_order.o	\
+$(OBJDIR)/printer_mod.o \
+$(OBJDIR)/force_torqueCM.o \
 $(OBJDIR)/sf_disp_tangtoe.o \
-
-
-$(OBJDIR)/tang_toennies.o:	\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/parameters.o		\
-
-
-
-# multiple dependents --- few prerequisite:
-$(NEW)/ps_dms.o	\
-$(NEW)/ps_pes.o:	\
-$(NEW)/constants.o	\
-
-
+$(OBJDIR)/ps_dms.o	\
+$(OBJDIR)/ps_pes.o \
+$(OBJDIR)/molforce.o	\
+$(OBJDIR)/atomicForces_mod.o	\
+$(OBJDIR)/force_torqueCM.o		\
+$(OBJDIR)/inducePoles.o		\
+$(OBJDIR)/calcEnergy_mod.o	\
 $(OBJDIR)/mdutil.o		\
 $(OBJDIR)/polariz_parameters.o	\
 $(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/max_parameters.o	\
 $(OBJDIR)/parameters.o:		\
 $(OBJDIR)/data_types.o		\
 
 
-$(OBJDIR)/dispersion_mod.o	\
-$(OBJDIR)/torqueCM_mod.o	\
-$(OBJDIR)/forceCM_mod.o		\
-$(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/calcEnergy_mod.o:	\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o	\
-
-
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o:	\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/max_parameters.o	\
-$(OBJDIR)/molecProperties.o	\
-
-
-# **********************************************************************************************************************************
-# module dependencies
-
-#$(OBJDIR)/parameters.o: $(OBJDIR)/data_types.o
-#
-#$(OBJDIR)/tang_toennies.o: $(OBJDIR)/parameters.o
-#
-#$(OBJDIR)/rho.o:$(OBJDIR)/parameters.o
-#
-#$(OBJDIR)/scme.o: $(addprefix $(OBJDIR)/, data_types.o parameters.o max_parameters.o multipole_parameters.o polariz_parameters.o \
-#	molecProperties.o calc_higher_order.o calc_lower_order.o calc_derivs.o inducePoles.o forceCM_mod.o \
-#	torqueCM_mod.o atomicForces_mod.o calcEnergy_mod.o coreInt_mod.o dispersion_mod.o ps.o)
-#
-#$(OBJDIR)/molecProperties.o: $(OBJDIR)/data_types.o $(OBJDIR)/max_parameters.o $(OBJDIR)/tang_toennies.o
-#
-#$(OBJDIR)/calc_higher_order.o: $(OBJDIR)/data_types.o $(OBJDIR)/max_parameters.o $(OBJDIR)/molecProperties.o
-#
-#$(OBJDIR)/calc_lower_order.o: $(OBJDIR)/data_types.o $(OBJDIR)/max_parameters.o $(OBJDIR)/molecProperties.o
-#
-#$(OBJDIR)/calc_derivs.o: $(OBJDIR)/data_types.o $(OBJDIR)/max_parameters.o $(OBJDIR)/molecProperties.o
-#
-#$(OBJDIR)/coreInt_mod.o: $(OBJDIR)/data_types.o $(OBJDIR)/max_parameters.o $(OBJDIR)/parameters.o $(OBJDIR)/rho.o
-#
-#$(OBJDIR)/atomicForces_mod.o: $(OBJDIR)/data_types.o $(OBJDIR)/max_parameters.o $(OBJDIR)/molforce.o
-#
-#$(OBJDIR)/molforce.o: $(OBJDIR)/data_types.o $(OBJDIR)/mdutil.o
-
-# **********************************************************************************************************************************
-# cleanup
 
 .PHONY: clean
 clean:
