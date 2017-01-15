@@ -58,7 +58,7 @@ module scme
   use ps_dms, only: vibdms
   use ps_pes, only: vibpes
   use constants, only:A_a0, ea0_Deb, eA_Deb
-  use printer_mod!, only: printer
+  use printer_mod, only: printer, printer_h2o_linear, h2o_lin
 
   implicit none
   private
@@ -178,6 +178,7 @@ contains
     integer m
     real(dp) :: uPES(n_atoms/3)
     type(h2o) :: aforces(n_atoms/3)
+    real(dp) :: fa_test(n_atoms*3)
     
     ! ----------------------------
     ! Set initial Intitial values.
@@ -289,7 +290,7 @@ call printer(dEhdr, 'dEhdr')
     ! the total force and total torque agree with the ones calculated
     ! for the multipoles.
     ! NOTE: This is where 'fa' is calculated.
-    call atomicForces(fCM, tau, ra, rCM, nM, fa)
+!JÖ    call atomicForces(fCM, tau, ra, rCM, nM, fa)
     call stillAtomicForces(fCM,tau,rw,rCM,nM,aforces)
 
     ! Calculate the energy of interaction between the multipole moments
@@ -306,7 +307,7 @@ call printer(dEhdr, 'dEhdr')
        aforces(m)%h2 = aforces(m)%h2*convFactor
        aforces(m)%o = aforces(m)%o*convFactor
     enddo
-    fa(:) = fa(:)*convFactor
+!JÖ    fa(:) = fa(:)*convFactor
     u_tot = u_tot * convFactor
 
     ! Store the energy this far for debug printout.
@@ -315,7 +316,7 @@ call printer(dEhdr, 'dEhdr')
     ! Calculate dispersion forces ??? ML
     call new_dispersion(rw, aforces, uDisp, nM, a, a2)
 !call printer(uDisp, 'uDisp new')    
-    call dispersion(ra, fa, uDisp, nM, a, a2)
+!    call dispersion(ra, fa, uDisp, nM, a, a2)
     u_tot = u_tot + uDisp
 !call printer(uDisp, 'uDisp old')    
 
@@ -331,8 +332,8 @@ call printer(dEhdr, 'dEhdr')
     !end if
     
     ! Adding intramolecular energy from Partridge-Schwenke PES.
-    uPES(:) = 0.0_dp
-    if (usePS_PES) then
+    !uPES = 0
+    !if (usePS_PES) then
        do m=1,nM
           
           !OHH order in vibpes
@@ -341,22 +342,49 @@ call printer(dEhdr, 'dEhdr')
           ps_mol(3,:) = rw(m)%h2!(indH2 + p)
 
           
-          ps_grad(:) = 0.0_dp
+          ps_grad = 0
           call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
           
           u_tot = u_tot + ps_pes
-          uPES(m) = ps_pes
-          
+          !uPES(m) = ps_pes
+
+
+!JÖ          indH1 = 6*(m-1)
+!JÖ          indO  = 3*(m-1+2*nM)
+!JÖ          indH2 = 3+6*(m-1)
+!JÖ          do p=1,3
+!JÖ             
+!JÖ             !
+!JÖ             fa(indO  + p) = fa(indO  + p) - ps_grad(p)  !*h2eV*A2b
+!JÖ             fa(indH1 + p) = fa(indH1 + p) - ps_grad(p+3)!*h2eV*A2b
+!JÖ             fa(indH2 + p) = fa(indH2 + p) - ps_grad(p+6)!*h2eV*A2b
+!JÖ             
+!JÖ          end do
           
           aforces(m)%o  = aforces(m)%o   - ps_grad(1:3)  
           aforces(m)%h1 = aforces(m)%h1  - ps_grad(4:6)
           aforces(m)%h2 = aforces(m)%h2  - ps_grad(7:9)
           
        end do
-    end if
-call printer(u_tot,'u_tot')
+    !end if
+    
+    !fa_test = fa
+!call printer(fa_test,'fa_test')
+    !fa=0
+    !call h2o_lin(aforces,fa,nM)
+    !call h2o_lin(aforces,fa,nM)
 !call printer(fa,'fa')
-call printer_h2o_linear(aforces,'aforces linear')
+fa_test=0
+call printer_h2o_linear(aforces,'printer_h2o_linear(aforces)')
+call h2o_lin(aforces,fa,nM)
+call printer(fa,'printer( h2o_lin(aforces))')
+
+call printer(aforces,'aforces')
+    
+    
+call printer(u_tot,'u_tot')
+!call printer_h2o_linear(aforces,'aforces linear')
+
 !call printer(aforces,'aforces')
 
 

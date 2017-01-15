@@ -14,7 +14,7 @@ interface printer
 end interface
 
   private
-  public printer, printer_h2o_linear
+  public printer, printer_h2o_linear, h2o_lin
 
 
 contains !/////////////////////////////////////////////
@@ -33,6 +33,8 @@ subroutine printer_h2o_linear(a,text)
    do m = 1,l
      do xyz = 1,3
        write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' H1:',a(m)%h1(xyz)
+     enddo
+     do xyz = 1,3
        write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' H2:',a(m)%h2(xyz)
      enddo
    enddo
@@ -44,6 +46,20 @@ subroutine printer_h2o_linear(a,text)
 
 end subroutine 
  
+subroutine h2o_lin(a,alin,nM)
+  integer, intent(in) :: nM
+  type(h2o), intent(in) :: a(nM)
+  real(dp) , intent(out) :: alin(nM*9)
+  integer l, m, xyz
+  alin=0
+   do m = 1,nM
+     do xyz = 1,3
+       alin((2*m-2)*3 + xyz) = a(m)%h1(xyz)
+       alin((2*m-1)*3 + xyz) = a(m)%h2(xyz)
+       alin((2*nM+m-1)*3 + xyz)  = a(m)%o(xyz)
+     enddo
+   enddo
+end subroutine 
 
 
 !//////////////////////////////////////////////////// Tensor Printers for "printer" interface above:
