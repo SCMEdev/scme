@@ -25,8 +25,9 @@ opti = -O0
 ## Flags for mor optimizations and 49 passes at home:
 #-Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
 # -Ofast
-FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR)
+FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR) 
 CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
+#-Wall
 #-fopenmp
 #-floop-unroll-and-jam -ftree-loop-if-convert
 #vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution

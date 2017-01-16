@@ -1,5 +1,6 @@
 module localAxes_mod
 use data_types
+use printer_mod
 implicit none
 
 
@@ -12,13 +13,15 @@ contains
 !
 !end subroutine
 
-subroutine torqueOnAtoms(tau,w,f,rCM)
- real(dp), intent(in) :: tau(3), rCM(3)
+
+
+subroutine force_torqueOnAtoms00(tau,fCM,w,f,rCM)
+ real(dp), intent(in) :: tau(3), rCM(3), fCM(3)
  type(h2o), intent(in) :: w
  type(h2o), intent(inout) :: f
  real(dp), dimension(3) :: txr1, txr2, txro, r1, r2, ro
  real(dp) :: I1, I2, Io, Itot, t2
- real(dp), parameter :: mh = 1.0_dp, mo = 16.0_dp !are these in the right units???
+ real(dp), parameter :: mh = 1.0_dp, mo = 16.0_dp, Mm = 2*mh+mo !are these in the right units???
  integer ii
  
    t2 = norm_2(tau)
@@ -38,78 +41,61 @@ subroutine torqueOnAtoms(tau,w,f,rCM)
    
    Itot = I1+I2+Io
    
-   f%h1 = mh/Itot*txr1
-   f%h2 = mh/Itot*txr2
-   f%o  = mo/Itot*txro
+   f%h1 = f%h1 + mh/Itot*txr1
+   f%h2 = f%h2 + mh/Itot*txr2
+   f%o  = f%o  + mo/Itot*txro
+   
+   ! End of torque
+   f%h1 = f%h1 + fCM*mh/Mm
+   f%h2 = f%h2 + fCM*mh/Mm
+   f%o  = f%o  + fCM*mo/Mm
    
 end subroutine
 
-
-
-subroutine test_xyz()
-type(xyz) r(2)
-r(1)%x = [1.2_dp, 3.4_dp,5.6_dp]
-r(2)%x = [4.2_dp, 6.4_dp,1.6_dp]
-print*, r(1)%x
-print*, r(2)%x
-end subroutine
-
-!type(hho) :: w(nM), aforces(nM)
-! call torqueOnAtoms2(tau(:,m), rCM(:,m), w(m)%a, fatom(m)%a
-
-subroutine torqueOnAtoms2(tau,rCM,rhho,f)
- integer, parameter :: a_m = 3
- type(xyz), intent(in) :: tau, rCM
- type(xyz), intent(in) :: rhho(a_m)
- type(xyz), intent(inout) :: f(a_m)
- type(xyz) :: r(a_m), txr(a_m)
- real(dp) :: I(a_m), Itot, t2
- !real(dp), dimension(3) :: txr1, txr2, txro, r1, r2, ro
- !real(dp) :: I1, I2, Io, Itot, t2
- real(dp), parameter :: m(a_m) = [1.0_dp, 1.0_dp, 16.0_dp] !are these in the right units???
- integer ii, a
- 
-   t2 = norm_2(tau%x)
-   
-   do a = 1,a_m !atoms hho
-      r(a)%x = rhho(a)%x - rCM%x
-      txr(a)%x = cross(tau%x,r(a)%x)
-      I(a) = m(a)/t2*norm_2(txr(a)%x)
-   enddo
-   
-   Itot = sum(I)
-   
-   do a = 1,a_m
-      f(a)%x = m(a)/Itot*txr(a)%x
-   enddo
-   
-end subroutine
-
-subroutine torqueOnAtoms3(tau,rCM,mol,f)
+subroutine force_torqueOnAtoms(tau,fCM,w,f,rCM)
  integer, parameter :: aim = 3
- real(dp), intent(in) :: tau(3), rCM(3)
- real(dp), intent(in) :: mol(3,aim)
- real(dp), intent(inout) :: f(3,aim)
- real(dp) :: r(3), txr(3,aim)
+ real(dp), intent(in) :: tau(3), rCM(3), fCM(3)
+ type(h2o), intent(in) :: w
+ type(h2o), intent(inout) :: f
+ real(dp) :: txr(3,aim), r(3,aim), ft(3,aim), ff(3,aim)
  real(dp) :: I(aim), Itot, t2
- real(dp), parameter :: m(aim) = [1.0_dp, 1.0_dp, 16.0_dp] !are these in the right units???
- integer ii, a
+ real(dp), parameter :: m(3) = [1.0_dp, 1.0_dp, 16.0_dp], Mm = sum(m) !are these in the right units???
+ integer a
  
-   t2 = norm_2(tau)
-   
-   do a = 1,aim !atoms hho
-      r = mol(:,a) - rCM
-      txr(:,a) = cross(tau,r)
+   t2 = norm_2(tau) !length square of torque
+
+   r(:,1) = w%h1 - rCM !extract oh distances
+   r(:,2) = w%h2 - rCM
+   r(:,3) = w%o  - rCM
+!call printer(r,'r')   
+
+   do a = 1,aim
+      txr(:,a) = cross(tau,r(:,a))
       I(a) = m(a)/t2*norm_2(txr(:,a))
    enddo
+!call printer(txr,'txr')   
    
    Itot = sum(I)
    
    do a = 1,aim
-      f(:,a) = m(a)/Itot*txr(:,a)
+      ft(:,a) = m(a)/Itot*txr(:,a) ! torque on atoms
+      ff(:,a) = fCM*m(a)/Mm        ! force distributed on atoms
    enddo
+!call printer(ft,'ft')   
+!call printer(ff,'ff')   
+   ! end of torque
+   
+   
+   
+   f%h1 = f%h1 + ft(:,1) + ff(:,1)
+   f%h2 = f%h2 + ft(:,2) + ff(:,2)
+   f%o  = f%o  + ft(:,3) + ff(:,3)
+!call printer(f,'f')
    
 end subroutine
+
+
+
 
 
 subroutine localAxes(d,w,rot)

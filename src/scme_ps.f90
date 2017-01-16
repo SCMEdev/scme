@@ -218,12 +218,12 @@ contains
 
 
 
-    ! Find the rotation matrix x that defines the principal axis.
-    call findPpalAxes(ra, nM, x)
-
-    ! Rotate the multipoles d0, dq etc, to allign with the molecules using
-    ! the rotation matrix x. The result is stored in the dpole0 etc arrays.
-    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
+!    ! Find the rotation matrix x that defines the principal axis.
+!    call findPpalAxes(ra, nM, x)
+!
+!    ! Rotate the multipoles d0, dq etc, to allign with the molecules using
+!    ! the rotation matrix x. The result is stored in the dpole0 etc arrays.
+!    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
 
     ! call Partridge-Schwenke dipole moment surface routine.
 !    print*, "DIPOLE"
@@ -241,26 +241,12 @@ contains
           dpole0(:,m) = dms(:)*kk1*kk2!*eA_Deb! dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!     When we fix units this shuld be fixed. 
        end do
     end if
-call printer(dpole0, 'dpole0')
+!call printer(dpole0, 'dpole0')
     
-!    do m = 1,nM
-!       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
-!!       call printer(dot(rot(:,1,m),rot(:,2,m)), 'rot dot 12')
-!!       call printer(dot(rot(:,2,m),rot(:,3,m)), 'rot dot 23')
-!!       call printer(dot(rot(:,1,m),rot(:,3,m)), 'rot dot 13')
-!!       
-!!       call printer(dot(x(:,1,m),x(:,2,m))    , 'x dot 12')
-!!       call printer(dot(x(:,2,m),x(:,3,m))    , 'x dot 23')
-!!       call printer(dot(x(:,1,m),x(:,3,m))    , 'x dot 13')
-!!       
-!!       
-!!       call printer(rot(:,:,m)-x(:,:,m),"rot(:,1,m)-x(:,1,m)")
-!       
-!       
-!
-!    enddo
-    
-!    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
+    do m = 1,nM
+       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
+    enddo
+    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
 
 !call printer(rot, 'rot')
 !call printer(x, 'x')
@@ -312,18 +298,23 @@ call printer(dpole0, 'dpole0')
     ! Compute the torque on the molecule.
     call torqueCM(dpole, qpole, opole, hpole, d1v, d2v, d3v, d4v, nM, tau)
 
+!call printer(tau,'tau')    
+!call printer(fCM,'fCM')    
+
     ! Find 3 forces, one at oxygen and one at each hydrogen such that
     ! the total force and total torque agree with the ones calculated
     ! for the multipoles.
     ! NOTE: This is where 'fa' is calculated.
 !JÖ    call atomicForces(fCM, tau, ra, rCM, nM, fa)
 
-    call stillAtomicForces(fCM,tau,rw,rCM,nM,aforces)
-    
-!    do m = 1,nM
-!       call torqueOnAtoms(tau(:,m),rw(m), aforces(m), rCM(:,m))
-!    enddo
-    
+!    call stillAtomicForces(fCM,tau,rw,rCM,nM,aforces)
+    do m = 1,nM
+       aforces(m)%h1 = 0
+       aforces(m)%h2 = 0
+       aforces(m)%o  = 0
+       call force_torqueOnAtoms(tau(:,m),fCM(:,m),rw(m), aforces(m), rCM(:,m))
+    enddo
+!call printer(aforces,'aforces')    
     
     
     ! Calculate the energy of interaction between the multipole moments
@@ -338,7 +329,7 @@ call printer(dpole0, 'dpole0')
     do m = 1,nM
        aforces(m)%h1 = aforces(m)%h1*convFactor
        aforces(m)%h2 = aforces(m)%h2*convFactor
-       aforces(m)%o = aforces(m)%o*convFactor
+       aforces(m)%o  = aforces(m)%o*convFactor
     enddo
 !JÖ    fa(:) = fa(:)*convFactor
     u_tot = u_tot * convFactor
@@ -404,9 +395,11 @@ call printer(dpole0, 'dpole0')
     !fa_test = fa
 !call printer(fa_test,'fa_test')
     !fa=0
-    !call h2o_lin(aforces,fa,nM)
+    call h2o_lin(aforces,fa,nM)
     !call h2o_lin(aforces,fa,nM)
 !call printer(fa,'fa')
+call printer(u_tot,'u_tot')
+call printer(aforces,'aforces')
 
 
 !fa_test=0
@@ -414,7 +407,6 @@ call printer(dpole0, 'dpole0')
 !call h2o_lin(aforces,fa,nM)
 !call printer(fa,'printer( h2o_lin(aforces))')
 !
-!call printer(aforces,'aforces')
 !    
 !    
 !call printer(u_tot,'u_tot')
@@ -422,9 +414,6 @@ call printer(dpole0, 'dpole0')
 !!!call printer_h2o_linear(aforces,'aforces linear')
 !!
 !!!call printer(aforces,'aforces')
-
-call test_xyz()
-
 
     return
 
