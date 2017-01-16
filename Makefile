@@ -39,7 +39,8 @@ OBJ = $(addprefix $(OBJDIR)/, \
 	inducePoles.o \
 	atomicForces_mod.o molforce.o mdutil.o \
 	molecProperties.o \
-	ps_pes.o ps_dms.o constants.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o)
+	ps_pes.o ps_dms.o constants.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
+	localAxes_mod.o )
 	
 #	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
@@ -106,8 +107,11 @@ $(OBJDIR)/ps_dms.o \
 $(OBJDIR)/printer_mod.o \
 $(OBJDIR)/sf_disp_tangtoe.o \
 $(OBJDIR)/force_torqueCM.o \
+$(OBJDIR)/localAxes_mod.o \
+
 
 # most dep. on data_types
+$(OBJDIR)/localAxes_mod.o \
 $(OBJDIR)/molecProperties.o	\
 $(OBJDIR)/calc_derivs.o		\
 $(OBJDIR)/calc_lower_order.o	\

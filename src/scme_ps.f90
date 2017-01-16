@@ -59,6 +59,7 @@ module scme
   use ps_pes, only: vibpes
   use constants, only:A_a0, ea0_Deb, eA_Deb
   use printer_mod, only: printer, printer_h2o_linear, h2o_lin
+  use localAxes_mod
 
   implicit none
   private
@@ -112,6 +113,7 @@ contains
     real(dp) :: ra(n_atoms*3)    ! atomic positioins in stupid format
     real(dp) :: rCM(3,n_atoms/3) ! center of mass positions
     real(dp) :: x(3,3,n_atoms/3) ! rotation matrix
+    
 
     ! Electric fields.
     real(dp) :: eD(3,n_atoms/3) !
@@ -179,6 +181,7 @@ contains
     real(dp) :: uPES(n_atoms/3)
     type(h2o) :: aforces(n_atoms/3)
     real(dp) :: fa_test(n_atoms*3)
+    real(dp) :: rot(3,3,n_atoms/3) ! rotation matrix
     
     ! ----------------------------
     ! Set initial Intitial values.
@@ -240,6 +243,29 @@ contains
     end if
 call printer(dpole0, 'dpole0')
     
+!    do m = 1,nM
+!       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
+!!       call printer(dot(rot(:,1,m),rot(:,2,m)), 'rot dot 12')
+!!       call printer(dot(rot(:,2,m),rot(:,3,m)), 'rot dot 23')
+!!       call printer(dot(rot(:,1,m),rot(:,3,m)), 'rot dot 13')
+!!       
+!!       call printer(dot(x(:,1,m),x(:,2,m))    , 'x dot 12')
+!!       call printer(dot(x(:,2,m),x(:,3,m))    , 'x dot 23')
+!!       call printer(dot(x(:,1,m),x(:,3,m))    , 'x dot 13')
+!!       
+!!       
+!!       call printer(rot(:,:,m)-x(:,:,m),"rot(:,1,m)-x(:,1,m)")
+!       
+!       
+!
+!    enddo
+    
+!    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
+
+!call printer(rot, 'rot')
+!call printer(x, 'x')
+
+    
     !print*, sqrt(sum(dpole0(:,1)**2))
     !print*, sqrt(sum(dpole0(:,1)**2))
     
@@ -248,11 +274,11 @@ call printer(dpole0, 'dpole0')
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x)
 
     call calcEhigh(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab)
-call printer(eH, 'eH')
-call printer(uH, 'uH')
-call printer(dEhdr, 'dEhdr')
-!call printer(opole, 'opole')
-!call printer(hpole, 'hpole')
+!call printer(eH, 'eH')
+!call printer(uH, 'uH')
+!call printer(dEhdr, 'dEhdr')
+!!!call printer(opole, 'opole')
+!!!call printer(hpole, 'hpole')
 
 
     ! Here's where the induction loop begins.
@@ -291,8 +317,15 @@ call printer(dEhdr, 'dEhdr')
     ! for the multipoles.
     ! NOTE: This is where 'fa' is calculated.
 !JÖ    call atomicForces(fCM, tau, ra, rCM, nM, fa)
-    call stillAtomicForces(fCM,tau,rw,rCM,nM,aforces)
 
+    call stillAtomicForces(fCM,tau,rw,rCM,nM,aforces)
+    
+!    do m = 1,nM
+!       call torqueOnAtoms(tau(:,m),rw(m), aforces(m), rCM(:,m))
+!    enddo
+    
+    
+    
     ! Calculate the energy of interaction between the multipole moments
     ! and the electric field of the other molecules.
     call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_tot)
@@ -374,18 +407,23 @@ call printer(dEhdr, 'dEhdr')
     !call h2o_lin(aforces,fa,nM)
     !call h2o_lin(aforces,fa,nM)
 !call printer(fa,'fa')
-fa_test=0
-call printer_h2o_linear(aforces,'printer_h2o_linear(aforces)')
-call h2o_lin(aforces,fa,nM)
-call printer(fa,'printer( h2o_lin(aforces))')
 
-call printer(aforces,'aforces')
-    
-    
-call printer(u_tot,'u_tot')
-!call printer_h2o_linear(aforces,'aforces linear')
 
+!fa_test=0
+!call printer_h2o_linear(aforces,'printer_h2o_linear(aforces)')
+!call h2o_lin(aforces,fa,nM)
+!call printer(fa,'printer( h2o_lin(aforces))')
+!
 !call printer(aforces,'aforces')
+!    
+!    
+!call printer(u_tot,'u_tot')
+
+!!!call printer_h2o_linear(aforces,'aforces linear')
+!!
+!!!call printer(aforces,'aforces')
+
+call test_xyz()
 
 
     return

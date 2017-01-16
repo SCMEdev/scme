@@ -3,7 +3,7 @@ module data_types
   implicit none
   
   private
-  public sp, dp, medint, longint, h2o
+  public sp, dp, medint, longint, h2o, xyz, hho
   
   integer, parameter :: sp = selected_real_kind(6,37) ! single precision, ~ 4 byte float
   integer, parameter :: dp = selected_real_kind(15, 307) ! double precision ~ 8 byte float
@@ -14,6 +14,15 @@ module data_types
   type h2o
    real(dp), dimension(3) :: h1, h2, o
   end type
+
+type xyz 
+  real(dp) :: x(3)
+end type
+
+type hho
+  type(xyz) :: a(3)
+end type
+
 
 !force type  
 !  type h2o_forces
