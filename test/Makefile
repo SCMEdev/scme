@@ -1,6 +1,7 @@
 
 FC = gfortran
-FFLAGS = -O3 -cpp -pg -I../mod/
+#FFLAGS = -O3 -cpp -I../mod/
+FFLAGS = -O3 -cpp -fopenmp -I../mod/
 
 
 run.x: run_tests.o mifu_asserts.o test_scme.o

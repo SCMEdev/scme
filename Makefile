@@ -13,8 +13,10 @@ vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-FFLAGS = -O3 -pg -I$(MODDIR) -J$(MODDIR)
+FFLAGS = -O3 -I$(MODDIR) -J$(MODDIR)
+#FFLAGS = -I$(MODDIR) -J$(MODDIR)
 CFLAGS = -O2 -I$(MODDIR) -J$(MODDIR) -lstdc++
+#CFLAGS =  -I$(MODDIR) -J$(MODDIR) -lstdc++
 
 OBJ = $(addprefix $(OBJDIR)/, \
 	scme.o \
