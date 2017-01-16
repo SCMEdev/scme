@@ -1,0 +1,12 @@
+# Compiled source #
+###################
+*.mod
+*.o
+*.a
+*.so
+*.x
+# Development and GAP directories #
+###################
+devel/*
+gap/*
+
