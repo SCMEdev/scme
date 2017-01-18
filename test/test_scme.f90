@@ -344,7 +344,7 @@ module test_scme
     p=p+3; coordinates(p:p+2) = [ -1.2805,  5.2116, -1.8113 ]
     p=p+3; coordinates(p:p+2) = [ -0.4045,  4.8032, -1.9164 ]
     p=p+3; coordinates(p:p+2) = [ -1.8429,  4.6655, -2.4245 ]
-    print*, "things in coordinates should be 81 and it is: ", p
+    print*, "things in coordinates should be 81 and it is: ", p+2
     cell(1) = 35.000
     cell(2) = 35.000
     cell(3) = 35.000
@@ -352,7 +352,7 @@ module test_scme
     forces(:) = 0.0
 
     ! Call the scme function.
-    do i=1,200
+    do i=1,1
        call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
     end do
 
