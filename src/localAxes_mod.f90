@@ -13,6 +13,36 @@ contains
 !
 !end subroutine
 
+subroutine gs(s,g)
+ real(dp), intent(in) :: s
+ real(dp), intent(out) :: g(5)
+ real(dp) eee, pi, prefac
+ integer k
+ eee = erf(s)
+ pi = 3.1415926535_dp
+ prefac = 2.0_dp/dsqrt(pi)*dexp(-s**2) 
+ 
+ k=0
+ g(1) = eee - prefac * ( 2.0_dp**k * s**(2*k+1) ) / dble(facfac(2*k+1))
+ 
+ do k = 1,4
+    g(k+1) = g(k) - prefac * ( 2.0_dp**k * s**(2*k+1) ) / dble(facfac(2*k+1))
+ enddo
+ 
+end subroutine
+
+
+recursive function facfac(n) result(res)
+ integer, intent(in) :: n
+ integer :: res, nn
+   res = n
+   nn = n-2
+   do while (nn>1)
+      res = res*nn
+      nn = nn-2
+   enddo
+end function
+
 
 
 subroutine force_torqueOnAtoms00(tau,fCM,w,f,rCM)
@@ -149,6 +179,17 @@ recursive function norm_2(d) result(d2)
 end function
 
 end module
+
+program test_g
+use localAxes_mod
+real*8 r, gg(5)
+r=0
+do while (r<10.0)
+ r=r+0.01
+ call gs(r,gg)
+ write(*,'(6f10.6)') r,gg
+enddo
+end program
 
 !program test
 !use localAxes_mod
