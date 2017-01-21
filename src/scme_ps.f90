@@ -245,7 +245,8 @@ contains
     ! why dont we induce those, we have the polarizabilities!?
     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab) 
     ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
-    call printer(uH*convFactor,'uH')
+
+call printer(uH*convFactor,'uH')
     
     !/ Induce dipole and quadrupole to self consistency
     converged = .false.

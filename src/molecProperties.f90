@@ -12,17 +12,16 @@ module molecProperties
 !  use max_parameters
   !use tang_toennies, only: Tang_ToenniesN, Tang_ToenniesNdF
   use sf_disp_tangtoe, only: SF, SFdsf
-
+implicit none
   private
-  public recoverMolecules, calcCentersOfMass, findPpalAxes,&
-       rotatePolariz, addDfields,  &
-        rotate_qoh_poles !, SF, SFdsf, create_rw, calc_cm, addFields, setUnpolPoles, 
+  public recoverMolecules, addDfields, rotatePolariz, rotate_qoh_poles 
+        !, SF, SFdsf, create_rw, calc_cm, addFields, setUnpolPoles, calcCentersOfMass, findPpalAxes,
 
 contains
 
   subroutine recoverMolecules(raOri, ra, nH, nO, a, a2, rw)
     !-------------------------------------------------------------------
-    ! Thos routine takes the coords(3*n_atoms) and puts out ar(3*natoms)
+    ! This routine takes the coords(3*n_atoms) and puts out ar(3*natoms)
     ! (both in the HH HH HH HH HH... O O O O... order). Oxygen position
     ! is copied but in case an H is on the wrong side of the box, it is
     ! moved to correct position beside the Oxygen. 
@@ -70,91 +69,6 @@ contains
 
 
 
-  !----------------------------------------------------------------------+
-  !> Routine to rotate the multipoles to the orientation of the molecules.
-  !! @param[in] d0     : ?
-  !! @param[in] q0     : ?
-  !! @param[in] o0     : ?
-  !! @param[in] h0     : ?
-  !! @param[out] dpole : The array is assumed to be zeroized.
-  !! @param[out] qpole : ?
-  !! @param[out] opole : ?
-  !! @param[out] hpole : ?
-  !! @param[out] nM    : The number of molecules.
-  !! @param[out] x     : ?
-  subroutine rotatePoles(d0, q0, o0, h0, dpole, qpole, opole, hpole, nM, x)
-    implicit none
-    real(dp), intent(in) :: d0(:) !JÖ assumed shape can be faster
-    real(dp), intent(in) :: q0(:,:)
-    real(dp), intent(in) :: o0(:,:,:)
-    real(dp), intent(in) :: h0(:,:,:,:)
-    integer, intent(in) :: nM
-    real(dp), intent(in) :: x(:,:,:)
-
-    real(dp), intent(out) :: dpole(:,:)
-    real(dp), intent(out) :: qpole(:,:,:)
-    real(dp), intent(out) :: opole(:,:,:,:)
-    real(dp), intent(out) :: hpole(:,:,:,:,:)
-
-
-
-!    real(dp), intent(in) :: d0(3)
-!    real(dp), intent(in) :: q0(3,3)
-!    real(dp), intent(in) :: o0(3,3,3)
-!    real(dp), intent(in) :: h0(3,3,3,3)
-!    integer, intent(in) :: nM
-!    real(dp), intent(in) :: x(3,3,nM)
-    ! ----------------------------------------
-
-!    real(dp), intent(out) :: dpole(3,nM)
-!    real(dp), intent(out) :: qpole(3,3,nM)
-!    real(dp), intent(out) :: opole(3,3,3,nM)
-!    real(dp), intent(out) :: hpole(3,3,3,3,nM)
-
-
-    ! local variables.
-    integer i, j, k, l, ii, jj, kk, ll, m !jö , save ::
-
-    ! Zeroise.
-!JÖ    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp
-!JÖ    opole(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
-!JÖ    qpole(1:3, 1:3, 1:nM) = 0.0_dp
-!JÖ    dpole(1:3, 1:nM) = 0.0_dp
-
-    hpole = 0 !JÖ this is enough 
-    opole = 0
-    qpole = 0
-    dpole = 0
-    ! Do the calculation.
-    do m = 1, nM
-       do l = 1, 3
-          do ll = 1, 3
-             do k = 1, 3
-                do kk = 1, 3
-                   do j = 1, 3
-                      do jj = 1, 3
-                         do i = 1, 3
-                            do ii = 1, 3
-                               hpole(i,j,k,l,m) = hpole(i,j,k,l,m) + &
-                                    x(i,ii,m) * x(j,jj,m) * x(k,kk,m) &
-                                    * x(l,ll,m) * h0(ii,jj,kk,ll)
-                            end do
-                         end do
-                         opole(j,k,l,m) = opole(j,k,l,m) + &
-                              x(j,jj,m)* x(k,kk,m)* x(l,ll,m) * o0(jj,kk,ll)
-                      end do
-                   end do
-                   qpole(k,l,m) = qpole(k,l,m) + x(k,kk,m) * x(l,ll,m)* q0(kk,ll)
-                end do
-             end do
-             dpole(l,m) = dpole(l,m) + x(l,ll,m) * d0(ll)
-          end do
-       end do
-    end do
-
-    return
-
-  end subroutine rotatePoles
 
   subroutine rotate_qoh_poles(q0, o0, h0, qpole, opole, hpole, nM, x) !JÖ d0,dpole
     implicit none
@@ -304,12 +218,32 @@ contains
     integer, intent(in) :: nM !JÖ
 !    real(dp) dEhdr(3,3,maxCoo/3)
 !    real(dp) dEtdr(3,3,maxCoo/3), dEddr(3,3,maxCoo/3)
-    real(dp), intent(out) :: dEtdr(:,:,:)
-    real(dp), intent(in)  :: dEhdr(:,:,:)
-    real(dp), intent(in)  :: dEddr(:,:,:)
+    real(dp), intent(out) :: dEtdr(3,3,nM)
+    real(dp), intent(in)  :: dEhdr(3,3,nM)
+    real(dp), intent(in)  :: dEddr(3,3,nM)
 
     integer i, j, k !JÖ, nM
     
+    !JÖ:
+    dEtdr = dEhdr + dEddr !half filled, above and on diagonal
+    do j = 2, 3
+       do k = 1, j-1
+          dEtdr(j,k,:) = dEtdr(k,j,:) !fill rest => symmetric
+       end do
+    end do
+
+  end subroutine addDfields
+
+
+end module molecProperties
+
+!from addDfields
+!    !do i = 1, nM
+!    !end do
+!    
+!    
+!    return
+
 !JÖ    do i = 1, nM
 !JÖ       do j = 1, 3
 !JÖ          do k = 1, 3
@@ -323,21 +257,5 @@ contains
 !JÖ          end do
 !JÖ       end do
 !JÖ    end do
-    
-    !JÖ:
-    dEtdr = dEhdr + dEddr
-    !do i = 1, nM
-    do j = 2, 3
-       do k = 1, j-1
-          dEtdr(j,k,:) = dEtdr(k,j,:)
-       end do
-    end do
-    !end do
-    
-    
-    return
 
-  end subroutine addDfields
-
-end module molecProperties
 

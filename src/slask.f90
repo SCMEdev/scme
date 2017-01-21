@@ -433,3 +433,90 @@ end subroutine
     return
 
   end subroutine setUnpolPoles
+  
+      !----------------------------------------------------------------------+
+  !> Routine to rotate the multipoles to the orientation of the molecules.
+  !! @param[in] d0     : ?
+  !! @param[in] q0     : ?
+  !! @param[in] o0     : ?
+  !! @param[in] h0     : ?
+  !! @param[out] dpole : The array is assumed to be zeroized.
+  !! @param[out] qpole : ?
+  !! @param[out] opole : ?
+  !! @param[out] hpole : ?
+  !! @param[out] nM    : The number of molecules.
+  !! @param[out] x     : ?
+subroutine rotatePoles(d0, q0, o0, h0, dpole, qpole, opole, hpole, nM, x)
+    implicit none
+    real(dp), intent(in) :: d0(3) !JÖ assumed shape can be faster
+    real(dp), intent(in) :: q0(3,3)
+    real(dp), intent(in) :: o0(3,3,3)
+    real(dp), intent(in) :: h0(3,3,3,3)
+    integer, intent(in) :: nM
+    real(dp), intent(in) :: x(:,:,:)
+
+    real(dp), intent(out) :: dpole(:,:)
+    real(dp), intent(out) :: qpole(:,:,:)
+    real(dp), intent(out) :: opole(:,:,:,:)
+    real(dp), intent(out) :: hpole(:,:,:,:,:)
+
+
+
+!    real(dp), intent(in) :: d0(3)
+!    real(dp), intent(in) :: q0(3,3)
+!    real(dp), intent(in) :: o0(3,3,3)
+!    real(dp), intent(in) :: h0(3,3,3,3)
+!    integer, intent(in) :: nM
+!    real(dp), intent(in) :: x(3,3,nM)
+    ! ----------------------------------------
+
+!    real(dp), intent(out) :: dpole(3,nM)
+!    real(dp), intent(out) :: qpole(3,3,nM)
+!    real(dp), intent(out) :: opole(3,3,3,nM)
+!    real(dp), intent(out) :: hpole(3,3,3,3,nM)
+
+
+    ! local variables.
+    integer i, j, k, l, ii, jj, kk, ll, m !jö , save ::
+
+    ! Zeroise.
+!JÖ    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    opole(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    qpole(1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    dpole(1:3, 1:nM) = 0.0_dp
+
+    hpole = 0 !JÖ this is enough 
+    opole = 0
+    qpole = 0
+    dpole = 0
+    ! Do the calculation.
+    do m = 1, nM
+       do l = 1, 3
+          do ll = 1, 3
+             do k = 1, 3
+                do kk = 1, 3
+                   do j = 1, 3
+                      do jj = 1, 3
+                         do i = 1, 3
+                            do ii = 1, 3
+                               hpole(i,j,k,l,m) = hpole(i,j,k,l,m) + &
+                                    x(i,ii,m) * x(j,jj,m) * x(k,kk,m) &
+                                    * x(l,ll,m) * h0(ii,jj,kk,ll)
+                            end do
+                         end do
+                         opole(j,k,l,m) = opole(j,k,l,m) + &
+                              x(j,jj,m)* x(k,kk,m)* x(l,ll,m) * o0(jj,kk,ll)
+                      end do
+                   end do
+                   qpole(k,l,m) = qpole(k,l,m) + x(k,kk,m) * x(l,ll,m)* q0(kk,ll)
+                end do
+             end do
+             dpole(l,m) = dpole(l,m) + x(l,ll,m) * d0(ll)
+          end do
+       end do
+    end do
+
+    return
+
+  end subroutine rotatePoles
+
