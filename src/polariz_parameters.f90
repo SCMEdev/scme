@@ -3,14 +3,14 @@ module polariz_parameters
   ! multipole moment polarizabilities, previously read from file multipoles
   ! public: dd0, dq0, hp0,qq0
   
-  use data_types
+  use data_types, only:dp
   
   implicit none
   
   private
   
   ! au to Debye constant
-  real(dp), parameter :: au_to_debye = 2.5417709_dp
+  !real(dp), parameter :: au_to_debye = 2.5417709_dp
   ! Ang to au constant
   real(dp), parameter :: ang_to_au = 1.88972666351031921149_dp
   

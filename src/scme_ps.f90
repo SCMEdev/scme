@@ -83,9 +83,9 @@ contains
     !real(dp), parameter :: kk1 = ea0_Deb!2.5417709_dp !au2deb
     !real(dp), parameter :: au2deb = kk1 !1.88972612456506198632=A_a0
     !real(dp), parameter :: kk2 = A_a0    !1.88972666351031921149_dp !A2b
-    real(dp), parameter :: kk1 = 2.5417709_dp
-    real(dp), parameter :: kk2 = 1.88972666351031921149_dp
-    real(dp), parameter :: convFactor = 14.39975841_dp / 4.803206799_dp**2 ! e**2[eVÅ]=[eVm / (e*10**10[statcol])**2
+    real(dp), parameter :: kk1        =            1.0_dp! *2.5417709_dp
+    real(dp), parameter :: kk2        =            1.0_dp! *1.88972666351031921149_dp
+    real(dp), parameter :: convFactor = 14.39975841_dp   ! /4.803206799_dp**2 ! Eh_eV*a0_A/ea0_deb**2 ish
     real(dp), parameter :: rMax = 11.0_dp
     real(dp), parameter :: rMax2 = rMax*rMax
     integer, parameter :: NC = num_cells
@@ -246,7 +246,7 @@ contains
     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab) 
     ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
 
-call printer(uH*convFactor,'uH')
+!call printer(eH*convFactor,'eH')
     
     !/ Induce dipole and quadrupole to self consistency
     converged = .false.
@@ -269,6 +269,7 @@ call printer(uH*convFactor,'uH')
        call induceDipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
        call induceQpole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
     end do
+!call printer(eT*convFactor,'eT')
     
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)

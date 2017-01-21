@@ -33,11 +33,11 @@ klean_all__SCME_AND_TEST:
 	(cd ../ && make clean) 
 	make clean
 
-diff_reference__run:
+diff_reference__RUN:
 	./2run.x |diff - reference.dat
 
-renew_reference__run:
-	./2run.x > reference.dat
+renew_reference_and_print__RUN:
+	./2run.x |tee  reference.dat
 
 
 #$(scme_obj)/libscme.a: $(wildcard ../$(scme_src)/*.f90)

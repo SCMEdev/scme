@@ -97,14 +97,14 @@ end subroutine
 subroutine p_int(a,text)
   character(*) text
   integer a
-   call printer_text(text)
+   call printer_text_scalar(text)
    write(un,intf) a
 end subroutine
 
 subroutine p_real(a,text)
   character(*) text
   real(dp) a
-   call printer_text(text)
+   call printer_text_scalar(text)
    write(un,'('//dblf//')') a
 end subroutine
 
@@ -228,6 +228,11 @@ end subroutine
 subroutine printer_text(text)
   character(*) text
    write(un,'(A)') '/'//text//': ------ '
+end subroutine
+
+subroutine printer_text_scalar(text)
+  character(*) text
+   write(un,'(A)',advance='no') '/'//text//':  '
 end subroutine
 
 
