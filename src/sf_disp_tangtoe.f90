@@ -1,8 +1,8 @@
 module sf_disp_tangtoe
 ! Module w/ swiching func. (SF,SFdsf,swFunc), dipsersion and 3 versions of tang toennies. 
   
-  use data_types
-  use parameters, only: tt_b !remember to theck if it is correct that only dispersion has a different b!?
+  use data_types, only: h2o, dp,tt_b
+  !use parameters, only: tt_b !remember to theck if it is correct that only dispersion has a different b!?
   
   implicit none
   

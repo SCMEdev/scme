@@ -5,7 +5,7 @@ module multipole_parameters
   ! unpolarized multipole moments, previously read from file multipoles
   ! public: d0, q0, o0, h0
   
-  use data_types
+  use data_types, only:dp, a0_A
   
   implicit none
   
@@ -14,10 +14,10 @@ module multipole_parameters
   ! au to Debye constant
   
   ! Ang to au constant
-  real(dp), parameter :: ang_to_au = 1.88972666351031921149_dp
-  real(dp), parameter :: a0_len = 1.0_dp/ang_to_au    !bohr to other length, now (angstrom, A)
-  real(dp), parameter :: au_to_debye = 2.5417709_dp
-  real(dp), parameter :: ea0_dip = a0_len!au_to_debye
+  !real(dp), parameter :: ang_to_au = 1.88972666351031921149_dp
+  !real(dp), parameter :: au_to_debye = 2.5417709_dp
+  real(dp), parameter :: a0_len  = a0_A!1.0_dp/ang_to_au    !bohr to other length, now (angstrom, A)
+  real(dp), parameter :: ea0_dip = a0_A!au_to_debye
   
   
   ! components of the unpolarized dipole, quadrupole, ...

@@ -1,7 +1,7 @@
       
 module ps_pes      
-use constants, only:a0_A, A_a0,cm1_eV !bohr in ansgtrom, angstrom in bohr, cm-1 in eV
-use data_types, only:dp               !integer, parameter :: dp = selected_real_kind(15, 307)
+!use constants, only:a0_A, A_a0,cm1_eV !bohr in ansgtrom, angstrom in bohr, cm-1 in eV
+use data_types, only:dp  ,a0_A, A_a0,cm1_eV             !integer, parameter :: dp = selected_real_kind(15, 307)
 implicit none
 !-----------------------------------------------------------------------
 !      subroutine vibpot(rij,v,n)

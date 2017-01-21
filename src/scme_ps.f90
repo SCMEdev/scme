@@ -33,9 +33,9 @@
 
 module scme
 
-  use data_types
+  use data_types, only:A_a0,dp,h2o, num_cells, coulomb_k !, ea0_Deb, eA_Deb,kk1,kk2 
   !use max_parameters
-  use parameters, only: num_cells
+  !use parameters, only: num_cells
   use multipole_parameters, only: q0, o0, h0 !d0, 
   use polariz_parameters, only: dd0, dq0, hp0, qq0
   use molecProperties, only: recoverMolecules, &
@@ -48,7 +48,7 @@ module scme
   !use forceCM_mod, only: forceCM
   !use torqueCM_mod, only: torqueCM
   
-  use atomicForces_mod, only: atomicForces, stillAtomicForces
+  !use atomicForces_mod, only: atomicForces, stillAtomicForces
   
   use calcEnergy_mod, only: calcEnergy
   !use coreInt_mod, only: coreInt
@@ -58,7 +58,7 @@ module scme
  ! the new PS surfaces: 
   use ps_dms, only: vibdms
   use ps_pes, only: vibpes
-  use constants, only:A_a0, ea0_Deb, eA_Deb
+  !use constants, only:A_a0, ea0_Deb, eA_Deb
   use printer_mod, only: printer, printer_h2o_linear, h2o_lin
   use localAxes_mod, only:create_rw, calc_cm, force_torqueOnAtoms, localAxes
 
@@ -79,20 +79,13 @@ contains
     ! ----------------------------------------
 
     ! Constants and parameters.
-    real(dp), parameter :: pi = 3.14159265358979324_dp
-    !real(dp), parameter :: kk1 = ea0_Deb!2.5417709_dp !au2deb
-    !real(dp), parameter :: au2deb = kk1 !1.88972612456506198632=A_a0
-    !real(dp), parameter :: kk2 = A_a0    !1.88972666351031921149_dp !A2b
-    real(dp), parameter :: kk1        =            1.0_dp! *2.5417709_dp
-    real(dp), parameter :: kk2        =            1.0_dp! *1.88972666351031921149_dp
-    real(dp), parameter :: convFactor = 14.39975841_dp   ! /4.803206799_dp**2 ! Eh_eV*a0_A/ea0_deb**2 ish
     real(dp), parameter :: rMax = 11.0_dp
     real(dp), parameter :: rMax2 = rMax*rMax
     integer, parameter :: NC = num_cells
 
     ! Parameter flags for controlling behavior.
-    logical*1, parameter :: usePS_PES = .true.
-    logical*1, parameter :: usePS_DMS = .true.
+    !logical*1, parameter :: usePS_PES = .true.
+    !logical*1, parameter :: usePS_DMS = .true.
     logical*1, parameter :: iSlab = .false.
     !logical*1, parameter :: addCore = .false.
 
@@ -221,7 +214,7 @@ contains
        dms = 0
        call vibdms(ps_mol_dip,dms) 
        
-       dpole0(:,m) = dms(:)*kk1*kk2!*eA_Deb! dipmom(p)*kk1*kk2!*ea0_Deb*A_a0!     When we fix units this shuld be fixed. 
+       dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
     end do
     
     !/ Let PSD define the molecular (local) axes by the rotation matrix "x" 
@@ -290,9 +283,9 @@ contains
        aforces(m)%o  = 0
        call force_torqueOnAtoms(tau(:,m),fCM(:,m),rw(m), aforces(m), rCM(:,m))
        !/ Convert from stat-units to eV & eV/A
-       aforces(m)%h1 = aforces(m)%h1*convFactor
-       aforces(m)%h2 = aforces(m)%h2*convFactor
-       aforces(m)%o  = aforces(m)%o*convFactor
+       aforces(m)%h1 = aforces(m)%h1*coulomb_k
+       aforces(m)%h2 = aforces(m)%h2*coulomb_k
+       aforces(m)%o  = aforces(m)%o* coulomb_k
     enddo
 !call printer(aforces,'aforces')    
     
@@ -300,7 +293,7 @@ contains
     !/ Calculate the energy of electric field interactions
     call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
     !/ Convert from stat-units to eV & eV/A
-    u_multipole = u_multipole * convFactor
+    u_multipole = u_multipole * coulomb_k
     
     
     !// Dispersion /////////////////////////////////////////////////////

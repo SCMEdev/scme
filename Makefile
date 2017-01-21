@@ -11,8 +11,8 @@ NEW = new
 
 #have added the "new/" directory and PS-files
 vpath %.f90 $(SRCDIR)
-vpath %.f90 $(NEW)
-vpath %.cpp $(SRCDIR)
+#vpath %.f90 $(NEW)
+#vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
@@ -34,16 +34,16 @@ CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
 
 OBJ = $(addprefix $(OBJDIR)/, \
 	scme_ps.o calc_derivs.o calc_higher_order.o \
-	data_types.o parameters.o \
+	data_types.o \
 	multipole_parameters.o polariz_parameters.o \
 	calcEnergy_mod.o calc_lower_order.o \
 	inducePoles.o \
-	atomicForces_mod.o molforce.o mdutil.o \
 	molecProperties.o \
-	ps_pes.o ps_dms.o constants.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
+	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
 	localAxes_mod.o )
 	
-#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o
+#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o parameters.o constants.o molforce.o mdutil.o 	atomicForces_mod.o \
+
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 #HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
@@ -78,10 +78,10 @@ $(OBJDIR)/%.o: %.f90
 
 #/////////////////////////////////////////////////// Dependencies //////
 # special dependencies:
-$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/parameters.o
-$(OBJDIR)/atomicForces_mod.o:$(OBJDIR)/molforce.o
-$(OBJDIR)/molforce.o:$(OBJDIR)/mdutil.o
-$(OBJDIR)/ps_dms.o	$(OBJDIR)/ps_pes.o:$(OBJDIR)/constants.o
+#$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/parameters.o
+#$(OBJDIR)/atomicForces_mod.o:$(OBJDIR)/molforce.o
+#$(OBJDIR)/molforce.o:$(OBJDIR)/mdutil.o
+#$(OBJDIR)/ps_dms.o	$(OBJDIR)/ps_pes.o:$(OBJDIR)/constants.o
 
 $(OBJDIR)/molecProperties.o	\
 $(OBJDIR)/calc_derivs.o		\
@@ -94,13 +94,11 @@ $(OBJDIR)/sf_disp_tangtoe.o \
 $(OBJDIR)/scme_ps.o:		\
 $(OBJDIR)/calc_derivs.o		\
 $(OBJDIR)/data_types.o		\
-$(OBJDIR)/parameters.o		\
 $(OBJDIR)/polariz_parameters.o	\
 $(OBJDIR)/molecProperties.o	\
 $(OBJDIR)/calc_lower_order.o	\
 $(OBJDIR)/calc_higher_order.o	\
 $(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/atomicForces_mod.o	\
 $(OBJDIR)/calcEnergy_mod.o	\
 $(OBJDIR)/multipole_parameters.o\
 $(OBJDIR)/ps_pes.o \
@@ -109,9 +107,15 @@ $(OBJDIR)/printer_mod.o \
 $(OBJDIR)/sf_disp_tangtoe.o \
 $(OBJDIR)/force_torqueCM.o \
 $(OBJDIR)/localAxes_mod.o \
+#$(OBJDIR)/constants.o \
+#$(OBJDIR)/parameters.o		\
+#$(OBJDIR)/atomicForces_mod.o	\
 
 
 # most dep. on data_types
+#$(OBJDIR)/constants.o \
+#$(OBJDIR)/parameters.o:		\
+
 $(OBJDIR)/localAxes_mod.o \
 $(OBJDIR)/molecProperties.o	\
 $(OBJDIR)/calc_derivs.o		\
@@ -122,17 +126,17 @@ $(OBJDIR)/force_torqueCM.o \
 $(OBJDIR)/sf_disp_tangtoe.o \
 $(OBJDIR)/ps_dms.o	\
 $(OBJDIR)/ps_pes.o \
-$(OBJDIR)/molforce.o	\
-$(OBJDIR)/atomicForces_mod.o	\
 $(OBJDIR)/force_torqueCM.o		\
 $(OBJDIR)/inducePoles.o		\
 $(OBJDIR)/calcEnergy_mod.o	\
-$(OBJDIR)/mdutil.o		\
 $(OBJDIR)/polariz_parameters.o	\
-$(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/parameters.o:		\
+$(OBJDIR)/multipole_parameters.o: \
 $(OBJDIR)/data_types.o		\
 
+
+#$(OBJDIR)/molforce.o	\
+#$(OBJDIR)/mdutil.o		\
+#$(OBJDIR)/atomicForces_mod.o	\
 
 
 .PHONY: clean

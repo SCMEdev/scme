@@ -1,5 +1,7 @@
 module ps_dms
-use constants, only:a0_A
+!use constants, only:a0_A
+use data_types, only:a0_A
+
 implicit none
 
 integer, parameter, dimension(84) :: idxD1 = [&
