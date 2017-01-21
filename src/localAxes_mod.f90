@@ -7,7 +7,58 @@ implicit none
 !private
 !public
 
-contains
+contains !/////////////////////////////////////////////////////////////
+
+  subroutine create_rw(ra,rw,nM)
+    real(dp), intent(in)   :: ra(:)
+    type(h2o), intent(out) :: rw(:)
+    integer, intent(in) :: nM
+    integer iH2, iH1, iO, m, j
+    
+    do m = 1,nM !molecules
+       iH2 = 2 * m
+       iH1 = iH2 - 1
+       iO  = 2*nM + m !JÖ
+
+       iH1 = 3 * (iH1 - 1)
+       iH2 = 3 * (iH2 - 1)
+       iO  = 3 * (iO - 1)
+       
+       do j = 1,3 !coords
+         rw(m)%h1(j) = ra(iH1+j) !H1
+         rw(m)%h2(j) = ra(iH2+j) !H2
+         rw(m)%o(j) = ra(io+j)  !O
+       enddo 
+     enddo 
+   end subroutine create_rw
+     
+!         rw(m)%r1(1) = ra(iH1+1)
+!         rw(m)%r1(2) = ra(iH1+2)
+!         rw(m)%r1(3) = ra(iH1+3)
+!         rw(m)%r2(1) = ra(iH2+1)
+!         rw(m)%r2(2) = ra(iH2+2)
+!         rw(m)%r2(3) = ra(iH2+3)
+!         rw(m)%ro(1) = ra(io+1)
+!         rw(m)%ro(2) = ra(io+2)
+!         rw(m)%ro(3) = ra(io+3)
+
+  !----------------------------------------------------------------------+
+  !     Routine to calculate the center of mass of each molecule         |
+  !----------------------------------------------------------------------+
+  subroutine calc_cm(rw, wcm, nM) !w=water molecules
+    implicit none 
+    type(h2o), 	intent(in) 	:: rw(:)
+    real(dp), 	intent(out) :: wcm(:,:)
+    integer, 	intent(in) 	:: nM
+!internal:    
+    integer m
+  
+     do m = 1, nM
+        wcm(:,m) = (rw(m)%h1 + rw(m)%h2 + 16.0_dp * rw(m)%o) / 18.0_dp
+     end do
+     
+  end subroutine calc_cm
+
 
 !subroutine forceOnAtoms(fCM,w,f,rCM)
 !

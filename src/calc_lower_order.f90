@@ -8,11 +8,11 @@ module calc_lower_order
   implicit none
   
   private
-  public calcEdip_quad
+  public dip_quadField
   
 contains
   
-  subroutine calcEdip_quad(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eT, dEdr, rMax2, iSlab)
+  subroutine dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eT, dEdr, rMax2, iSlab)
     
     implicit none
     
@@ -125,7 +125,7 @@ contains
 !    !$omp end parallel do 
     return
     
-  end subroutine calcEdip_quad
+  end subroutine dip_quadField
   
   !----------------------------------------------------------------------+
   !     Calculate the dipolar field and its derivative                   |
