@@ -51,13 +51,15 @@ contains
 !    !$omp parallel do shared(rCM, a, a2, NC, uD, uQ, NCz,rMax2, dEdr, nM) &
 !    !$omp private(eT, jj, kk, nx, i, j, k, re, ny, nz, dr, r2, r1, swFunc, r3, r5, r7, eD, dpole, u, dEdr1, eq, qpole) &
 !    !$omp default(none)
+
+!       do jj = 1, 3
+!          do kk = 1, 3
+!          end do
+!       end do
+    eT=0
+    dEdr = 0
+
     do i = 1, nM
-       do jj = 1, 3
-          eT(jj,i) = 0.0_dp
-          do kk = 1, 3
-             dEdr(kk,jj,i) = 0.0_dp
-          end do
-       end do
        do nx = -NC, NC
           re(1) = a(1) * nx
           do ny = -NC, NC

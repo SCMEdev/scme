@@ -182,7 +182,7 @@ contains
     type(h2o) :: aforces(n_atoms/3)
     real(dp) :: fa_test(n_atoms*3)
     real(dp) :: rot(3,3,n_atoms/3) ! rotation matrix
-    
+    real(dp) :: u_multipole, u_ps
     ! ----------------------------
     ! Set initial Intitial values.
     ! ----------------------------
@@ -239,13 +239,13 @@ contains
     qpole = qpole0 !JÖ
     
     !/ Rotate polarizability tensors into local coordinate systems
-    call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x)
+    call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     
     !/ Compute the electric field (F) and gradient (dF) for the static octupole and hexadecapole
     ! why dont we induce those, we have the polarizabilities!?
     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab) 
     ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
-    
+    call printer(uH*convFactor,'uH')
     
     !/ Induce dipole and quadrupole to self consistency
     converged = .false.
@@ -255,10 +255,11 @@ contains
 
        ! NEEDS DOCUMENTATION
        call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+       ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
        
        !call addFields(eH, eD, eT, nM)
-       eT = eH + eD
-       call addDfields(dEhdr, dEddr, dEtdr, nM)
+       eT = eH + eD !add fields
+       call addDfields(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
        
 
        ! Induce dipoles and quadrupoles.
@@ -295,19 +296,17 @@ contains
     
     
     !/ Calculate the energy of electric field interactions
-    u_tot = 0.0_dp
-    call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_tot)
+    call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
     !/ Convert from stat-units to eV & eV/A
-    u_tot = u_tot * convFactor
-    
+    u_multipole = u_multipole * convFactor
     
     
     !// Dispersion /////////////////////////////////////////////////////
     call new_dispersion(rw, aforces, uDisp, nM, a, a2)
-    u_tot = u_tot + uDisp
     
     
     !// Partridge-Schwenke PES /////////////////////////////////////////
+    u_ps=0
     do m=1,nM
        
        !OHH order in vibpes
@@ -315,19 +314,26 @@ contains
        ps_mol(2,:) = rw(m)%h1!(indH1 + p)
        ps_mol(3,:) = rw(m)%h2!(indH2 + p)
        
-       ps_grad = 0
+       ps_grad = 0;ps_pes = 0
        call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
        
-       u_tot = u_tot + ps_pes
+       u_ps = u_ps + ps_pes
        
        aforces(m)%o  = aforces(m)%o   - ps_grad(1:3)  
        aforces(m)%h1 = aforces(m)%h1  - ps_grad(4:6)
        aforces(m)%h2 = aforces(m)%h2  - ps_grad(7:9)
        
     end do
+    
+    u_tot = u_tot + uDisp + u_multipole + u_ps
+    
+    call printer(u_multipole,'u_multipole')
+    call printer(uDisp,'uDisp')
+    call printer(u_ps,'u_ps')
+    call printer(u_tot,'u_tot')
+    
     call h2o_lin(aforces,fa,nM)
-call printer(u_tot,'u_tot')
-call printer(aforces,'aforces')
+    call printer(aforces,'aforces')
 
 
 

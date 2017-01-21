@@ -11,6 +11,7 @@ FFLAGS = -O0 -cpp -pg -I$(scme_mod)
 #-fopenmp 
 
 all:
+	make scme
 	make run.x
 	make 2run.x
 
@@ -21,15 +22,23 @@ run.x: run_tests.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
 ## The 9 and 15 and 32 and 64 H2O tests:
 2run.x: run_tests2.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
 	$(FC) $(FFLAGS) -o $@ $^
-	
+
 run_tests2.o: run_tests2.f90 mifu_asserts.mod test_scme.mod
 	$(FC) $(FFLAGS) -c run_tests2.f90
-	
+
 scme:
 	(cd ../ && make) 
 
-klean_scme:
+klean_all__SCME_AND_TEST:
 	(cd ../ && make clean) 
+	make clean
+
+diff_reference__run:
+	./2run.x |diff - reference.dat
+
+renew_reference__run:
+	./2run.x > reference.dat
+
 
 #$(scme_obj)/libscme.a: $(wildcard ../$(scme_src)/*.f90)
 #	cd ../ && make 
