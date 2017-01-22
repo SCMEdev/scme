@@ -7,9 +7,76 @@ module sf_disp_tangtoe
   implicit none
   
   private
-  public SF, SFdsf, dispersion,new_dispersion !Tang_ToenniesN, Tang_ToenniesNdF
+  public SF, SFdsf, dispersion,new_dispersion,oxygen_dispersion !Tang_ToenniesN, Tang_ToenniesNdF
   
 contains
+
+  subroutine oxygen_dispersion(rw, f, uDisp, nM, a, a2)
+    
+    implicit none
+    
+    real(dp), intent(in)  :: rw(3,3,nM)!xyz,OHH,nM
+    real(dp), intent(inout) :: f(3,3,nM)!xyz,OHH,nM
+    real(dp), intent(out) :: uDisp
+    integer,  intent(in)  :: nM
+    real(dp), intent(in)  :: a(3), a2(3) 
+
+!JÖ internal    
+    real(dp) t1, t2, df, r
+    real(dp) r2, r6, r7, r8, r9, r10, r11
+    real(dp) f6, df6, f8, df8, f10, df10
+    
+    integer n, m, iOn, iOm, i
+    real(dp) dr(3), sc
+    real(dp), parameter :: C6 = 46.4430d0 * 0.597527378d0
+    real(dp), parameter :: C8  = 1141.7000d0 * 0.167324732d0
+    real(dp), parameter :: C10 = 33441.0000d0 * 0.046855703d0
+
+    
+    uDisp = 0.0_dp
+    do n = 1, nM-1
+       do m = n+1, nM
+          !dr = rw(m)%o - rw(n)%o !Om-On
+          dr = rw(:,3,m) - rw(:,3,n) !Om-On
+          do i = 1, 3
+             if      (dr(i) .gt. a2(i))  then; dr(i) = dr(i) - a(i)
+             else if (dr(i) .lt. -a2(i)) then; dr(i) = dr(i) + a(i)
+             end if
+          end do
+          
+          r2 = sum(dr**2)
+          r = sqrt(r2)
+          call tang_toennies_disp(r, f6, df6, f8, df8, f10, df10)
+          
+          r6 = r**6 !probably better with r2**3
+          r7 = r6 * r
+          r8 = r7 * r
+          r9 = r8 * r
+          r10 = r9 * r
+          r11 = r10 * r
+          
+          uDisp = uDisp - C6/r6*f6 - C8/r8*f8 - C10/r10*f10
+          
+          do i = 1, 3
+             df = -C6 * (6.0_dp * f6 / r7 - df6 / r6)
+             df = df - C8 * (8.0_dp * f8 / r9 - df8 / r8)
+             df = df - C10 * (10.0_dp * f10 / r11 - df10 / r10)
+             df = df * dr(i) / r
+             !fa(iOn+i) = fa(iOn+i) - df
+             !fa(iOm+i) = fa(iOm+i) + df
+             !fa(n)%o(i) = fa(n)%o(i) - df
+             !fa(m)%o(i) = fa(m)%o(i) + df
+             f(i,3,n) = f(i,3,n) - df
+             f(i,3,m) = f(i,3,m) + df
+             
+          end do
+       end do
+    end do
+    
+    return
+    
+  end subroutine 
+
 
   subroutine new_dispersion(rw, fa, uDisp, nM, a, a2)
     

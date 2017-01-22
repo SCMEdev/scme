@@ -10,16 +10,35 @@ module printer_mod
 !  character(*), parameter :: dblf='(f24.16)'
   
 interface printer
- module procedure p_real, p_int, p_real_vec, p_real_mat, p_real_3d, p_real_4d, p_real_5d, p_h2o, p_h2os
+ module procedure p_real, p_int, p_real_vec, p_real_mat, p_real_3d, p_real_4d, &
+                  p_real_5d, p_h2o, p_h2os
 end interface
 
   private
-  public printer, printer_h2o_linear, h2o_lin
+  public printer, printer_h2o_linear, h2o_to_linear, xyz_hho_to_linear
 
 
 contains !/////////////////////////////////////////////
 
 !////////////////////////////////////////////////////// Special Printers:
+
+
+subroutine xyz_hho_to_linear(a,alin,nM)
+  integer, intent(in) :: nM
+  real(dp), intent(in) :: a(3,3,nM)!xyz,hho,nM
+  real(dp), intent(out) :: alin(nM*9)
+  integer l, m, xyz
+  alin=0
+   do m = 1,nM
+     do xyz = 1,3
+       alin((2*m-2)*3 + xyz)     = a(xyz,1,m) !a(m)%h1(xyz) 
+       alin((2*m-1)*3 + xyz)     = a(xyz,2,m) !a(m)%h2(xyz) 
+       alin((2*nM+m-1)*3 + xyz)  = a(xyz,3,m) !a(m)%o(xyz)  
+     enddo
+   enddo
+end subroutine 
+
+
 
 ! Prints h2o type in fa order. 
 ! It takes type(h2o) and outputs a vector: [H1x H1y H1z H2x H2y H2z H1x H1y H1z H2x H2y H2z ... Ox Oy Oz ...]
@@ -46,7 +65,7 @@ subroutine printer_h2o_linear(a,text)
 
 end subroutine 
  
-subroutine h2o_lin(a,alin,nM)
+subroutine h2o_to_linear(a,alin,nM)
   integer, intent(in) :: nM
   type(h2o), intent(in) :: a(nM)
   real(dp) , intent(out) :: alin(nM*9)

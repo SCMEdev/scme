@@ -39,6 +39,9 @@ diff_reference__RUN:
 renew_reference_and_print__RUN:
 	./2run.x |tee  reference.dat
 
+just__RUN:
+	./2run.x
+
 
 #$(scme_obj)/libscme.a: $(wildcard ../$(scme_src)/*.f90)
 #	cd ../ && make 

@@ -39,28 +39,30 @@ module scme
   use multipole_parameters, only: q0, o0, h0 !d0, 
   use polariz_parameters, only: dd0, dq0, hp0, qq0
   use molecProperties, only: recoverMolecules, &
-       rotatePolariz,  addDfields, &
+       rotatePolariz,  add_field_gradients, &
        rotate_qoh_poles !rotatePoles,setUnpolPoles,findPpalAxes, calcCentersOfMass,addFields, 
   use calc_lower_order, only: dip_quadField
   use calc_higher_order, only: octu_hexaField
   use calc_derivs, only: calcDv
-  use inducePoles, only: induceDipole, induceQpole
+  use inducePoles, only: induce_dipole, induce_quadrupole
   !use forceCM_mod, only: forceCM
   !use torqueCM_mod, only: torqueCM
   
   !use atomicForces_mod, only: atomicForces, stillAtomicForces
   
-  use calcEnergy_mod, only: calcEnergy
+  use calcEnergy_mod, only: multipole_energy
   !use coreInt_mod, only: coreInt
-  use sf_disp_tangtoe, only: dispersion, new_dispersion
+  use sf_disp_tangtoe, only: dispersion, new_dispersion,oxygen_dispersion
   use force_torqueCM, only: forceCM, torqueCM
   
  ! the new PS surfaces: 
   use ps_dms, only: vibdms
   use ps_pes, only: vibpes
   !use constants, only:A_a0, ea0_Deb, eA_Deb
-  use printer_mod, only: printer, printer_h2o_linear, h2o_lin
-  use localAxes_mod, only:create_rw, calc_cm, force_torqueOnAtoms, localAxes
+  use printer_mod, only: printer, printer_h2o_linear, h2o_to_linear, xyz_hho_to_linear
+  
+  use localAxes_mod, only:create_rw, calc_cm, force_torqueOnAtoms, localAxes, localAxes2, &
+                          create_xyz, create_xyz_hho, get_cm,force_and_torque_on_atoms
 
   implicit none
   private
@@ -162,20 +164,24 @@ contains
     !integer jjj
     real(dp) ps_mol(3,3) !fix this  !!!  ! ps(O,H1,H1 ; x,y,z)
     real(dp) ps_mol_dip(3,3)
-    real(dp) ps_grad(9)
+    real(dp) ps_grad(3,3)!ps_grad(9)!
     real(dp) ps_pes
     !real(dp) :: qdms(3)
     real(dp) :: dms(3)
     !real(dp), save :: dipmom2(3)
     integer iteration
-    type(h2o) :: rw(n_atoms/3)
+!    type(h2o) :: rw(n_atoms/3)
     real(dp) :: rwCM(3,n_atoms/3)
     integer m
-    real(dp) :: uPES(n_atoms/3)
-    type(h2o) :: aforces(n_atoms/3)
+!    real(dp) :: uPES(n_atoms/3)
+!    type(h2o) :: aforces(n_atoms/3)
     real(dp) :: fa_test(n_atoms*3)
     real(dp) :: rot(3,3,n_atoms/3) ! rotation matrix
     real(dp) :: u_multipole, u_ps
+    real(dp) :: xyz(3,n_atoms)
+    real(dp) :: xyz_hho(3,3,n_atoms/3) !xyz,hho,nM
+    real(dp) :: xa_forces(3,3,n_atoms/3) !xyz,hho,nM
+    
     ! ----------------------------
     ! Set initial Intitial values.
     ! ----------------------------
@@ -195,33 +201,40 @@ contains
     a2(3) = lattice(3)/2.0_dp
 
     ! Recover broken molecules due to periodic boundary conditions.
-    call recoverMolecules(coords, ra, nH, nO, a, a2,   rw) !JÖ rw
-    call create_rw(ra,rw,nM)
+    call recoverMolecules(coords, ra, nH, nO, a, a2) !JÖ rw
+    !call create_rw(ra,rw,nM)
+    call create_xyz(ra,xyz,nM)
+    call create_xyz_hho(ra,xyz_hho,nM)
     
+!call printer(rw,'rw')    
+!call printer(ra,'ra')    
+!call printer(xyz,'xyz')    
+!call printer(xyz_hho,'xyz_hho')    
+
     ! compute centers of mass (cm)
-    call calc_cm(rw,rCM,nM)
+    !call calc_cm(rw,rCM,nM)
+    call get_cm(xyz_hho,rCM,nM)
+    
+call printer(rCM, 'rCM')    
 
     !// Multipole Expansion Part ///////////////////////////////////////
     
     !/ Partridge-Schwenke Dipoles (PSD)
     do m = 1,nM
     
-       !OHH order in ps_dms: 
-       ps_mol_dip(1,:) = rw(m)%o 
-       ps_mol_dip(2,:) = rw(m)%h1 
-       ps_mol_dip(3,:) = rw(m)%h2
        
        dms = 0
-       call vibdms(ps_mol_dip,dms) 
+       call vibdms(xyz_hho(:,:,m),dms) 
        
        dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
     end do
     
     !/ Let PSD define the molecular (local) axes by the rotation matrix "x" 
     do m = 1,nM
-       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
+!       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
+       call localAxes2(dpole0(:,m),xyz_hho(:,:,m),x(:,:,m))
     enddo
-    
+call printer(x,'x')    
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
     call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
@@ -253,14 +266,14 @@ contains
        
        !call addFields(eH, eD, eT, nM)
        eT = eH + eD !add fields
-       call addDfields(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+       call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
        
 
        ! Induce dipoles and quadrupoles.
        converged = .true.
 
-       call induceDipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-       call induceQpole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+       call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+       call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
     end do
 !call printer(eT*convFactor,'eT')
     
@@ -278,57 +291,87 @@ contains
     !// Forces on atoms ////////////////////////////////////////////////
     !/ Compute force atoms from CM force/torque as "temp. rigid body"
     do m = 1,nM
-       aforces(m)%h1 = 0
-       aforces(m)%h2 = 0
-       aforces(m)%o  = 0
-       call force_torqueOnAtoms(tau(:,m),fCM(:,m),rw(m), aforces(m), rCM(:,m))
-       !/ Convert from stat-units to eV & eV/A
-       aforces(m)%h1 = aforces(m)%h1*coulomb_k
-       aforces(m)%h2 = aforces(m)%h2*coulomb_k
-       aforces(m)%o  = aforces(m)%o* coulomb_k
+!       aforces(m)%h1 = 0
+!       aforces(m)%h2 = 0
+!       aforces(m)%o  = 0
+!       call force_torqueOnAtoms(tau(:,m),fCM(:,m),rw(m), aforces(m), rCM(:,m))
+!       !/ Convert from stat-units to eV & eV/A
+!       aforces(m)%h1 = aforces(m)%h1*coulomb_k
+!       aforces(m)%h2 = aforces(m)%h2*coulomb_k
+!       aforces(m)%o  = aforces(m)%o* coulomb_k
+       
+       xa_forces(:,:,m)=0
+       call force_and_torque_on_atoms(tau(:,m),fCM(:,m),xyz_hho(:,:,m), xa_forces(:,:,m), rCM(:,m))
+       
     enddo
-!call printer(aforces,'aforces')    
+    xa_forces=xa_forces*coulomb_k
+   
     
     
     !/ Calculate the energy of electric field interactions
-    call calcEnergy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
+    call multipole_energy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
     !/ Convert from stat-units to eV & eV/A
     u_multipole = u_multipole * coulomb_k
     
     
     !// Dispersion /////////////////////////////////////////////////////
-    call new_dispersion(rw, aforces, uDisp, nM, a, a2)
+    !call new_dispersion(rw, aforces, uDisp, nM, a, a2)
+    call oxygen_dispersion(xyz_hho, xa_forces, uDisp, nM, a, a2) !uDisp created here
     
     
     !// Partridge-Schwenke PES /////////////////////////////////////////
     u_ps=0
     do m=1,nM
        
-       !OHH order in vibpes
-       ps_mol(1,:) = rw(m)%o!(indO  + p)
-       ps_mol(2,:) = rw(m)%h1!(indH1 + p)
-       ps_mol(3,:) = rw(m)%h2!(indH2 + p)
        
-       ps_grad = 0;ps_pes = 0
-       call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
+       call vibpes(xyz_hho(:,:,m),ps_pes,ps_grad)!,ps_pes) *A2b
+       
        
        u_ps = u_ps + ps_pes
        
-       aforces(m)%o  = aforces(m)%o   - ps_grad(1:3)  
-       aforces(m)%h1 = aforces(m)%h1  - ps_grad(4:6)
-       aforces(m)%h2 = aforces(m)%h2  - ps_grad(7:9)
+       
+       xa_forces(:,:,m) = xa_forces(:,:,m) - ps_grad
+       
+       
+       !xa_forces(:,1,m) = xa_forces(:,1,m)   - ps_grad(1:3)
+       !xa_forces(:,2,m) = xa_forces(:,2,m)   - ps_grad(4:6)
+       !xa_forces(:,3,m) = xa_forces(:,3,m)   - ps_grad(7:9)
+       
+       !aforces(m)%h1 = aforces(m)%h1  - ps_grad(1:3)
+       !aforces(m)%h2 = aforces(m)%h2  - ps_grad(4:6)
+       !aforces(m)%o  = aforces(m)%o   - ps_grad(7:9)  
+       
+       !aforces(m)%h1 = aforces(m)%h1  - ps_grad(:,1)!1:3)
+       !aforces(m)%h2 = aforces(m)%h2  - ps_grad(:,2)!4:6)
+       !aforces(m)%o  = aforces(m)%o   - ps_grad(:,3)!7:9)  
+       
+       
+       
+       
        
     end do
     
     u_tot = u_tot + uDisp + u_multipole + u_ps
+
+!call printer(aforces,'aforces') 
+!call printer(xa_forces,'xa_forces') 
+
     
     call printer(u_multipole,'u_multipole')
     call printer(uDisp,'uDisp')
     call printer(u_ps,'u_ps')
     call printer(u_tot,'u_tot')
     
-    call h2o_lin(aforces,fa,nM)
-    call printer(aforces,'aforces')
+    !call printer(aforces,'aforces')
+    
+    !call h2o_to_linear(aforces,fa,nM)
+    !call printer(fa,'aforces linear')
+    
+    call xyz_hho_to_linear(xa_forces,fa_test,nM)
+    call printer(fa_test,'xa_forces linear')
+    
+    
+    
 
 
 
@@ -337,6 +380,20 @@ contains
   end subroutine scme_calculate
 
 end module scme
+
+
+       !OHH order in ps_dms: 
+       !ps_mol_dip(:,1) = xyz_hho(:,1,m)!rw(m)%h1 
+       !ps_mol_dip(:,2) = xyz_hho(:,2,m)!rw(m)%h2
+       !ps_mol_dip(:,3) = xyz_hho(:,3,m)!rw(m)%o 
+       !call vibdms(ps_mol_dip,dms) 
+
+       !OHH order in vibpes
+       !ps_mol(:,1) = xyz_hho(:,1,m)!rw(m)%h1!(indH1 + p)
+       !ps_mol(:,2) = xyz_hho(:,2,m)!rw(m)%h2!(indH2 + p)
+       !ps_mol(:,3) = xyz_hho(:,3,m)!rw(m)%o!(indO  + p)
+       !call vibpes(ps_mol,ps_pes,ps_grad)!,ps_pes) *A2b
+
 
        !uPES(m) = ps_pes
     

@@ -1,6 +1,6 @@
 module ps_dms
 !use constants, only:a0_A
-use data_types, only:a0_A
+use data_types, only:a0_A, dp
 
 implicit none
 
@@ -26,7 +26,7 @@ integer, parameter, dimension(84) :: idxD3 = [&
        3, 2, 1, 6, 5, 4, 3, 2, 1, 5, 4, 3, 2, 1, 4, 3, 2, 1, 3, 2,&
        1, 2, 1, 1]
 
-real*8, parameter, dimension(84) :: coefD = [&
+real(dp), parameter, dimension(84) :: coefD = [&
       -2.1689686086730d-03, 1.4910379754728d-02, 5.3546078430060d-02,&
       -7.4055995388666d-02,-3.7764333017616d-03, 1.4089887256484d-01,&
       -6.2584207687264d-02,-1.1260393113022d-01,-5.7824159269319d-02,&
@@ -62,16 +62,14 @@ real*8, parameter, dimension(84) :: coefD = [&
 !real*8, parameter :: A2b     = 1.88972612545782819321d0 !Ångström to Bohr
 !real*8, parameter :: au2deb  = 2.541746230211d0 !a.u. to debye
 
-real*8,parameter :: reoh = 0.958649d0
-real*8,parameter :: b1D =  1.0d0
-real*8,parameter :: a   =  0.2999d0
-real*8,parameter :: b   = -0.6932d0
-
-real*8,parameter :: c0  =  1.0099d0
-real*8,parameter :: c1  = -0.1801d0
-real*8,parameter :: c2  =  0.0892d0
-
-real*8,parameter :: costhe = -0.24780227221366464506d0
+real(dp), parameter :: reoh = 0.958649d0
+real(dp), parameter :: b1D =  1.0d0
+real(dp), parameter :: a   =  0.2999d0
+real(dp), parameter :: b   = -0.6932d0
+real(dp), parameter :: c0  =  1.0099d0
+real(dp), parameter :: c1  = -0.1801d0
+real(dp), parameter :: c2  =  0.0892d0
+real(dp), parameter :: costhe = -0.24780227221366464506d0
 
 private
 public vibdms
@@ -79,16 +77,15 @@ public vibdms
 contains !//////////////////////////////////////////////////////////////
 
    subroutine vibdms(rr,dd)
-    real*8 , intent(in)  :: rr(3,3)!x(3,3) x(OHH,xyz)
-    real*8 , intent(out) :: dd(3)
-    real*8 :: efac, xpow(3,7) !,x1,x2,x3 !7 should be enough
-    real*8 :: p1, p2, pl1, pl2,x(3)
-    
-    real*8 :: v1(3), v2(3), vhh(3), r1, r2, rhh, costh, pc0
+    real(dp), intent(in)  :: rr(3,3)!x(3,3) x(xyz,OHH)
+    real(dp), intent(out) :: dd(3)
+    real(dp) :: efac, xpow(3,7) !,x1,x2,x3 !7 should be enough
+    real(dp) :: p1, p2, pl1, pl2,x(3)
+    real(dp) :: v1(3), v2(3), vhh(3), r1, r2, rhh, costh, pc0
     integer inI, inJ, inK,j
       
-      v1  = ( rr(2,:) - rr(1,:) )!*A2b !rr(i,2,:) - rr(i,1,:) !H1-O
-      v2  = ( rr(3,:) - rr(1,:) )!*A2b !rr(i,3,:) - rr(i,1,:) !H2-O
+      v1  = ( rr(:,1) - rr(:,3) )!*A2b !rr(i,2,:) - rr(i,1,:) !H1-O
+      v2  = ( rr(:,2) - rr(:,3) )!*A2b !rr(i,3,:) - rr(i,1,:) !H2-O
       
       !r1  = dsqrt(sum( v1*v1 ))
       !r2  = dsqrt(sum( v2*v2 ))

@@ -14,12 +14,12 @@ module molecProperties
   use sf_disp_tangtoe, only: SF, SFdsf
 implicit none
   private
-  public recoverMolecules, addDfields, rotatePolariz, rotate_qoh_poles 
+  public recoverMolecules, add_field_gradients, rotatePolariz, rotate_qoh_poles 
         !, SF, SFdsf, create_rw, calc_cm, addFields, setUnpolPoles, calcCentersOfMass, findPpalAxes,
 
 contains
 
-  subroutine recoverMolecules(raOri, ra, nH, nO, a, a2, rw)
+  subroutine recoverMolecules(raOri, ra, nH, nO, a, a2)
     !-------------------------------------------------------------------
     ! This routine takes the coords(3*n_atoms) and puts out ar(3*natoms)
     ! (both in the HH HH HH HH HH... O O O O... order). Oxygen position
@@ -35,7 +35,7 @@ contains
     real(dp), 	intent(in)	:: raOri(:), a(:), a2(:)
     integer, 	intent(in) 	:: nH, nO
     real(dp), 	intent(out) :: ra(:)
-    type(h2o),  intent(out) :: rw(:)
+    !type(h2o),  intent(out) :: rw(:)
 
 	! Internal
     integer  :: i,l,n, index
@@ -212,7 +212,7 @@ contains
   !----------------------------------------------------------------------+
   !     Add the derivative of all the fields                             |
   !----------------------------------------------------------------------+
-  subroutine addDfields(dEhdr, dEddr, dEtdr, nM)
+  subroutine add_field_gradients(dEhdr, dEddr, dEtdr, nM)
 
     implicit none
     integer, intent(in) :: nM !JÖ
@@ -232,10 +232,10 @@ contains
        end do
     end do
 
-  end subroutine addDfields
+  end subroutine 
 
 
-end module molecProperties
+end module 
 
 !from addDfields
 !    !do i = 1, nM

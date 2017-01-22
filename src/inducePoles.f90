@@ -6,14 +6,14 @@ module inducePoles
   implicit none
   
   private
-  public induceDipole, induceQpole
+  public induce_dipole, induce_quadrupole
   
 contains
   
   !----------------------------------------------------------------------+
   !     Induce dipole moment                                             |
   !----------------------------------------------------------------------+
-  subroutine induceDipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+  subroutine induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
     
     implicit none
     real(dp), intent(inout) :: dpole(:,:)
@@ -54,12 +54,12 @@ contains
     
     return
     
-  end subroutine induceDipole
+  end subroutine induce_dipole
   
   !----------------------------------------------------------------------+
   !     Induce quadrupole moment                                         |
   !----------------------------------------------------------------------+
-  subroutine induceQpole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+  subroutine induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
     
     implicit none
     
@@ -103,6 +103,6 @@ contains
     
     return
     
-  end subroutine induceQpole
+  end subroutine induce_quadrupole
   
 end module inducePoles

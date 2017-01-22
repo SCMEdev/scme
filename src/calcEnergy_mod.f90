@@ -6,11 +6,11 @@ module calcEnergy_mod
   implicit none
   
   private
-  public calcEnergy
+  public multipole_energy
   
 contains
   
-  subroutine calcEnergy(dpole, qpole, opole, hpole, d1v, d2v, d3v,d4v, nM, uTot)
+  subroutine multipole_energy(dpole, qpole, opole, hpole, d1v, d2v, d3v,d4v, nM, uTot)
     
     implicit none
     
@@ -108,7 +108,7 @@ contains
     
     return
     
-  end subroutine calcEnergy
+  end subroutine multipole_energy
   
   !-----------------------------------------------------------------------
   subroutine calcEnergyI(dpole, dpole0, qpole, qpole0, opole, hpole,d1v, d2v, d3v, d4v, nM, uTot)
