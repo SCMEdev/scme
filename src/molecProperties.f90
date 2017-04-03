@@ -3,64 +3,141 @@
 !     conditions                                                       |
 !----------------------------------------------------------------------+
 
+!JÖ changed all .d0 and .0d0 to .0_dp
+! and other syntax-oriented changes. 
+
 module molecProperties
 
   use data_types
-  use max_parameters
-  use tang_toennies, only: Tang_ToenniesN, Tang_ToenniesNdF
+!  use max_parameters
+  !use tang_toennies, only: Tang_ToenniesN, Tang_ToenniesNdF
+  use sf_disp_tangtoe, only: SF, SFdsf
 
   private
   public recoverMolecules, calcCentersOfMass, findPpalAxes, rotatePoles,&
-       rotatePolariz, setUnpolPoles, addFields, addDfields, SF, SFdsf
+       rotatePolariz, setUnpolPoles, addFields, addDfields,  create_rw, calc_cm !, SF, SFdsf
 
 contains
 
-  subroutine recoverMolecules(raOri, ra, nH, nO, a, a2)
+  subroutine recoverMolecules(raOri, ra, nH, nO, a, a2, rw)
+    !-------------------------------------------------------------------
+    ! Thos routine takes the coords(3*n_atoms) and puts out ar(3*natoms)
+    ! (both in the HH HH HH HH HH... O O O O... order). Oxygen position
+    ! is copied but in case an H is on the wrong side of the box, it is
+    ! moved to correct position beside the Oxygen. 
+    !    / Description by Jonatan Öström in Dec 2016
+    !-------------------------------------------------------------------
+    
+    !JÖ reformulate to implicit none and state intention and assumed shape
+    implicit none
+!JÖ    implicit real(dp) (a-h,o-z)
+    
+    real(dp), 	intent(in)	:: raOri(:), a(:), a2(:)
+    integer, 	intent(in) 	:: nH, nO
+    real(dp), 	intent(out) :: ra(:)
+    type(h2o),  intent(out) :: rw(:)
 
-    implicit real(dp) (a-h,o-z)
+	! Internal
+    integer  :: i,l,n, index
+    real(dp) :: dist
 
-    real(dp) raOri(maxCoo), a(3), a2(3), ra(maxCoo), dist
-    integer nH,nO
-
-    do i = 1, nO
-       do l = 1, 3
-          do n = 1, 2
-             index = l+3*(n-1)+6*(i-1)
-             dist = raOri(index) - raOri(l+3*(i-1+nH))
-             if (dist .gt. a2(l)) then
-                ra(index) = raOri(index) - a(l)
+!JÖ    real(dp) raOri(maxCoo), a(3), a2(3), ra(maxCoo), dist
+!JÖ    integer nH,nO
+    !HH HH HH HH O O O O is the order expected from raOri
+	!JÖ change 1 = 0,nO-1 and n = 0,2 to make reindexing more straightforward in loop 
+    do i = 0, nO-1 !JÖ oxygen nr i
+       do l = 1, 3 !JÖ the x,y,z directions of atom coordinates and box size a(l)
+          do n = 0, 1 !JÖ which hydrogen 
+             index = l + 3*(n) + 6*(i)
+             dist = raOri(index) - raOri(l + 3*(i+nH)) ! H-position - O-positon
+             if (dist .gt. a2(l)) then                 ! a2 = a/2 = boxdimension/2
+                ra(index) = raOri(index) - a(l)        
              elseif(dist .lt. -a2(l)) then
                 ra(index) = raOri(index) + a(l)
              else
                 ra(index) = raOri(index)
              end if
           end do
-          ra(l+3*(i-1+nH)) = raOri(l+3*(i-1+nH))
+          ra(l + 3*(i+nH)) = raOri(l + 3*(i+nH)) !oxygen is copied over regardless
        end do
     end do
-    return
+    !return
 
   end subroutine recoverMolecules
+  
+  subroutine create_rw(ra,rw,nM)
+    real(dp), intent(in)   :: ra(:)
+    type(h2o), intent(out) :: rw(:)
+    integer, intent(in) :: nM
+    integer i, j, n
+    
+    do m = 1,nM !molecules
+       iH2 = 2 * m
+       iH1 = iH2 - 1
+       iO  = 2*nM + m !JÖ
+
+       iH1 = 3 * (iH1 - 1)
+       iH2 = 3 * (iH2 - 1)
+       iO  = 3 * (iO - 1)
+       
+       do j = 1,3 !coords
+         rw(m)%h1(j) = ra(iH1+j) !H1
+         rw(m)%h2(j) = ra(iH2+j) !H2
+         rw(m)%o(j) = ra(io+j)  !O
+       enddo 
+     enddo 
+   end subroutine create_rw
+     
+!         rw(m)%r1(1) = ra(iH1+1)
+!         rw(m)%r1(2) = ra(iH1+2)
+!         rw(m)%r1(3) = ra(iH1+3)
+!         rw(m)%r2(1) = ra(iH2+1)
+!         rw(m)%r2(2) = ra(iH2+2)
+!         rw(m)%r2(3) = ra(iH2+3)
+!         rw(m)%ro(1) = ra(io+1)
+!         rw(m)%ro(2) = ra(io+2)
+!         rw(m)%ro(3) = ra(io+3)
 
   !----------------------------------------------------------------------+
   !     Routine to calculate the center of mass of each molecule         |
   !----------------------------------------------------------------------+
+  subroutine calc_cm(rw, wcm, nM) !w=water molecules
+    implicit none 
+    type(h2o), 	intent(in) 	:: rw(:)
+    real(dp), 	intent(out) :: wcm(:,:)
+    integer, 	intent(in) 	:: nM
+!internal:    
+    integer m
+  
+     do m = 1, nM
+        wcm(:,m) = (rw(m)%h1 + rw(m)%h2 + 16.0_dp * rw(m)%o) / 18.0_dp
+     end do
+     
+  end subroutine calc_cm
+
+
   subroutine calcCentersOfMass(ra, nM, rCM)
 
-    implicit real(dp) (a-h,o-z)
-    integer nM, iH1, iH2, iO, i, j
-    real(dp) rCM(3,maxCoo/3), ra(maxCoo)
+!JÖ    implicit real(dp) (a-h,o-z)
+    implicit none !JÖ
+    !JÖ state intents and assumed shape:
+    real(dp), 	intent(in) 	:: ra(:)
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(out) :: rCM(:,:)
+    
+    integer iH1, iH2, iO, i, j !JÖ nM, 
+!JÖ    real(dp) rCM(3,maxCoo/3), ra(maxCoo)
 
     do i = 1, nM
        iH2 = 2 * i
        iH1 = iH2 - 1
-       iO  = 2 * nM + i
+       iO  = 2*nM + i !JÖ
 
        iH1 = 3 * (iH1 - 1)
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
        do j = 1, 3
-          rCM(j,i) = (ra(iH1+j) + ra(iH2+j) + 16.d0 * ra(iO+j)) / 18.d0
+          rCM(j,i) = (ra(iH1+j) + ra(iH2+j) + 16.0_dp * ra(iO+j)) / 18.0_dp
        end do
     end do
 
@@ -73,10 +150,17 @@ contains
   !----------------------------------------------------------------------+
   subroutine findPpalAxesOLD(ra, nM, x)
 
-    implicit real(dp) (a-h,o-z)
+!JÖ    implicit real(dp) (a-h,o-z)
+    implicit none
+    
+    real(dp), 	intent(in) 	:: ra(:)
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(out) :: x(:,:,:) 
 
-    integer nM, iH1, iH2, iO, i, j
-    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
+    integer 	:: iH1, iH2, iO, i, j !JÖ nM, 
+    real(dp) 	:: r11, r21
+!jö    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
+
 
     do i = 1, nM
        iH2 = 2 * i
@@ -86,12 +170,12 @@ contains
        iH1 = 3 * (iH1 - 1)
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
-       do j = 1, 3
-          x(j,1,i) = -(ra(iH1+j) + ra(iH2+j) - 2.d0 * ra(iO+j))
-          x(j,2,i) = ra(iH2+j) - ra(iH1+j)
+       do j = 1, 3 ! j = x,y,z coord of H1,H2,O
+          x(j,1,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j)) !x(:,1,i) = -{ H1(:) + H2(:) - 2*O(:) } 
+          x(j,2,i) = ra(iH2+j) - ra(iH1+j)                        !x(:,2,i) = H2(:) - H1(:) 
        end do
-       r11 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i))
-       r21 = sqrt(x(1,2,i)*x(1,2,i) + x(2,2,i)*x(2,2,i) + x(3,2,i) * x(3,2,i))
+       r11 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i)) !norm(x(:,1,i)),  ":" is x,y,z
+       r21 = sqrt(x(1,2,i)*x(1,2,i) + x(2,2,i)*x(2,2,i) + x(3,2,i) * x(3,2,i)) !norm(x(:,2,i))
        do j = 1, 3
           x(j,1,i) = x(j,1,i) / r11
           x(j,2,i) = x(j,2,i) / r21
@@ -108,11 +192,26 @@ contains
   !     Routine to calculate the principal axes of each molecule         |
   !----------------------------------------------------------------------+
   subroutine findPpalAxes(ra, nM, x)
+  !---------------------------------------------------------------------
+  ! This routine finds the principal axis of the molecule but does it 
+  ! apply to a water molecule with non-fixed geometry?
+  !---------------------------------------------------------------------
 
-    implicit real(dp) (a-h,o-z)
+!JÖ    implicit real(dp) (a-h,o-z)
+!JÖ
+!JÖ    integer nM, iH1, iH2, iO, i, j
+!JÖ    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
 
-    integer nM, iH1, iH2, iO, i, j
-    real(dp) x(3,3,maxCoo/3), ra(maxCoo), r11, r21
+!JÖ use instead:
+    implicit none
+    
+    real(dp), 	intent(in) 	:: ra(:)
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(out) :: x(:,:,:) 
+
+    integer 	:: iH1, iH2, iO, i, j !JÖ nM, 
+    real(dp) 	:: r11, r21
+
 
     ! Debug
     integer*4 p
@@ -125,19 +224,19 @@ contains
        iH1 = 3 * (iH1 - 1)
        iH2 = 3 * (iH2 - 1)
        iO  = 3 * (iO - 1)
-       do j = 1, 3
-          x(j,3,i) = -(ra(iH1+j) + ra(iH2+j) - 2.d0 * ra(iO+j))
-          x(j,1,i) = ra(iH2+j) - ra(iH1+j)
+       do j = 1, 3 ! j = x,y,z coord of H1,H2,O
+          x(j,3,i) = -(ra(iH1+j) + ra(iH2+j) - 2.0_dp * ra(iO+j)) !x(:,1,i) = -{ H1(:) + H2(:) - 2*O(:) } |
+          x(j,1,i) = ra(iH2+j) - ra(iH1+j)                        !x(:,2,i) = H2(:) - H1(:)               | These find two vectors in the plane of the molecule
        end do
-       r11 = sqrt(x(1,3,i)*x(1,3,i) + x(2,3,i)*x(2,3,i) + x(3,3,i) * x(3,3,i))
-       r21 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i))
+       r11 = sqrt(x(1,3,i)*x(1,3,i) + x(2,3,i)*x(2,3,i) + x(3,3,i) * x(3,3,i)) !norm(x(:,1,i)),  ":" is x,y,z
+       r21 = sqrt(x(1,1,i)*x(1,1,i) + x(2,1,i)*x(2,1,i) + x(3,1,i) * x(3,1,i)) !norm(x(:,2,i))
 
        do j = 1, 3
-          x(j,3,i) = x(j,3,i) / r11
+          x(j,3,i) = x(j,3,i) / r11 !normalize?
           x(j,1,i) = x(j,1,i) / r21
        end do
-       x(1,2,i) = x(2,3,i) * x(3,1,i) - x(3,3,i) * x(2,1,i)
-       x(2,2,i) = x(3,3,i) * x(1,1,i) - x(1,3,i) * x(3,1,i)
+       x(1,2,i) = x(2,3,i) * x(3,1,i) - x(3,3,i) * x(2,1,i) !cross product ? find middle vector orthogonal to plane
+       x(2,2,i) = x(3,3,i) * x(1,1,i) - x(1,3,i) * x(3,1,i) !do we need all three of them? Yes!
        x(3,2,i) = x(1,3,i) * x(2,1,i) - x(2,3,i) * x(1,1,i)
     end do
 
@@ -169,27 +268,47 @@ contains
   !! @param[out] x     : ?
   subroutine rotatePoles(d0, q0, o0, h0, dpole, qpole, opole, hpole, nM, x)
     implicit none
-    real(dp), intent(in) :: d0(3)
-    real(dp), intent(in) :: q0(3,3)
-    real(dp), intent(in) :: o0(3,3,3)
-    real(dp), intent(in) :: h0(3,3,3,3)
-    real(dp), intent(out) :: dpole(3,nM)
-    real(dp), intent(out) :: qpole(3,3,nM)
-    real(dp), intent(out) :: opole(3,3,3,nM)
-    real(dp), intent(out) :: hpole(3,3,3,3,nM)
+    real(dp), intent(in) :: d0(:) !JÖ assumed shape can be faster
+    real(dp), intent(in) :: q0(:,:)
+    real(dp), intent(in) :: o0(:,:,:)
+    real(dp), intent(in) :: h0(:,:,:,:)
     integer, intent(in) :: nM
-    real(dp), intent(in) :: x(3,3,nM)
+    real(dp), intent(in) :: x(:,:,:)
+
+    real(dp), intent(out) :: dpole(:,:)
+    real(dp), intent(out) :: qpole(:,:,:)
+    real(dp), intent(out) :: opole(:,:,:,:)
+    real(dp), intent(out) :: hpole(:,:,:,:,:)
+
+
+
+!    real(dp), intent(in) :: d0(3)
+!    real(dp), intent(in) :: q0(3,3)
+!    real(dp), intent(in) :: o0(3,3,3)
+!    real(dp), intent(in) :: h0(3,3,3,3)
+!    integer, intent(in) :: nM
+!    real(dp), intent(in) :: x(3,3,nM)
     ! ----------------------------------------
 
+!    real(dp), intent(out) :: dpole(3,nM)
+!    real(dp), intent(out) :: qpole(3,3,nM)
+!    real(dp), intent(out) :: opole(3,3,3,nM)
+!    real(dp), intent(out) :: hpole(3,3,3,3,nM)
+
+
     ! local variables.
-    integer i, j, k, l, ii, jj, kk, ll, m
+    integer i, j, k, l, ii, jj, kk, ll, m !jö , save ::
 
     ! Zeroise.
-    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0d0
-    opole(1:3, 1:3, 1:3, 1:nM) = 0.0d0
-    qpole(1:3, 1:3, 1:nM) = 0.0d0
-    dpole(1:3, 1:nM) = 0.0d0
+!JÖ    hpole(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    opole(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    qpole(1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    dpole(1:3, 1:nM) = 0.0_dp
 
+    hpole = 0 !JÖ this is enough 
+    opole = 0
+    qpole = 0
+    dpole = 0
     ! Do the calculation.
     do m = 1, nM
        do l = 1, 3
@@ -229,18 +348,30 @@ contains
 
     implicit none
 
-    integer nM, i, j, k
-    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
-    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
+    
+    real(dp), intent(inout) :: dpole(:,:) !JÖ 
+    real(dp), intent(inout) :: qpole(:,:,:)
+    real(dp), intent(in) :: dpole0(:,:)
+    real(dp), intent(in) :: qpole0(:,:,:)
+    integer , intent(in) :: nM
+    
+    integer i, j, k
+    
+!JÖ    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
+!JÖ    real(dp) dpole0(3,maxCoo/3), qpole0(3,3,maxCoo/3)
 
-    do i = 1, nM
-       do j = 1, 3
-          dPole(j,i) = dpole0(j,i)
-          do k = 1, 3
-             qpole(k,j,i) = qpole0(k,j,i)
-          end do
-       end do
-    end do
+    
+    dPole = dpole0 !JÖ 
+    qpole = qpole0 !JÖ
+
+!JÖ    do i = 1, nM 
+!JÖ       do j = 1, 3
+!JÖ          dPole(j,i) = dpole0(j,i)
+!JÖ          do k = 1, 3
+!JÖ             qpole(k,j,i) = qpole0(k,j,i)
+!JÖ          end do
+!JÖ       end do
+!JÖ    end do
     return
 
   end subroutine setUnpolPoles
@@ -260,26 +391,47 @@ contains
   subroutine rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x)
 
     implicit none
-    real(dp), intent(in) :: hp0(3,3,3)
-    real(dp), intent(in) :: dq0(3,3,3)
-    real(dp), intent(in) :: dd0(3,3)
-    real(dp), intent(in) :: qq0(3,3,3,3)
-    real(dp), intent(out) :: hp(3,3,3,nM)
-    real(dp), intent(out) :: dq(3,3,3,nM)
-    real(dp), intent(out) :: dd(3,3,nM)
-    real(dp), intent(out) :: qq(3,3,3,3,nM)
-    integer, intent(in) :: nM
-    real(dp), intent(in) :: x(3,3,nM)
+!    real(dp), intent(in) :: hp0(3,3,3)
+!    real(dp), intent(in) :: dq0(3,3,3)
+!    real(dp), intent(in) :: dd0(3,3)
+!    real(dp), intent(in) :: qq0(3,3,3,3)
+!    real(dp), intent(out) :: hp(3,3,3,nM)
+!    real(dp), intent(out) :: dq(3,3,3,nM)
+!    real(dp), intent(out) :: dd(3,3,nM)
+!    real(dp), intent(out) :: qq(3,3,3,3,nM)
+!    integer, intent(in) :: nM
+!    real(dp), intent(in) :: x(3,3,nM)
     ! ----------------------------------------
+
+    real(dp), intent(in) :: hp0(:,:,:)
+    real(dp), intent(in) :: dq0(:,:,:)
+    real(dp), intent(in) :: dd0(:,:)
+    real(dp), intent(in) :: qq0(:,:,:,:)
+    real(dp), intent(out) :: hp(:,:,:,:)
+    real(dp), intent(out) :: dq(:,:,:,:)
+    real(dp), intent(out) :: dd(:,:,:)
+    real(dp), intent(out) :: qq(:,:,:,:,:)
+    integer , intent(in) :: nM
+    real(dp), intent(in) :: x(:,:,:)
+    ! ----------------------------------------
+
+
+
 
     ! Local variables.
     integer i, j, k, l, ii, jj, kk, ll, m
 
     ! Zeroise.
-    dd(1:3, 1:3, 1:nM) = 0.d0
-    dq(1:3, 1:3, 1:3, 1:nM) = 0.d0
-    qq(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.d0
-    hp(1:3, 1:3, 1:3, 1:nM) = 0.d0
+!JÖ    dd(1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    dq(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    qq(1:3, 1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+!JÖ    hp(1:3, 1:3, 1:3, 1:nM) = 0.0_dp
+
+    dd = 0 !JÖ
+    dq = 0 !JÖ
+    qq = 0 !JÖ
+    hp = 0 !JÖ
+
 
     ! Do the calculation.
     do m = 1, nM
@@ -319,15 +471,24 @@ contains
   subroutine addFields(eH, eD, eT, nM)
 
     implicit none
-    integer i, j, nM
-    real(dp) eH(3,maxCoo/3), eD(3,maxCoo/3)
-    real(dp) eT(3,maxCoo/3)
+!    integer i, j, nM
+!    real(dp) eH(3,maxCoo/3), eD(3,maxCoo/3)
+!    real(dp) eT(3,maxCoo/3)
 
-    do i = 1, nM
-       do j = 1, 3
-          eT(j,i) = eH(j,i) + eD(j,i)
-       end do
-    end do
+    integer , intent(in)   :: nM
+    real(dp), intent(in)   :: eH(:,:)
+    real(dp), intent(in)   :: eD(:,:)
+    real(dp), intent(out) :: eT(:,:)
+    
+    integer i, j
+   
+    eT = eH + eD
+
+!JÖ    do i = 1, nM
+!JÖ       do j = 1, 3
+!JÖ          eT(j,i) = eH(j,i) + eD(j,i)
+!JÖ       end do
+!JÖ    end do
     return
 
   end subroutine addFields
@@ -338,23 +499,40 @@ contains
   subroutine addDfields(dEhdr, dEddr, dEtdr, nM)
 
     implicit none
-    integer i, j, k, nM
-    real(dp) dEhdr(3,3,maxCoo/3)
-    real(dp) dEtdr(3,3,maxCoo/3), dEddr(3,3,maxCoo/3)
+    integer, intent(in) :: nM !JÖ
+!    real(dp) dEhdr(3,3,maxCoo/3)
+!    real(dp) dEtdr(3,3,maxCoo/3), dEddr(3,3,maxCoo/3)
+    real(dp), intent(out) :: dEtdr(:,:,:)
+    real(dp), intent(in)  :: dEhdr(:,:,:)
+    real(dp), intent(in)  :: dEddr(:,:,:)
 
-    do i = 1, nM
-       do j = 1, 3
-          do k = 1, 3
-             dEtdr(k,j,i) = dEhdr(k,j,i) + dEddr(k,j,i)
-             !               dEtdr(j,k,i) = dEhdr(k,j,i)
-          end do
-       end do
-       do j = 2, 3
-          do k = 1, j-1
-             dEtdr(j,k,i) = dEtdr(k,j,i)
-          end do
+    integer i, j, k !JÖ, nM
+    
+!JÖ    do i = 1, nM
+!JÖ       do j = 1, 3
+!JÖ          do k = 1, 3
+!JÖ             dEtdr(k,j,i) = dEhdr(k,j,i) + dEddr(k,j,i)
+!JÖ             !               dEtdr(j,k,i) = dEhdr(k,j,i)
+!JÖ          end do
+!JÖ       end do
+!JÖ       do j = 2, 3
+!JÖ          do k = 1, j-1
+!JÖ             dEtdr(j,k,i) = dEtdr(k,j,i)
+!JÖ          end do
+!JÖ       end do
+!JÖ    end do
+    
+    !JÖ:
+    dEtdr = dEhdr + dEddr
+    !do i = 1, nM
+    do j = 2, 3
+       do k = 1, j-1
+          dEtdr(j,k,:) = dEtdr(k,j,:)
        end do
     end do
+    !end do
+    
+    
     return
 
   end subroutine addDfields
@@ -392,124 +570,139 @@ contains
   !        end subroutine applyPBC
 
   !-----------------------------------------------------------------------
-  subroutine SF(r, swFunc)
-
-    implicit none
-    real(dp) r, swFunc, x, x2, x3, rSW, rCut
-    real(dp) rL1, rL2, rH1, rH2, dr
-
-    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-    data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 9.d0, 11.d0 /
-    !      data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 11.d0, 13.d0 /
-    save
-
-
-    !     Kroes
-    !$$$      rSW = 8.d0
-    !$$$      rCut = 9.d0
-    !$$$
-    !$$$      x = (r - rSW)/(rCut - rSW)
-    !$$$
-    !$$$      if (r. lt. rSW) then
-    !$$$         swFunc = 1.0d0
-    !$$$      else if(r .lt. rCut) then
-    !$$$         x2 = x * x
-    !$$$         x3 = x2 * x
-    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    !$$$      else
-    !$$$         swFunc = 0.0d0
-    !$$$      end if
-
-    if ((r .ge. rH2) .or. (r .le. rL1)) then
-       swFunc = 0.0d0
-    else if ((r .ge. rH1) .and. (r .le. rL2)) then
-       swFunc = 1.0d0
-    else if (r .lt. rH1) then
-
-       call tang_toenniesN(r, swFunc, 6)
-
-       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
-       !$$$         x2 = x * x
-       !$$$         x3 = x2 * x
-       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    else
-       x = (r - rL2)/(rH2 - rL2)
-       x2 = x * x
-       x3 = x2 * x
-       swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    end if
-
-    !      swFunc = 1.d0
-
-    return
-
-  end subroutine SF
-
-  !-----------------------------------------------------------------------
-  subroutine SFdsf(r, swFunc, dSdr)
-
-    implicit none
-    real(dp) r, swFunc, x, x2, x3, dSdr, rSW, rCut
-    real(dp) rL1, rL2, rH1, rH2, dr
-
-    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
-    data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 9.d0, 11.d0 /
-    !      data rL1, rH1, rL2, rH2 / 0.d0, 5.d0, 11.d0, 13.d0 /
-    save
-
-    !     Kroes
-    !$$$      rSW = 8.d0
-    !$$$      rCut = 9.d0
-
-
-    !$$$      x = (r - rSW)/(rCut - rSW)
-    !$$$
-    !$$$      if (r. lt. rSW) then
-    !$$$         swFunc = 1.0d0
-    !$$$         dSdr = 0.0d0
-    !$$$      else if(r .lt. rCut) then
-    !$$$         x2 = x * x
-    !$$$         x3 = x2 * x
-    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-    !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) / (rCut-rSW)
-    !$$$      else
-    !$$$         swFunc = 0.0d0
-    !$$$         dSdr = 0.0d0
-    !$$$      end if
-
-
-    if ((r .ge. rH2) .or. (r .le. rL1)) then
-       swFunc = 0.0d0
-       dSdr = 0.0d0
-    else if ((r .ge. rH1) .and. (r .le. rL2)) then
-       swFunc = 1.0d0
-       dSdr = 0.0d0
-    else if (r .lt. rH1) then
-
-       !c         call switchCloseDsf(r, swFunc, dSdr)
-       call tang_toenniesNdF(r, swFunc, dSdr, 6)
-
-       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
-       !$$$         dr = - 1.d0 / (rH1 - rL1)
-       !$$$         x2 = x * x
-       !$$$         x3 = x2 * x
-       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-       !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
-    else
-       x = (r - rL2)/(rH2 - rL2)
-       dr = 1.d0 / (rH2 - rL2)
-       x2 = x * x
-       x3 = x2 * x
-       swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
-       dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
-    end if
-
-    !      swFunc = 1.d0
-    !      dSdr = 0.d0
-
-    return
-
-  end subroutine SFdsf
-
+!  pure subroutine SF(r, swFunc)
+!
+!    implicit none
+!    real(dp), intent(in) :: r !JÖ
+!    real(dp), intent(out) :: swFunc !JÖ
+!    real(dp) x, x2, x3, rSW, rCut, dr     !JÖ r, swFunc, 
+!    !JÖ , save ::
+!!JÖ    real(dp), save :: rL1, rL2, rH1, rH2
+!    real(dp), parameter :: rL1 = 0.0_dp
+!    real(dp), parameter :: rL2 = 9.0_dp
+!    real(dp), parameter :: rH1 = 5.0_dp
+!    real(dp), parameter :: rH2 = 11.0_dp
+!    
+!    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
+!!JÖ    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+!    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
+!!JÖ     save
+!
+!
+!    !     Kroes
+!    !$$$      rSW = 8.d0
+!    !$$$      rCut = 9.d0
+!    !$$$
+!    !$$$      x = (r - rSW)/(rCut - rSW)
+!    !$$$
+!    !$$$      if (r. lt. rSW) then
+!    !$$$         swFunc = 1.0d0
+!    !$$$      else if(r .lt. rCut) then
+!    !$$$         x2 = x * x
+!    !$$$         x3 = x2 * x
+!    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!    !$$$      else
+!    !$$$         swFunc = 0.0d0
+!    !$$$      end if
+!
+!    if ((r .ge. rH2) .or. (r .le. rL1)) then
+!       swFunc = 0.0_dp
+!    else if ((r .ge. rH1) .and. (r .le. rL2)) then
+!       swFunc = 1.0_dp
+!    else if (r .lt. rH1) then
+!
+!       call tang_toenniesN(r, swFunc, 6)
+!
+!       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
+!       !$$$         x2 = x * x
+!       !$$$         x3 = x2 * x
+!       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!    else
+!       x = (r - rL2)/(rH2 - rL2)
+!       x2 = x * x
+!       x3 = x2 * x
+!       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
+!    end if
+!
+!    !      swFunc = 1.0_dp
+!
+!    return
+!
+!  end subroutine SF
+!
+!  !-----------------------------------------------------------------------
+!  pure subroutine SFdsf(r, swFunc, dSdr)!JÖ pure
+!
+!    implicit none
+!    real(dp), intent(in) :: r !JÖ stated intents
+!    real(dp), intent(out) :: swFunc, dSdr !JÖ
+!    real(dp) :: x, x2, x3, rSW, rCut, dr
+!!JÖ pure    real(dp) :: rL1, rL2, rH1, rH2  !JÖ pure: ^, dr
+!    
+!    real(dp), parameter :: rL1 = 0.0_dp   !JÖ pure
+!    real(dp), parameter :: rH1 = 5.0_dp   !JÖ pure
+!    real(dp), parameter :: rL2 = 9.0_dp   !JÖ pure
+!    real(dp), parameter :: rH2 = 11.0_dp  !JÖ pure
+!!, save
+!!, save
+!    !      data rL1, rH1, rL2, rH2 / 1.5d0, 2.7d0, 8.d0, 9.d0 /
+!!JÖ pure    data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 9.0_dp, 11.0_dp /
+!    !      data rL1, rH1, rL2, rH2 / 0.0_dp, 5.0_dp, 11.0_dp, 13.0_dp /
+!    !JÖ save
+!
+!    !     Kroes
+!    !$$$      rSW = 8.d0
+!    !$$$      rCut = 9.d0
+!
+!
+!    !$$$      x = (r - rSW)/(rCut - rSW)
+!    !$$$
+!    !$$$      if (r. lt. rSW) then
+!    !$$$         swFunc = 1.0d0
+!    !$$$         dSdr = 0.0d0
+!    !$$$      else if(r .lt. rCut) then
+!    !$$$         x2 = x * x
+!    !$$$         x3 = x2 * x
+!    !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!    !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) / (rCut-rSW)
+!    !$$$      else
+!    !$$$         swFunc = 0.0d0
+!    !$$$         dSdr = 0.0d0
+!    !$$$      end if
+!
+!
+!    if ((r .ge. rH2) .or. (r .le. rL1)) then
+!       swFunc = 0.0_dp
+!       dSdr = 0.0_dp
+!    else if ((r .ge. rH1) .and. (r .le. rL2)) then
+!       swFunc = 1.0_dp
+!       dSdr = 0.0_dp
+!    else if (r .lt. rH1) then
+!
+!       !c         call switchCloseDsf(r, swFunc, dSdr)
+!       call tang_toenniesNdF(r, swFunc, dSdr, 6)
+!
+!       !$$$         x = 1.d0 - (r - rL1)/(rH1 - rL1)
+!       !$$$         dr = - 1.d0 / (rH1 - rL1)
+!       !$$$         x2 = x * x
+!       !$$$         x3 = x2 * x
+!       !$$$         swFunc = 1.d0 + x3 * (-6.d0 * x2 + 15.d0 * x - 10.d0)
+!       !$$$         dSdr = 30.d0 * x2 * (- x2 + 2.d0 * x - 1.d0) * dr
+!    else
+!       x = (r - rL2)/(rH2 - rL2)
+!       dr = 1.0_dp / (rH2 - rL2)
+!       x2 = x * x
+!       x3 = x2 * x
+!       swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
+!       dSdr = 30.0_dp * x2 * (- x2 + 2.0_dp * x - 1.0_dp) * dr
+!    end if
+!
+!    !      swFunc = 1.d0
+!    !      dSdr = 0.d0
+!
+!    return
+!
+!  end subroutine SFdsf
+!
 
 end module molecProperties

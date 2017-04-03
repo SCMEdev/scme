@@ -1,7 +1,7 @@
 module inducePoles
   
   use data_types
-  use max_parameters
+!  use max_parameters
   
   implicit none
   
@@ -16,11 +16,23 @@ contains
   subroutine induceDipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
     
     implicit none
-    integer nM, i, j, k, m
-    real(dp) dpole(3,maxCoo/3), dpole0(3,maxCoo/3)
-    real(dp) dd(3,3,maxCoo/3), dq(3,3,3,maxCoo/3), hp(3,3,3,maxCoo/3)
-    real(dp) eT(3,maxCoo/3), dEtdr(3,3,maxCoo/3), daux
-    logical*1 converged
+    real(dp), intent(out) :: dpole(:,:)
+    real(dp), intent(in) :: dpole0(:,:)
+    real(dp), intent(in) :: eT(:,:), dEtdr(:,:,:)
+    real(dp), intent(in) :: dd(:,:,:), dq(:,:,:,:), hp(:,:,:,:)
+    integer, intent(in) ::  nM
+    logical*1, intent(inout) ::  converged
+
+!JÖ internal:    
+    real(dp), save :: daux
+    integer , save :: i, j, k, m
+
+!    integer nM, i, j, k, m
+!    real(dp) dpole(3,maxCoo/3), dpole0(3,maxCoo/3)
+!    real(dp) dd(3,3,maxCoo/3), dq(3,3,3,maxCoo/3), hp(3,3,3,maxCoo/3)
+!    real(dp) eT(3,maxCoo/3), dEtdr(3,3,maxCoo/3), daux
+!    logical*1 converged
+
     
     do m = 1, nM
        do i = 1, 3
@@ -31,8 +43,8 @@ contains
           end do
           do j = 1, 3
              do k = 1, 3
-                dpole(i,m) = dpole(i,m) + dq(i,j,k,m) * dEtdr(j,k,m) / 3.d0 + &
-                     hp(i,j,k,m) * eT(j,m) * eT(k,m) / 2.d0
+                dpole(i,m) = dpole(i,m) + dq(i,j,k,m) * dEtdr(j,k,m) / 3.0_dp + &
+                     hp(i,j,k,m) * eT(j,m) * eT(k,m) / 2.0_dp
              end do
           end do
 
@@ -51,11 +63,22 @@ contains
     
     implicit none
     
-    integer nM, i, j, k, l, m
-    real(dp) qpole(3,3,maxCoo/3), dq(3,3,3,maxCoo/3)
-    real(dp) qq(3,3,3,3,maxCoo/3), qaux
-    real(dp) qpole0(3,3,maxCoo/3), eT(3,maxCoo/3), dEtdr(3,3,maxCoo/3)
-    logical*1 converged
+    integer, intent(in) :: nM
+    real(dp), intent(out) :: qpole(:,:,:)
+    real(dp), intent(in) :: dq(:,:,:,:), qq(:,:,:,:,:)
+    real(dp), intent(in) :: qpole0(:,:,:), eT(:,:), dEtdr(:,:,:)
+    logical*1, intent(inout) :: converged
+
+!JÖ internal:
+    real(dp), save :: qaux
+    integer , save :: i, j, k, l, m
+
+!    integer nM, i, j, k, l, m
+!    real(dp) qpole(3,3,maxCoo/3), dq(3,3,3,maxCoo/3)
+!    real(dp) qq(3,3,3,3,maxCoo/3), qaux
+!    real(dp) qpole0(3,3,maxCoo/3), eT(3,maxCoo/3), dEtdr(3,3,maxCoo/3)
+!    logical*1 converged
+
     
     do m = 1, nM
        

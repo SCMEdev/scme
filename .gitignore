@@ -1,12 +1,25 @@
 # Compiled source #
 ###################
-*.mod
-*.o
-*.a
-*.so
-*.x
+obj/*
+mod/*
+build/*
 # Development and GAP directories #
 ###################
 devel/*
 gap/*
+# testing
+test/*.mod
+test/*.o
+test/*.x
+test/*.out
+new/*.mod
+new/*.o
+new/ppes
+new/ppotr
+new/pdip
+new/plodi
+new/cppdip
+new/a.out
+new/pdms
+new/pconst
 

@@ -15,12 +15,22 @@ contains
     
     implicit none
     
-    real(dp) ra(maxCoo), a(3), a2(3)
-    integer nM, i, j, k, iOi, iOj
-    real(dp) rho(maxCoo/3), dr(3), dr1, dr2, f, rMax2
+    real(dp), intent(in)  :: ra(:), a(3), a2(3), rMax2
+    real(dp), intent(out) :: rho(:)
+    integer,  intent(in)  :: nM
+
+!JÖ internal:     
+    real(dp) dr(3), dr1, dr2, f
+    integer i, j, k, iOi, iOj
+
+!--------------------
+!    real(dp) ra(maxCoo), a(3), a2(3)
+!    integer nM, i, j, k, iOi, iOj
+!    real(dp) rho(maxCoo/3), dr(3), dr1, dr2, f, rMax2
+
     
     do i = 1, nM
-       rho(i) = 0.d0
+       rho(i) = 0.0_dp
     end do
     
     do i = 1, nM-1
@@ -61,8 +71,14 @@ contains
     implicit none
     
     integer nM, i, j, k
-    real(dp) rho(maxCoo/3), dr(3), dr1, dr2, f, df, h, dh, rMax2
-    real(dp) dAmp(maxCoo/3), Amp(maxCoo/3), rhoAvg
+    real(dp), intent(in) :: rho(:)
+    real(dp), intent(out) :: dAmp(:)
+    real(dp), intent(out) :: Amp(:)
+    real(dp) dr1, dr2, f, df, h, dh, rMax2, rhoAvg, dr(3)
+!---------
+!    integer nM, i, j, k
+!    real(dp) rho(maxCoo/3), dr(3), dr1, dr2, f, df, h, dh, rMax2
+!    real(dp) dAmp(maxCoo/3), Amp(maxCoo/3), rhoAvg
     
     
     do i = 1, nM
@@ -90,7 +106,7 @@ contains
     
     implicit none
     real(dp) r, f, A, alpha, beta
-    parameter (A=2.5d5, alpha=1.5d0, beta=3.d0)
+    parameter (A=2.5e5_dp, alpha=1.5_dp, beta=3.0_dp)
     
     f = A * exp(-r/alpha) / r**beta
     
@@ -107,7 +123,7 @@ contains
     
     implicit none
     real(dp) r, f, A, alpha, beta
-    parameter (A=2.5d5, alpha=1.5d0, beta=3.d0)
+    parameter (A=2.5e5_dp, alpha=1.5_dp, beta=3.0_dp)
     
     f =- A * exp(-r/alpha) / r**(beta+1) * (beta + r/alpha)
     
@@ -128,28 +144,28 @@ contains
     a(1) = rho_a1
     a(2) = rho_a2
     a(3) = rho_a3
-    a(4)= rho_a4
-    a(5)= rho_a5
-    a(6)= rho_a6
+    a(4) = rho_a4
+    a(5) = rho_a5
+    a(6) = rho_a6
     n = rho_n
     
     !      if (r .lt. 1465.35283) then
-    if (r .lt. 1600.d0) then
-       Amp = 0.d0
-       dAmp = 0.d0
+    if (r .lt. 1600.0_dp) then
+       Amp = 0.0_dp
+       dAmp = 0.0_dp
        !      else if (r .gt. 8275.18577201142) then
     else if (r .gt. 8000.) then
        !     else if (r .gt. 10000.) then
        ! Commented by Fer
        !        Amp = 0.024d0/2d0
        ! New values found for reparametrized potential
-       Amp = 0.1750D0/2.0D0
+       Amp = 0.1750_dp/2.0_dp
        !        Amp = 0.0610D0/2.0D0
-       dAmp = 0.d0
+       dAmp = 0.0_dp
     else
        Amp = a(1)
-       dAmp = 0.d0
-       rp = 1.d0
+       dAmp = 0.0_dp
+       rp = 1.0_dp
        
        do i = 1, n
           dAmp = dAmp + dble(i) * a(i+1) * rp

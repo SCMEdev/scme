@@ -11,13 +11,22 @@ module tang_toennies
 contains
   
   !-----------------------------------------------------------------------
-  subroutine Tang_ToenniesN(r, f, n)
+  pure subroutine Tang_ToenniesN(r, f, n)
     
+!JÖ    implicit none
+!JÖ    real(dp) r, f, b
+!JÖ    integer k, n
+!JÖ    real(dp) x, t
+
     implicit none
-    real(dp) r, f, b
-    integer k, n
-    real(dp) x, t
+    real(dp), intent(in)  :: r
+    real(dp), intent(out) :: f
+    integer , intent(in)  :: n
     
+    integer  :: k
+    real(dp) ::  x, t, b
+    !JÖ , save
+    !JÖ , save
     b = tt_b
     
     x = b * r
@@ -39,13 +48,24 @@ contains
   end subroutine Tang_ToenniesN
   
   !-----------------------------------------------------------------------
-  subroutine Tang_ToenniesNdF(r, f, df, n)
+  pure subroutine Tang_ToenniesNdF(r, f, df, n)
     
+!JÖ    implicit none
+!JÖ    real(dp) r, f, df, b
+!JÖ    integer k, n
+!JÖ    real(dp) x, t
+
     implicit none
-    real(dp) r, f, df, b
-    integer k, n
-    real(dp) x, t
-    
+    real(dp), intent(in)  :: r
+    real(dp), intent(out) :: f
+    real(dp), intent(out) :: df
+    integer , intent(in)  :: n
+
+!internal:    
+    integer  :: k
+    real(dp) :: x, t, b
+    !JÖ , save
+    !JÖ , save
     b = tt_b
     
     x = b * r

@@ -17,11 +17,17 @@ contains
   subroutine coreInt(ra, fa, uCore, nM, a, a2)
     
     implicit none
+    real(dp), intent(out) :: ra(:), fa(:)
+    real(dp), intent(out) :: uCore
+    integer,  intent(in) :: nM
+    real(dp), intent(in) :: a(3), a2(3)
     
-    integer nM, ai(10), kk, jj
-    real(dp) t1, t2, df, uCore, r, a(3), a2(3), avg
-    real(dp) ra(maxCoo), fa(maxCoo), c1, c2, c3, c4, c5,t11, t12, t13
-    real(dp) Amp(maxCoo/3), dAmp(maxCoo/3), rho(maxCoo/3), f, rMax2
+!JÖ internal:
+    integer ai(10), kk, jj
+    real(dp) t1, t2, df, r, avg
+    real(dp) c1, c2, c3, c4, c5,t11, t12, t13
+    real(dp),dimension(size(ra)/3) :: Amp, dAmp, rho
+    real(dp) f, rMax2
     real(dp) Ri1(3), Ri(3), Ri2(3), Rj1(3), Rj(3), Rj2(3)
     real(dp) vRi1j1(3), vRi2j2(3), vRij(3)
     real(dp) Rij
@@ -35,6 +41,26 @@ contains
     
     integer i, j, k, n, m, iOn, iOm, iOi, iOj, p
     real(dp) dr(3)
+
+!--------------
+!    integer nM, ai(10), kk, jj
+!    real(dp) t1, t2, df, uCore, r, a(3), a2(3), avg
+!    real(dp) ra(maxCoo), fa(maxCoo), c1, c2, c3, c4, c5,t11, t12, t13
+!    real(dp) Amp(maxCoo/3), dAmp(maxCoo/3), rho(maxCoo/3), f, rMax2
+!    real(dp) Ri1(3), Ri(3), Ri2(3), Rj1(3), Rj(3), Rj2(3)
+!    real(dp) vRi1j1(3), vRi2j2(3), vRij(3)
+!    real(dp) Rij
+!    real(dp) S
+!    real(dp) uR_An
+!    real(dp) an_1, an_2, an_3, an_4
+!    real(dp) df1, df2
+!    real(dp) c5_r
+!    integer*4 Pt_i, Pt_i1, Pt_i2
+!    integer*4 Pt_j, Pt_j1, Pt_j2
+!    
+!    integer i, j, k, n, m, iOn, iOm, iOi, iOj, p
+!    real(dp) dr(3)
+!--------------
     
     c1 = coreInt_c1
     c2 = coreInt_c2
@@ -64,7 +90,7 @@ contains
     !    &                                          Amp(int(nM/2))
     !     end if
     
-    uCore = 0.0D0
+    uCore = 0.0_dp
     
     
     do n = 1, nM-1
@@ -94,7 +120,7 @@ contains
           t13 = r**c1
           
           ! Debug
-          if ( c5_r .ge. 0.0D0 ) then
+          if ( c5_r .ge. 0.0_dp ) then
              c5 = c5_r
           else
              c5 = (Amp(n)+Amp(m))
@@ -119,7 +145,7 @@ contains
           !     Derivative of the embedding part (Amplitude)
           !
           ! Debug
-          if (c5_r .lt. 0.0D0 ) then
+          if (c5_r .lt. 0.0_dp ) then
              do j = 1, nM
                 if (j .eq. n) goto 11
                 iOj = 3 * (2*nM + j - 1)
