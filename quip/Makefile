@@ -1,0 +1,112 @@
+# HND XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# HND X
+# HND X   libAtoms+QUIP: atomistic simulation library
+# HND X
+# HND X   Portions of this code were written by
+# HND X     Albert Bartok-Partay, Silvia Cereda, Gabor Csanyi, James Kermode,
+# HND X     Ivan Solt, Wojciech Szlachta, Csilla Varnai, Steven Winfield.
+# HND X
+# HND X   Copyright 2006-2010.
+# HND X
+# HND X   Not for distribution
+# HND X
+# HND X   Portions of this code were written by Noam Bernstein as part of
+# HND X   his employment for the U.S. Government, and are not subject
+# HND X   to copyright in the USA.
+# HND X
+# HND X   When using this software, please cite the following reference:
+# HND X
+# HND X   http://www.libatoms.org
+# HND X
+# HND X  Additional contributions by
+# HND X    Alessio Comisso, Chiara Gattinoni, and Gianpietro Moras
+# HND X
+# HND XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+all: libscme.a
+
+ifeq (${QUIP_ARCH},)
+  include Makefile.arch
+else
+  include Makefile.${QUIP_ARCH}
+endif
+include Makefile.inc
+include Makefile.rules
+
+
+## object file list >>>>>>>
+SCME_OBJECTS = \
+	scme_ps.o calc_derivs.o calc_higher_order.o \
+	data_types.o \
+	multipole_parameters.o polariz_parameters.o \
+	calcEnergy_mod.o calc_lower_order.o \
+	inducePoles.o \
+	molecProperties.o \
+	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
+	localAxes_mod.o
+## <<<<<<<
+.PHONY: clean allclean depend doc
+
+libscme.a: ${SCME_OBJECTS}
+ifneq (${LIBTOOL},)
+	${LIBTOOL} -o libscme.a ${SCME_OBJECTS}
+else
+	${AR} ${AR_ADD} libscme.a $?
+endif
+
+## Dependencies >>>>>>>>>>>>>
+molecProperties.o	\
+calc_derivs.o		\
+calc_lower_order.o	\
+calc_higher_order.o:	\
+sf_disp_tangtoe.o \
+
+
+# scme dep. on most
+scme_ps.o:		\
+calc_derivs.o		\
+data_types.o		\
+polariz_parameters.o	\
+molecProperties.o	\
+calc_lower_order.o	\
+calc_higher_order.o	\
+inducePoles.o		\
+calcEnergy_mod.o	\
+multipole_parameters.o\
+ps_pes.o \
+ps_dms.o \
+printer_mod.o \
+sf_disp_tangtoe.o \
+force_torqueCM.o \
+localAxes_mod.o \
+
+
+# most dep. on data_types
+
+localAxes_mod.o \
+molecProperties.o	\
+calc_derivs.o		\
+calc_lower_order.o	\
+calc_higher_order.o	\
+printer_mod.o \
+force_torqueCM.o \
+sf_disp_tangtoe.o \
+ps_dms.o	\
+ps_pes.o \
+force_torqueCM.o		\
+inducePoles.o		\
+calcEnergy_mod.o	\
+polariz_parameters.o	\
+multipole_parameters.o: \
+data_types.o		\
+
+## <<<<<<<<<<
+
+clean:
+	rm -f *.o *.mod *.mod.save libscme.a
+	-rm -r doctmp
+
+allclean: clean
+	rm -f depend 
+
+-include depend

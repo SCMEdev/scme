@@ -1,0 +1,4 @@
+# To use SCME in QUIP: 
+# Move ThirdParty/ into QUIP/src/ and then scme/ into ThirdParty/ to get
+#   QUIP/src/ThirdParty/scme/
+
