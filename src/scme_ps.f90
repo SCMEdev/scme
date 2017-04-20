@@ -144,7 +144,10 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) :: xyz_hho(3,3,n_atoms/3) !xyz,hho,nM
     real(dp) :: xa_forces(3,3,n_atoms/3) !xyz,hho,nM
     
-    
+    integer :: s !transposing
+    logical :: prod
+    prod = .true.!.false.
+    s=2
     !// Routine Starts /////////////////////////////////////////////////
     
     ! Number of oxygen, hydrogen and moecules.
@@ -167,7 +170,7 @@ contains !//////////////////////////////////////////////////////////////
     ! compute centers of mass (cm)
     call get_cm(xyz_hho,rCM,nM)
     
-call printer(rCM, 'rCM')    
+call printer(rCM, 'rCM',s,prod)    
 
     !// Multipole Interaction //////////////////////////////////////////
     
@@ -183,7 +186,7 @@ call printer(rCM, 'rCM')
 !       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
        call localAxes2(dpole0(:,m),xyz_hho(:,:,m),x(:,:,m))
     enddo
-call printer(x,'x')    
+call printer(x,'x',s,prod)    
 
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
@@ -277,17 +280,19 @@ call printer(x,'x')
     
     
     !// Debug output ///////////////////////////////////////////////////!(pipe to file, diff to see change, comment to mute)
-    call printer(u_multipole,'u_multipole')
-    call printer(uDisp,'uDisp')
-    call printer(u_ps,'u_ps')
-    call printer(u_tot,'u_tot')
+call printer(u_multipole,'u_multipole',s,prod)
+call printer(uDisp,'uDisp',s,prod)
+call printer(u_ps,'u_ps',s,prod)
+call printer(u_tot,'u_tot',s,prod)
     
     
     !call h2o_to_linear(aforces,fa_test,nM)
     !call printer(fa_test,'aforces linear')
     
-    call printer(fa,'xa_forces linear')
-    
+    !call printer(fa,'xa_forces linear')
+call printer(xa_forces,'xa_forces',s,prod) 
+    !s=0
+call printer(1,'1',s,prod)    
     
     
 

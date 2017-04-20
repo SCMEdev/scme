@@ -11,7 +11,7 @@ module printer_mod
   
 interface printer
  module procedure p_real, p_int, p_real_vec, p_real_mat, p_real_3d, p_real_4d, &
-                  p_real_5d, p_h2o, p_h2os
+                  p_real_5d!, p_h2o, p_h2os
 end interface
 
   private
@@ -86,67 +86,102 @@ end subroutine
 ! printer_text is at the bottom
 ! printers for: tensors of rank 1-5, type(h2o) objects, 
 
+!s=0:noprint
+!s=1:print
+!s=2:print transpose
 
-subroutine p_h2o(a,text)
-  character(*) text
-  type(h2o) :: a
-   call printer_text(text)
-   write(un,'(a,3'//dblf//')') '   H1:',a%h1(:)
-   write(un,'(a,3'//dblf//')') '   H2:',a%h2(:)
-   write(un,'(a,3'//dblf//')') '   O :',a%o(:)
-end subroutine 
 
-subroutine p_h2os(a,text)
-  character(*) text
-  type(h2o) :: a(:)
-  integer l, m
-   call printer_text(text)
-   l = size(a)
-   do m = 1,l
-     write(un,'(a,I3)') '   H2O Nr:',m
-     write(un,'(a,3'//dblf//')') '   H1:',a(m)%h1(:)
-     write(un,'(a,3'//dblf//')') '   H2:',a(m)%h2(:)
-     write(un,'(a,3'//dblf//')') '   O :',a(m)%o(:)
-   enddo
-end subroutine 
+!subroutine p_h2o(a,text,s)
+!  character(*) text
+!  type(h2o) :: a
+!  integer s
+!  if(s==0)return
+!   call printer_text(text)
+!   write(un,'(a,3'//dblf//')') '   H1:',a%h1(:)
+!   write(un,'(a,3'//dblf//')') '   H2:',a%h2(:)
+!   write(un,'(a,3'//dblf//')') '   O :',a%o(:)
+!end subroutine 
+!
+!subroutine p_h2os(a,text)
+!  character(*) text
+!  type(h2o) :: a(:)
+!  integer l, m
+!   call printer_text(text)
+!   l = size(a)
+!   do m = 1,l
+!     write(un,'(a,I3)') '   H2O Nr:',m
+!     write(un,'(a,3'//dblf//')') '   H1:',a(m)%h1(:)
+!     write(un,'(a,3'//dblf//')') '   H2:',a(m)%h2(:)
+!     write(un,'(a,3'//dblf//')') '   O :',a(m)%o(:)
+!   enddo
+!end subroutine 
    
      
   
+!s=0:noprint,,,,,,, this was stupid!!!
+!s=1:print
+!s=2:print transpose
 
-subroutine p_int(a,text)
+!debug = 1 => print
+!debug = 0 => noprint
+
+
+
+
+subroutine p_int(a,text,s,production)
   character(*) text
   integer a
+  integer s
+  logical production
+  if(production)return
    call printer_text_scalar(text)
    write(un,intf) a
 end subroutine
 
-subroutine p_real(a,text)
+subroutine p_real(a,text,s,production)
   character(*) text
   real(dp) a
+  integer s
+  logical production
+  if(production)return
    call printer_text_scalar(text)
    write(un,'('//dblf//')') a
 end subroutine
 
-subroutine p_real_vec(a,text)
+subroutine p_real_vec(a,text,s,production)
   character(*) text
+  character(3) :: ch_cols
+  character(20):: forma
   real(dp) a(:)
   integer length, i
+  integer s
+  logical production
+  if(production)return
+
   length = size(a)
   call printer_text(text)
   
-  do i = 1,length
-    write(un,'('//dblf//')') a(i)
-  enddo
-  
+  if(s==1)then
+    do i = 1,length
+      write(un,'('//dblf//')') a(i)
+    enddo
+  elseif(s==2)then
+    write(ch_cols,'(I3)') length
+    forma = '('//ch_cols//dblf//')'
+    write(un,forma) a(:)
+  endif
 end subroutine
 
 
-subroutine p_real_mat(a,text)
+subroutine p_real_mat(a,text,s,production)
   character(*) :: text
   character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,i
   real(dp)     :: a(:,:)
+  integer s
+  logical production
+  if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -155,17 +190,26 @@ subroutine p_real_mat(a,text)
    forma = '('//ch_cols//dblf//')'
 
    call printer_text(text)
-   do i = 1,rows
-     write(un,forma) a(i,:)
-   enddo
+   if(s==1)then
+     do i = 1,rows
+       write(un,forma) a(i,:)
+     enddo
+   elseif(s==2)then
+     do i = 1,cols
+       write(un,forma) a(:,i)
+     enddo
+   endif
 end subroutine
 
-subroutine p_real_3d(a,text)
+subroutine p_real_3d(a,text,s,production)
   character(*) :: text
   character(3) :: ch_cols, ch_slices
   character(20):: forma
   integer rows,cols,slices,slice,i
   real(dp)     :: a(:,:,:)
+  integer s
+  logical production
+  if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -177,18 +221,27 @@ subroutine p_real_3d(a,text)
    call printer_text(text)
    do slice = 1,slices
       write(un,'(a,I2,a)') "   slice nr. ",slice, ':'
-      do i = 1,rows
-        write(un,forma) a(i,:,slice)
-      enddo
+      if(s==1)then
+        do i = 1,rows
+          write(un,forma) a(i,:,slice)
+        enddo
+      elseif(s==2)then
+        do i = 1,cols
+          write(un,forma) a(:,i,slice)
+        enddo
+      endif
    enddo
 end subroutine
 
-subroutine p_real_4d(a,text)
+subroutine p_real_4d(a,text,s,production)
   character(*) :: text
   character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,slices,slice,i, i4s, i4
   real(dp)     :: a(:,:,:,:)
+  integer s
+  logical production
+  if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -203,19 +256,28 @@ subroutine p_real_4d(a,text)
       write(un,'(a,I2,a)') "   4D index nr. ",i4, ':'
       do slice = 1,slices
          write(un,'(a,I2,a)') "      Slice nr. ",slice, ':'
+         if(s==1)then
          do i = 1,rows
            write(un,forma) a(i,:,slice,i4 )
          enddo
+         elseif(s==2)then
+         do i = 1,cols
+           write(un,forma) a(:,i,slice,i4 )
+         enddo
+         endif
       enddo
    enddo
 end subroutine
 
-subroutine p_real_5d(a,text)
+subroutine p_real_5d(a,text,s,production)
   character(*) :: text
   character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,slices,slice,i, i4s, i4, i5s, i5
   real(dp)     :: a(:,:,:,:,:)
+  integer s
+  logical production
+  if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -233,9 +295,15 @@ subroutine p_real_5d(a,text)
          write(un,'(a,I2,a)') "      4D index nr. ",i4, ':'
          do slice = 1,slices
             write(un,'(a,I2,a)') "         Slice nr. ",slice, ':'
+            if(s==1)then
             do i = 1,rows
               write(un,forma) a(i,:,slice,i4,i5)
             enddo
+            elseif(s==2)then
+            do i = 1,cols
+              write(un,forma) a(:,i,slice,i4,i5)
+            enddo
+            endif
          enddo
       enddo
    enddo
