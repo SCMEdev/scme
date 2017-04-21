@@ -153,7 +153,8 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
    real(dp) :: uTot
    real(dp), dimension(3) :: lattice
    real(dp), dimension(:), allocatable :: raOri
-   real(dp), dimension(:,:), allocatable :: fa
+   real(dp), dimension(:,:), allocatable :: coords !j
+   real(dp), dimension(:,:), allocatable :: fa     !j
 
    INIT_ERROR(error)
 #ifndef HAVE_SCME
@@ -191,6 +192,7 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
 
    !j allocate(raOri(3*at%N),fa(3*at%N)) 
    allocate(raOri(3*at%N),fa(3,at%N)) !j
+   allocate( coords(3,at%N) ) !j
    
    if( is_diagonal(at%lattice) ) then
       do i = 1, 3
@@ -200,7 +202,12 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
       RAISE_ERROR('IPModel_SCME_Calc - lattice must be orthorhombic',error)
    endif
 
-   do i = 1, nWater !j molecules.  I should change raOrig to at(3,n_atoms) or at(3,3,n_atoms)
+   do i = 1, nWater !j molecules.  I should change raOrig to at(3,n_atoms) or at(3,3,n_water)
+      
+      coords(:,(i-1)*3+1) = at%pos(:,water_monomer_index(2,i)) !j coords is hho ordered
+      coords(:,(i-1)*3+2) = at%pos(:,water_monomer_index(3,i))
+      coords(:,(i-1)*3+3) = at%pos(:,water_monomer_index(1,i))
+      
       do a = 1, 3 !j xyz
          raOri( (i-1)*6 + a ) = at%pos(a,water_monomer_index(2,i))            !j h
          raOri( (i-1)*6 + a + 3 ) = at%pos(a,water_monomer_index(3,i))        !j h
@@ -209,7 +216,8 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
    enddo
  
 #ifdef HAVE_SCME
-   call scme_calculate(at%N,raOri, lattice, fa, uTot)
+   !call scme_calculate(at%N,raOri, lattice, fa, uTot)
+   call scme_calculate(at%N,coords, lattice, fa, uTot)
 #endif
    
    if(present(f)) f = fa !j copy over the forces to the quip-defined array f from scme-specified fa

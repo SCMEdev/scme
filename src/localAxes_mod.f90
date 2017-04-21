@@ -92,6 +92,31 @@ contains !/////////////////////////////////////////////////////////////
      enddo 
    end subroutine create_xyz_hho
 
+subroutine create_xyz_hho_new(ra,xyz_hho,nM)
+    real(dp), intent(in)   :: ra(3,3*nM) !j  (xyz,hho.nM) ...
+    real(dp), intent(out) :: xyz_hho(3,3,nM)!xyz,hho,nM
+    integer, intent(in)    :: nM
+    integer io,ih1, ih2, m, j, posi
+    real(dp), parameter :: oh_max_A = 2.0_dp !Angstrom
+    
+    do m = 1,nM !molecules
+       ih1 = (m-1)*3+1
+       ih2 = (m-1)*3+2
+       io = (m-1)*3+3
+       
+       do j = 1,3 !coords
+         
+         if( abs(ra(j,io)-ra(j,ih1)) > oh_max_A )write(6,'(a,I3)') 'Long O--H1 in molecule',m
+         if( abs(ra(j,io)-ra(j,ih2)) > oh_max_A )write(6,'(a,I3)') 'Long O--H2 in molecule',m
+         
+         xyz_hho(j,1,m) = ra(j,ih1) !H1
+         xyz_hho(j,2,m) = ra(j,ih2) !H2
+         xyz_hho(j,3,m) = ra(j,io )  !O
+         
+       enddo 
+     enddo 
+   end subroutine create_xyz_hho_new
+
      
 !         rw(m)%r1(1) = ra(iH1+1)
 !         rw(m)%r1(2) = ra(iH1+2)

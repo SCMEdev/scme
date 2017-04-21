@@ -14,7 +14,7 @@ module molecProperties
   use sf_disp_tangtoe, only: SF, SFdsf
 implicit none
   private
-  public recoverMolecules, add_field_gradients, rotatePolariz, rotate_qoh_poles 
+  public recoverMolecules, add_field_gradients, rotatePolariz, rotate_qoh_poles , recoverMolecules_new
         !, SF, SFdsf, create_rw, calc_cm, addFields, setUnpolPoles, calcCentersOfMass, findPpalAxes,
 
 contains
@@ -65,6 +65,37 @@ contains
 
   end subroutine recoverMolecules
   
+  subroutine recoverMolecules_new(coord, ra, nM, a, a2)
+    implicit none
+    real(dp), 	intent(in)	:: coord(:,:) !j hho
+    real(dp), 	intent(out) :: ra(:,:)    !j hho
+    integer, 	intent(in) 	:: nM
+    real(dp), 	intent(in)	:: a(:), a2(:)
+
+	! Internal
+    integer  :: m,q,h, ih, io
+    real(dp) :: dist
+
+    do m = 1, nM !j molecule
+       do q = 1, 3 !j x,y,z 
+          do h = 1, 2 !j hydrogen 
+             ih = (m-1)*3+h
+             io = (m-1)*3+3
+             dist = coord(q,ih) - coord(q,io)          ! H-position - O-positon
+             if (dist .gt. a2(q)) then                 ! a2 = a/2 = boxdimension/2
+                ra(q,ih) = coord(q,ih) - a(q)
+             elseif(dist .lt. -a2(q)) then
+                ra(q,ih) = coord(q,ih) + a(q)
+             else
+                ra(q,ih) = coord(q,ih)
+             end if
+          end do
+          ra(q,io) = coord(q,io) !oxygen is copied regardless
+       end do
+    end do
+    !return
+
+  end subroutine !
 
 
 

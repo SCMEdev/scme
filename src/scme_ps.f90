@@ -41,7 +41,7 @@ module scme
   use polariz_parameters, only: dd0, dq0, hp0, qq0
   
   ! Routines:
-  use molecProperties, only: recoverMolecules, rotatePolariz,add_field_gradients, rotate_qoh_poles !rotatePoles,setUnpolPoles,findPpalAxes, calcCentersOfMass,addFields, 
+  use molecProperties, only: recoverMolecules, rotatePolariz,add_field_gradients, rotate_qoh_poles,recoverMolecules_new !rotatePoles,setUnpolPoles,findPpalAxes, calcCentersOfMass,addFields, 
   use calc_lower_order, only: dip_quadField
   use calc_higher_order, only: octu_hexaField
   use calc_derivs, only: calcDv
@@ -55,7 +55,7 @@ module scme
   use ps_pes, only: vibpes
   use printer_mod, only: printer, h2o_to_linear, xyz_hho_to_linear !printer_h2o_linear, 
   
-  use localAxes_mod, only:localAxes2, create_xyz_hho, get_cm,force_and_torque_on_atoms !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, 
+  use localAxes_mod, only:localAxes2, create_xyz_hho, get_cm,force_and_torque_on_atoms,create_xyz_hho_new !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, 
 
   implicit none
   private
@@ -67,7 +67,8 @@ contains !//////////////////////////////////////////////////////////////
 
     implicit none
     integer, intent(in) :: n_atoms
-    real(dp), intent(in) :: coords(n_atoms*3)
+    !real(dp), intent(in) :: coords(n_atoms*3)
+    real(dp), intent(in) :: coords(3,n_atoms)
     real(dp), intent(in) :: lattice(3)
     !j real(dp), intent(out) :: fa(n_atoms*3)
     real(dp), intent(out) :: ohh_fa(3,n_atoms) !j Better. and: trying to get into quip
@@ -95,7 +96,8 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) :: fsf(3,n_atoms/3) 
     real(dp) :: tau(3,n_atoms/3) !center of mass torque
 
-    real(dp) :: ra(n_atoms*3)    ! atomic positioins in stupid format
+    !real(dp) :: ra(n_atoms*3)    ! atomic positioins in stupid format
+    real(dp) :: ra(3,n_atoms)    ! atomic positioins in ...
     real(dp) :: rCM(3,n_atoms/3) ! center of mass positions
     real(dp) :: x(3,3,n_atoms/3) ! rotation matrix
     
@@ -167,8 +169,12 @@ contains !//////////////////////////////////////////////////////////////
     a2(3) = lattice(3)/2.0_dp
 
     ! Recover broken molecules due to periodic boundary conditions.
-    call recoverMolecules(coords, ra, nH, nO, a, a2) !JÖ rw
-    call create_xyz_hho(ra,xyz_hho,nM)
+    !call recoverMolecules(coords, ra, nH, nO, a, a2) !JÖ rw
+    !call create_xyz_hho(ra,xyz_hho,nM)
+    
+    call recoverMolecules_new(coords, ra, nM, a, a2) !JÖ rw
+    call create_xyz_hho_new(ra,xyz_hho,nM)
+    
     
     ! compute centers of mass (cm)
     call get_cm(xyz_hho,rCM,nM)
