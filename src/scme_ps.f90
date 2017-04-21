@@ -63,13 +63,14 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, fa, u_tot)
+  subroutine scme_calculate(n_atoms, coords, lattice, ohh_fa, u_tot)
 
     implicit none
     integer, intent(in) :: n_atoms
     real(dp), intent(in) :: coords(n_atoms*3)
     real(dp), intent(in) :: lattice(3)
-    real(dp), intent(out) :: fa(n_atoms*3)
+    !j real(dp), intent(out) :: fa(n_atoms*3)
+    real(dp), intent(out) :: ohh_fa(3,n_atoms) !j Better. and: trying to get into quip
     real(dp), intent(out) :: u_tot
     ! ----------------------------------------
 
@@ -144,9 +145,11 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) :: xyz_hho(3,3,n_atoms/3) !xyz,hho,nM
     real(dp) :: xa_forces(3,3,n_atoms/3) !xyz,hho,nM
     
+    integer ia
+    
     integer :: s !transposing
     logical :: prod
-    prod = .true.!.false.
+    prod = .true.!.false.!
     s=2
     !// Routine Starts /////////////////////////////////////////////////
     
@@ -274,7 +277,14 @@ call printer(x,'x',s,prod)
     
     !// Output /////////////////////////////////////////////////////////
     u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
-    call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
+    !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
+    
+    do m = 1,nM
+      do ia = 1,3 !o,h,h
+        ohh_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
+      enddo
+    enddo
+    
 
     
     
@@ -291,8 +301,10 @@ call printer(u_tot,'u_tot',s,prod)
     
     !call printer(fa,'xa_forces linear')
 call printer(xa_forces,'xa_forces',s,prod) 
+call printer(ohh_fa,'ohh_fa',s,prod) 
+
     !s=0
-call printer(1,'1',s,prod)    
+!call printer(1,'1',s,prod)    
     
     
 
