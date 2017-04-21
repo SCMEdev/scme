@@ -1,18 +1,23 @@
 # To use SCME in QUIP: 
-# Move this ThirdParty/ into QUIP/src/ and then scme/ into ThirdParty/ to get
-#   QUIP/src/ThirdParty/scme/
 
-# export_activate.sh:
-# -Change the environmental varibles to suite your system 
-# -Change "quippy2" to the name of the conda env where you want to (re)install quippy. 
-# put export_activate.sh in QUIP/
+#1 Put ThirdParty/ into QUIP/src/ 
+#2 Put (or link) scme/ into ThirdParty/ to get
 
-# To install quippy with scme: 
-# from QUIP/ : 	
+#3 Alter export_activate.sh and put in QUIP/
+
+#4 Put (or link) IPModel_SCME.f95 in QUIP/src/Potenitals/ (substituting the present one)
+
+
+## Example:
+export QUIP_ROOT=/path/to/QUIP
+
+cp export_activate.sh $QUIP_ROOT/
+cp -r ThirdParty $QUIP_ROOT/src/
+ln -s IPModel_SCME.f95 $QUIP_ROOT/src/Potentials/IPModel_SCME.f95 
+ln -s ../../scme $QUIP_ROOT/src/ThirdParty/scme 
+
+cd $QUIP_ROOT
 . export_activate.sh 
 [make config #make choices, only needed once to create Make.inc]
 make install-quippy
 
-
-# IPModel_SCME.f95 should be put into QUIP/src/Potenitals/, substituting the present one. 
-# This version of the file is adapted to give analytical forces in quippy. 
