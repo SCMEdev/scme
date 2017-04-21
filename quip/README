@@ -15,3 +15,4 @@ make install-quippy
 
 
 # IPModel_SCME.f95 should be put into QUIP/src/Potenitals/, substituting the present one. 
+# This version of the file is adapted to give analytical forces in quippy. 
