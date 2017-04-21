@@ -9,6 +9,8 @@ MODDIR = mod
 SRCDIR = src/
 NEW = new
 
+dirs = $(OBJDIR) $(MODDIR)
+
 #have added the "new/" directory and PS-files
 vpath %.f90 $(SRCDIR)
 #vpath %.f90 $(NEW)
@@ -59,8 +61,13 @@ it:$(OBJDIR)/libscme.a
 #
 
 # library
-$(OBJDIR)/libscme.a: $(OBJ)
-	ar rcs $@ $^
+
+
+$(OBJDIR)/libscme.a: $(OBJ) $(dirs)
+	ar rcs $@ $(OBJ)
+
+$(dirs):
+	mkdir $@
 
 # compiling
 
