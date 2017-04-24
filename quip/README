@@ -11,7 +11,7 @@
 ## Example:
 export QUIP_ROOT=/path/to/QUIP
 
-cp export_activate.sh $QUIP_ROOT/
+ln -s export_activate.sh $QUIP_ROOT/export_activate.sh
 cp -r ThirdParty $QUIP_ROOT/src/
 ln -s IPModel_SCME.f95 $QUIP_ROOT/src/Potentials/IPModel_SCME.f95 
 ln -s ../../scme $QUIP_ROOT/src/ThirdParty/scme 
