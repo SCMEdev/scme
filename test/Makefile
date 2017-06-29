@@ -68,6 +68,8 @@ $b/run_tests2.o\
 $b/run_tests.o:\
 $(common_obj)
 
-$b/test_scme.o: 
+$b/test_scme.o:\
+$b/mifu_asserts.o
+
 
 
