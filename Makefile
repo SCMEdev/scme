@@ -1,12 +1,14 @@
 # disable the built-in (implicit) rules to avoid trying to compile X.o from X.mod (Modula-2 program)
 .SUFFIXES:
 
-OBJDIR = obj
-MODDIR = mod
-SRCDIR = src/
+b = build
+OBJDIR = $b
+MODDIR = $b
+SRCDIR = src
 #NEW = new
 
-dirs = $(OBJDIR) $(MODDIR)
+#dirs = $(OBJDIR) $(MODDIR)
+dirs = $b
 
 #have added the "new/" directory and PS-files
 vpath %.f90 $(SRCDIR)
