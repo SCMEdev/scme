@@ -256,6 +256,16 @@ call printer(x,'x',s,prod)
     
     
     !/ Mutipole energy
+    !/ This should in principle be the induced poles in the field of the static poles
+    !/ What is computed is the static poles in the field of the induced poles. 
+    !/ But since T is symmetric, this is probably equivalent. 
+    !/ 
+    !/ But for the forces, they are computed above with the static+induced poles in the static+induced field gradients. Should be static+induced poles in only static field gradients?? 
+    !/ Because U_ind = Q_ind F_stat, U_stat = U_stat F_stat, so U_tot = Q_tot F_stat. 
+    !/ solution: calcDv(dpole0,qpole0....
+    !/           torqueCM(dpole, qpole, ... 
+    !/           forceCM(dpole, qpole, ... unchanged syntax      (i.e. total pole in static field)
+    !/           multipole_energy(dpole, qpole....            (i.e. total pole in static field)
     call multipole_energy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
     u_multipole = u_multipole * coulomb_k ! Coulomb force constant to get eV
     
