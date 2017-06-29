@@ -95,7 +95,7 @@ contains !//////////////////////////////////////////////////////////////
     
     integer inI_1, inJ_1, inK_1
     
-    real(dp) :: dpc0dr1  
+    real(dp) :: dpc0dr1  !! Zeroize these!!
     real(dp) :: dpc0dr2  
     real(dp) :: dpc0dcabc
     real(dp) :: defacdr1 
@@ -131,7 +131,7 @@ contains !//////////////////////////////////////////////////////////////
       
       r12 = dsqrt( v12(1)*v12(1) + v12(2)*v12(2) + v12(3)*v12(3) )
       
-      efac = dexp(-b1D*( (r1-reoh)**2 + (r2-reoh)**2 ) )
+      efac = dexp(-b1D*( (r1-reoh)**2 + (r2-reoh)**2 ) ) !-b1D = -beta
       
       x = [ (r1-reoh)/reoh , (r2-reoh)/reoh , (costh - costhe) ]
       
@@ -158,7 +158,7 @@ contains !//////////////////////////////////////////////////////////////
           inK_1 = inK - 1
           
           
-          !  derivative:
+          !(1)  derivative:                      \/ Here there should be inI/reoh not inI-1=inI_1 ???????????????
 		  dp1dr1   = dp1dr1   +  coefD(j)*(inI_1)*xpow(1,inI_1)*xpow(2,inJ)*  xpow(3,inK)
 		  dp1dr2   = dp1dr2   +  coefD(j)*(inJ_1)*xpow(1,inI)  *xpow(2,inJ_1)*xpow(3,inK)
 		  dp1dcabc = dp1dcabc +  coefD(j)*(inK_1)*xpow(1,inI)  *xpow(2,inJ)*  xpow(3,inK_1)
@@ -170,10 +170,15 @@ contains !//////////////////////////////////////////////////////////////
       xx = a0_A
       xx2 = xx**2
       
-      pl1 = costh;
+      !! the q^O in PS paper:
+      ! pl1, pl2 Lagrange polynomials:
+      pl1 = costh; 
       pl2 = 0.5d0*(3d0*pl1*pl1 - 1d0)
+      
+      ! p1^0 = p2^0 = q^0 in PS paper:
       pc0 = a*( r1**b + r2**b )*(c0 + pl1*c1 + pl2*c2)
       
+      ! total q = q^0 + q^c in paper: Nice!
       p1 = coefD(1) + p1*efac + pc0*xx !; // q^H1 in TTM2-F
       p2 = coefD(1) + p2*efac + pc0*xx !; // q^H2 paper
           
@@ -189,7 +194,7 @@ contains !//////////////////////////////////////////////////////////////
       
       ! derivative: 
       
-      dp1dr1 = dp1dr1 * xx/reoh  
+      dp1dr1 = dp1dr1 * xx/reoh  !reoh from derivatives (1) 
       dp1dr2 = dp1dr2 * xx/reoh 
       dp2dr1 = dp2dr1 * xx/reoh 
       dp2dr2 = dp2dr2 * xx/reoh 
@@ -201,6 +206,7 @@ contains !//////////////////////////////////////////////////////////////
       defacdr1 = -2.d0*b1D*(r1 - reoh)*efac*xx
       defacdr2 = -2.d0*b1D*(r2 - reoh)*efac*xx
       
+      ! d(efac*p1 + pc0) = ...
       dp1dr1   = dp1dr1   * efac + p1*defacdr1 + dpc0dr1
       dp1dr2   = dp1dr2   * efac + p1*defacdr2 + dpc0dr2
       dp1dcabc = dp1dcabc * efac + dpc0dcabc
@@ -217,7 +223,7 @@ contains !//////////////////////////////////////////////////////////////
       
       
       !dd = p1*v1 + p2*v2 
-      !dd = -(qO+q2)*v1 + -(qO+q2)*v2
+      !dd = -(qO+q2)*v1 + -(qO+q2)*v2 
       
       
       
@@ -281,71 +287,78 @@ contains !//////////////////////////////////////////////////////////////
       
       
       
-!      ! H1: GRADQ(., 1, .)
-!      !gradient of charge h1(second index) wrt displacement of h1(first index)
-!      GRADH1(1, :) = f1q1r13*v1(:) + f1q1r23*v2(:)
-! 
-!      !gradient of charge h1 wrt displacement of h2
-!      GRADH1(2, :) = f2q1r13*v1(:) + f2q1r23*v2(:)
-! 
-!      !gradient of charge h1 wrt displacement of O
-!      GRADH1(3, :) = -(GRADH1(1, :) + GRADH1(2, :))
-!      
-!      
-!      !H2: GRADQ(., 2, .)
-!      !gradient of charge h2 wrt displacement of h1
-!      GRADH2(1, :) = f1q2r13*v1(:) + f1q2r23*v2(:)
-! 
-!      !gradient of charge h2 wrt displacement of h2
-!      GRADH2(2, :) = f2q2r13*v1(:) + f2q2r23*v2(:)
-! 
-!      !gradient of charge h2 wrt displacement of O
-!      GRADH2(3, :) = -(GRADH2(1, :) + GRADH2(2, :))
-! 
-!      
-!      !O: GRADQ(., 3, .)
-!      !gradient of charge O wrt displacement of h1
-!   !    GRADO(1, :) = -(GRADH1(1, :) + GRADH2(1, :))
-!   !  
-!   !    !gradient of charge O wrt displacement of h2
-!   !    GRADO(2, :) = -(GRADH1(2, :) + GRADH2(2, :))
-!   !    
-!   !    !gradient of charge O wrt displacement of O
-!   !    GRADO(3, :) = -(GRADH1(3, :) + GRADH2(3, :))
-!
-!       GRADO(:, :) = -(GRADH1(:, :) + GRADH2(:, :))
-!       
-!       
-!      
-!      real(dp) :: DH1_H1(3) 
-!      real(dp) :: DH2_H1(3) 
-!      real(dp) :: DO_H1(3)  
-!      real(dp) :: DH1_H2(3) 
-!      real(dp) :: DH2_H2(3) 
-!      real(dp) :: DO_H2(3)  
-!      real(dp) :: DH1_O(3) 
-!      real(dp) :: DH2_O(3) 
-!      real(dp) :: DO_O(3) 
-!      
-!      
-!       
-!       !w.r.t H1:
-!      Dq1_H1(:) = f1q1r13*v1(:) + f1q1r23*v2(:)
-!      Dq2_H1(:) = f1q2r13*v1(:) + f1q2r23*v2(:)
-!      DqO_H1(:)  = -( Dq1_H1(:) + Dq2_H1(:) )
-!      
-!      !w.r.t H2:
-!      Dq1_H2(:) = f2q1r13*v1(:) + f2q1r23*v2(:)
-!      Dq2_H2(:) = f2q2r13*v1(:) + f2q2r23*v2(:)
-!      DqO_H2(:)  = -( Dq1_H2(:) + Dq2_H2(:) )
-!      
-!      !w.r.t O:
-!      Dq1_O(:) = -( Dq1_H1(:) + Dq1_H2(:) ) 
-!      Dq2_O(:) = -( Dq2_H1(:) + Dq2_H2(:) )
-!      DqO_O (:) = -( Dq1_O(:) + Dq2_O(:) )
-!      
-!      Ddx_H1 = 
-!      
+      ! H1: GRADQ(., 1, .)
+      !gradient of charge h1(second index) wrt displacement of h1(first index)
+      GRADH1(1, :) = f1q1r13*v1(:) + f1q1r23*v2(:)
+ 
+      !gradient of charge h1 wrt displacement of h2
+      GRADH1(2, :) = f2q1r13*v1(:) + f2q1r23*v2(:)
+ 
+      !gradient of charge h1 wrt displacement of O
+      GRADH1(3, :) = -(GRADH1(1, :) + GRADH1(2, :))
+      
+      
+      !H2: GRADQ(., 2, .)
+      !gradient of charge h2 wrt displacement of h1
+      GRADH2(1, :) = f1q2r13*v1(:) + f1q2r23*v2(:)
+ 
+      !gradient of charge h2 wrt displacement of h2
+      GRADH2(2, :) = f2q2r13*v1(:) + f2q2r23*v2(:)
+ 
+      !gradient of charge h2 wrt displacement of O
+      GRADH2(3, :) = -(GRADH2(1, :) + GRADH2(2, :))
+ 
+      
+      !O: GRADQ(., 3, .)
+      !gradient of charge O wrt displacement of h1
+   !    GRADO(1, :) = -(GRADH1(1, :) + GRADH2(1, :))
+   !  
+   !    !gradient of charge O wrt displacement of h2
+   !    GRADO(2, :) = -(GRADH1(2, :) + GRADH2(2, :))
+   !    
+   !    !gradient of charge O wrt displacement of O
+   !    GRADO(3, :) = -(GRADH1(3, :) + GRADH2(3, :))
+
+       GRADO(:, :) = -(GRADH1(:, :) + GRADH2(:, :))
+       
+       
+      
+      real(dp) :: DH1_H1(3) 
+      real(dp) :: DH2_H1(3) 
+      real(dp) :: DO_H1(3)  
+      real(dp) :: DH1_H2(3) 
+      real(dp) :: DH2_H2(3) 
+      real(dp) :: DO_H2(3)  
+      real(dp) :: DH1_O(3) 
+      real(dp) :: DH2_O(3) 
+      real(dp) :: DO_O(3) 
+      
+      
+       
+       !w.r.t H1:
+      Dq1_H1(:) = f1q1r13*v1(:) + f1q1r23*v2(:)
+      Dq2_H1(:) = f1q2r13*v1(:) + f1q2r23*v2(:)
+      DqO_H1(:)  = -( Dq1_H1(:) + Dq2_H1(:) )
+      
+      !w.r.t H2:
+      Dq1_H2(:) = f2q1r13*v1(:) + f2q1r23*v2(:)
+      Dq2_H2(:) = f2q2r13*v1(:) + f2q2r23*v2(:)
+      DqO_H2(:)  = -( Dq1_H2(:) + Dq2_H2(:) )
+      
+      !w.r.t O:
+      Dq1_O(:) = -( Dq1_H1(:) + Dq1_H2(:) ) 
+      Dq2_O(:) = -( Dq2_H1(:) + Dq2_H2(:) )
+      DqO_O (:) = -( Dq1_O(:) + Dq2_O(:) )
+      
+      d =  p1*v1 + p2*v2 
+      d =-(qO+q2)*v1(:) + -(qO+q2)*v2(:)
+      
+      do i = 1,3
+        do j = 1,3
+        
+        Dd_O(i,j) = -(DqO_O(i)+Dq2_O(i))*v1(j) -(qO+q2)*dv1(i,j)   &
+                    -(DqO_O(i) + Dq1_O(i))*v2(j) -(qO+q2)*dv2(i,j) 
+
    end subroutine
 end module
 
@@ -359,7 +372,7 @@ end module
       !qO = -(p1 + p2);  
       
 !      dd = p1*v1 + p2*v2 
-!      dd = -(qO+q2)*v1 + -(qO+q2)*v2
+!      dd = -(qO+q2)*v1 + -(qO+q1)*v2
       
       
       
