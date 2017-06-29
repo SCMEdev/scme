@@ -3,19 +3,7 @@ obj/*
 mod/*
 build/*
 
-test/*.mod
-test/*.o
-test/*.x
-test/*.out
-
-new/*.mod
-new/*.o
-new/ppes
-new/ppotr
-new/pdip
-new/plodi
-new/cppdip
-new/a.out
-new/pdms
-new/pconst
-
+*.mod
+*.o
+*.x
+*.out
