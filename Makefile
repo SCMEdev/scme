@@ -1,13 +1,10 @@
-	# **********************************************************************************************************************************
-# settings
-
 # disable the built-in (implicit) rules to avoid trying to compile X.o from X.mod (Modula-2 program)
 .SUFFIXES:
 
 OBJDIR = obj
 MODDIR = mod
 SRCDIR = src/
-NEW = new
+#NEW = new
 
 dirs = $(OBJDIR) $(MODDIR)
 
@@ -19,20 +16,15 @@ vpath %.f90 $(SRCDIR)
 FC = gfortran
 CC = g++
 opti = -O0
-#-fopenmp 
-#-O0 gives 13 errors at work 
-#-fopenmp
-## Flags for 49 passes at work:
-#-O2 -fopenmp  
-## Flags for mor optimizations and 49 passes at home:
-#-Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
-# -Ofast
+
+## optimization:
+#opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
+## warn all:
+#-Wall
+
 FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR) 
 CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
-#-Wall
-#-fopenmp
-#-floop-unroll-and-jam -ftree-loop-if-convert
-#vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution
+
 
 OBJ = $(addprefix $(OBJDIR)/, \
 	scme_ps.o calc_derivs.o calc_higher_order.o \
@@ -49,19 +41,14 @@ OBJ = $(addprefix $(OBJDIR)/, \
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 #HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
-#all: $(OBJDIR)/scme.o
+#/// Build
+
 all:
 	make -j4 it
 
 it:$(OBJDIR)/libscme.a
 
-# **********************************************************************************************************************************
-
-# linking
-#
-
 # library
-
 
 $(OBJDIR)/libscme.a: $(OBJ) $(dirs)
 	ar rcs $@ $(OBJ)
@@ -69,27 +56,19 @@ $(OBJDIR)/libscme.a: $(OBJ) $(dirs)
 $(dirs):
 	mkdir $@
 
-# compiling
-
-#$(OBJDIR)/.f90.o:
-#	$(FC) $(FFLAGS) -c -o $@ $<
-
-#$(OBJDIR)/.cpp.o: $(HEADERS)
-#	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(OBJDIR)/%.o: %.f90
 	$(FC) $(FFLAGS) -c -o $@ $<
 
-#$(OBJDIR)/%.o: %.cpp
-#	$(CC) $(CFLAGS) -c -o $@ $<
+#//// Clean
+.PHONY: clean
+clean:
+	rm -f $(OBJDIR)/* $(MODDIR)/*
 
-#/////////////////////////////////////////////////// Dependencies //////
+
+#/// Dependencies
+
 # special dependencies:
-#$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/parameters.o
-#$(OBJDIR)/atomicForces_mod.o:$(OBJDIR)/molforce.o
-#$(OBJDIR)/molforce.o:$(OBJDIR)/mdutil.o
-#$(OBJDIR)/ps_dms.o	$(OBJDIR)/ps_pes.o:$(OBJDIR)/constants.o
-
 $(OBJDIR)/molecProperties.o	\
 $(OBJDIR)/calc_derivs.o		\
 $(OBJDIR)/calc_lower_order.o	\
@@ -114,14 +93,8 @@ $(OBJDIR)/printer_mod.o \
 $(OBJDIR)/sf_disp_tangtoe.o \
 $(OBJDIR)/force_torqueCM.o \
 $(OBJDIR)/localAxes_mod.o \
-#$(OBJDIR)/constants.o \
-#$(OBJDIR)/parameters.o		\
-#$(OBJDIR)/atomicForces_mod.o	\
 
 
-# most dep. on data_types
-#$(OBJDIR)/constants.o \
-#$(OBJDIR)/parameters.o:		\
 
 $(OBJDIR)/localAxes_mod.o \
 $(OBJDIR)/molecProperties.o	\
@@ -141,14 +114,5 @@ $(OBJDIR)/multipole_parameters.o: \
 $(OBJDIR)/data_types.o		\
 
 
-#$(OBJDIR)/molforce.o	\
-#$(OBJDIR)/mdutil.o		\
-#$(OBJDIR)/atomicForces_mod.o	\
 
 
-.PHONY: clean
-clean:
-	rm $(OBJDIR)/*.o $(OBJDIR)/*.a $(MODDIR)/*.mod
-
-
-# **********************************************************************************************************************************
