@@ -2,16 +2,14 @@
 .SUFFIXES:
 
 b = build
-OBJDIR = $b
-MODDIR = $b
-SRCDIR = src
+src = src
 #NEW = new
 
 #dirs = $(OBJDIR) $(MODDIR)
 dirs = $b
 
 #have added the "new/" directory and PS-files
-vpath %.f90 $(SRCDIR)
+vpath %.f90 $(src)
 #vpath %.f90 $(NEW)
 #vpath %.cpp $(SRCDIR)
 
@@ -24,11 +22,11 @@ opti = -O0
 ## warn all:
 #-Wall
 
-FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR) 
-CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
+FFLAGS = $(opti) -pg -I$b -J$b
+CFLAGS = $(opti) -I$b -J$b -lstdc++
 
 
-OBJ = $(addprefix $(OBJDIR)/, \
+OBJ = $(addprefix $b/, \
 	scme_ps.o calc_derivs.o calc_higher_order.o \
 	data_types.o \
 	multipole_parameters.o polariz_parameters.o \
@@ -48,72 +46,72 @@ OBJ = $(addprefix $(OBJDIR)/, \
 all:
 	make -j4 it
 
-it:$(OBJDIR)/libscme.a
+it:$b/libscme.a
 
 # library
 
-$(OBJDIR)/libscme.a: $(OBJ) $(dirs)
+$b/libscme.a: $(OBJ) $(dirs)
 	ar rcs $@ $(OBJ)
 
-$(dirs):
+$b:
 	mkdir $@
 
 
-$(OBJDIR)/%.o: %.f90
+$b/%.o: %.f90
 	$(FC) $(FFLAGS) -c -o $@ $<
 
 #//// Clean
 .PHONY: clean
 clean:
-	rm -f $(OBJDIR)/* $(MODDIR)/*
+	rm -f $b/*
 
 
 #/// Dependencies
 
 # special dependencies:
-$(OBJDIR)/molecProperties.o	\
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o:	\
-$(OBJDIR)/sf_disp_tangtoe.o \
+$b/molecProperties.o	\
+$b/calc_derivs.o		\
+$b/calc_lower_order.o	\
+$b/calc_higher_order.o:	\
+$b/sf_disp_tangtoe.o \
 
 
 # scme dep. on most
-$(OBJDIR)/scme_ps.o:		\
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/polariz_parameters.o	\
-$(OBJDIR)/molecProperties.o	\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o	\
-$(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/calcEnergy_mod.o	\
-$(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/ps_pes.o \
-$(OBJDIR)/ps_dms.o \
-$(OBJDIR)/printer_mod.o \
-$(OBJDIR)/sf_disp_tangtoe.o \
-$(OBJDIR)/force_torqueCM.o \
-$(OBJDIR)/localAxes_mod.o \
+$b/scme_ps.o:		\
+$b/calc_derivs.o		\
+$b/data_types.o		\
+$b/polariz_parameters.o	\
+$b/molecProperties.o	\
+$b/calc_lower_order.o	\
+$b/calc_higher_order.o	\
+$b/inducePoles.o		\
+$b/calcEnergy_mod.o	\
+$b/multipole_parameters.o\
+$b/ps_pes.o \
+$b/ps_dms.o \
+$b/printer_mod.o \
+$b/sf_disp_tangtoe.o \
+$b/force_torqueCM.o \
+$b/localAxes_mod.o \
 
 
 
-$(OBJDIR)/localAxes_mod.o \
-$(OBJDIR)/molecProperties.o	\
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o	\
-$(OBJDIR)/printer_mod.o \
-$(OBJDIR)/force_torqueCM.o \
-$(OBJDIR)/sf_disp_tangtoe.o \
-$(OBJDIR)/ps_dms.o	\
-$(OBJDIR)/ps_pes.o \
-$(OBJDIR)/force_torqueCM.o		\
-$(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/calcEnergy_mod.o	\
-$(OBJDIR)/polariz_parameters.o	\
-$(OBJDIR)/multipole_parameters.o: \
-$(OBJDIR)/data_types.o		\
+$b/localAxes_mod.o \
+$b/molecProperties.o	\
+$b/calc_derivs.o		\
+$b/calc_lower_order.o	\
+$b/calc_higher_order.o	\
+$b/printer_mod.o \
+$b/force_torqueCM.o \
+$b/sf_disp_tangtoe.o \
+$b/ps_dms.o	\
+$b/ps_pes.o \
+$b/force_torqueCM.o		\
+$b/inducePoles.o		\
+$b/calcEnergy_mod.o	\
+$b/polariz_parameters.o	\
+$b/multipole_parameters.o: \
+$b/data_types.o		\
 
 
 
