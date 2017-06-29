@@ -51,7 +51,7 @@ it:$b/libscme.a
 # library
 
 $b/libscme.a: $(OBJ) $(dirs)
-	ar rcs $@ $(OBJ)
+	ar rcs $@ $(OBJ) $b/*.mod
 
 $b:
 	mkdir $@

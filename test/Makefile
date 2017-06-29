@@ -1,10 +1,15 @@
-scme_obj = ../obj
-scme_mod = ../mod
+scme_obj = ../build
+scme_mod = ../build
 scme_src = ../src
-#test_build = build
+
+#scme_sources = $(shell ls ../src/*.f90)
+#scme_objects = $(patsubst  ../src/%, ../build/%, $(scme_sources:.f90=.o))
+
+b=build
+
 
 FC = gfortran
-FFLAGS = -O0 -cpp -pg -I$(scme_mod) 
+FFLAGS = -O0 -cpp -pg -I$(scme_mod) -J$b
 #-fopenmp
 ## flags for home:
 #-Ofast -cpp -pg -I$(scme_mod) -fopenmp
@@ -15,20 +20,8 @@ all:
 	make run.x
 	make 2run.x
 
-run.x: run_tests.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
-	$(FC) $(FFLAGS) -o run.x $^
 
-
-## The 9 and 15 and 32 and 64 H2O tests:
-2run.x: run_tests2.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
-	$(FC) $(FFLAGS) -o $@ $^
-
-run_tests2.o: run_tests2.f90 mifu_asserts.mod test_scme.mod
-	$(FC) $(FFLAGS) -c run_tests2.f90
-
-scme:
-	(cd ../ && make) 
-
+# commands:
 klean_all__SCME_AND_TEST:
 	(cd ../ && make clean) 
 	make clean
@@ -42,25 +35,39 @@ renew_reference_and_print__RUN:
 just__RUN:
 	./2run.x
 
-
-#$(scme_obj)/libscme.a: $(wildcard ../$(scme_src)/*.f90)
-#	cd ../ && make 
-#run_tests.o mifu_asserts.o test_scme.o  $(scme_obj)/libscme.a
-
-
-
-run_tests.o: run_tests.f90 mifu_asserts.mod test_scme.mod
-	$(FC) $(FFLAGS) -c run_tests.f90
-
-mifu_asserts.mod: mifu_asserts.o
-
-mifu_asserts.o: mifu_asserts.f90
-	$(FC) $(FFLAGS) -c mifu_asserts.f90
-
-test_scme.mod: test_scme.o
-
-test_scme.o: test_scme.f90 mifu_asserts.mod
-	$(FC) $(FFLAGS) -c test_scme.f90
-
 clean:
-	rm -f *.o *.mod *.x *~
+	rm -f build/* *.x
+
+
+# things:
+common_obj=$(addprefix $b/, mifu_asserts.o test_scme.o )
+
+
+$b:
+	mkdir $@
+
+scme:
+	(cd ../ && make) 
+
+#executables:
+run.x: $b/run_tests.o $(common_obj) $(scme_obj)/libscme.a
+
+
+2run.x: $b/run_tests2.o $(common_obj) $(scme_obj)/libscme.a
+
+%.x:
+	$(FC) $(FFLAGS) -o $@ $^ 
+
+$b/%.o:%.f90
+	$(FC) $(FFLAGS) -c $< -o $@
+
+#objects:
+
+
+$b/run_tests2.o\
+$b/run_tests.o:\
+$(common_obj)
+
+$b/test_scme.o: 
+
+
