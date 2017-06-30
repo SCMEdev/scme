@@ -1,9 +1,10 @@
 # To use SCME in QUIP: 
 
-#1 Put ThirdParty/ into QUIP/src/ 
-#2 Put (or link) scme/ into ThirdParty/ to get
+#1 Put ThirdParty/ into QUIP/src/ (in here is a modified makefile and cube_tools.f95)
 
-#3 Alter export_activate.sh and put in QUIP/
+#2 Put (or link) scme/ into ThirdParty/ 
+
+#3 Alter sourceMe_env.sh and put in QUIP/
 
 #4 Put (or link) IPModel_SCME.f95 in QUIP/src/Potenitals/ (substituting the present one)
 
