@@ -6,11 +6,11 @@ module calcEnergy_mod
   implicit none
   
   private
-  public calcEnergy
+  public multipole_energy
   
 contains
   
-  subroutine calcEnergy(dpole, qpole, opole, hpole, d1v, d2v, d3v,d4v, nM, uTot)
+  subroutine multipole_energy(dpole, qpole, opole, hpole, d1v, d2v, d3v,d4v, nM, uTot)
     
     implicit none
     
@@ -33,7 +33,7 @@ contains
     
     !PRB -- ud, uq, uo, uh in eV and the conversion factor -------------
     
-    real(dp) udev, uqev, uoev, uhev, convFactor
+    real(dp) udev, uqev, uoev, uhev!JÖ, convFactor
 
 !    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
 !    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
@@ -52,14 +52,14 @@ contains
 !    real(dp) udev, uqev, uoev, uhev, convFactor
 
 
-    convFactor = 14.39975841d0 / 4.803206799d0**2
+    !JÖconvFactor = 14.39975841d0 / 4.803206799d0**2
     !PRB ---------------------------------------------------------------
     
-    uTot = 0.0_dp
-    ud = 0.0_dp
-    uq = 0.0_dp
-    uo = 0.0_dp
-    uh = 0.0_dp
+    uTot = 0
+    ud   = 0
+    uq   = 0
+    uo   = 0
+    uh   = 0
     
     do n = 1, nM
        
@@ -108,7 +108,7 @@ contains
     
     return
     
-  end subroutine calcEnergy
+  end subroutine multipole_energy
   
   !-----------------------------------------------------------------------
   subroutine calcEnergyI(dpole, dpole0, qpole, qpole0, opole, hpole,d1v, d2v, d3v, d4v, nM, uTot)

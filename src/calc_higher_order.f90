@@ -8,11 +8,11 @@ module calc_higher_order
   implicit none
   
   private
-  public calcEhigh
+  public octu_hexaField
   
 contains
   
-  subroutine calcEhigh(rCM, opole, hpole, nM, NC, a, a2, uH, eT, dEdr, rMax2, iSlab)
+  subroutine octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eT, dEdr, rMax2, iSlab)
     
     implicit none
     
@@ -29,7 +29,7 @@ contains
 
     real(dp), intent(out)   :: uH
     real(dp), intent(out)   :: dEdr(:,:,:) !3,3,maxCoo/3
-    real(dp), intent(out)   ::  eT(:,:)
+    real(dp), intent(out)   ::  eT(:,:) !3,maxCoo/3
 
 !JÖ internal: 
     integer  i, j, k, l, NCz, nx, ny, nz !itagl(maxatoms),
@@ -58,17 +58,21 @@ contains
     
     NCz = NC
     if (iSlab) NCz = 0
+    eT=0
+    dEdr=0
+    ! NO uH zeroize?????????????????????????????????????????????????????????
+    uH=0 !JÖ I added it, it isn't used anywhere so its fine anyway. 
+!       do j = 1, 3
+!!          eoT(j,i) = 0.d0
+!!          ehT(j,i) = 0.d0
+!          eT(j,i) = 0.d0
+!          do k = 1, 3
+!             dEdr(j,k,i) = 0.d0
+!          end do
+!       end do
     
     do i = 1, nM
-       do j = 1, 3
-!          eoT(j,i) = 0.d0
-!          ehT(j,i) = 0.d0
-          eT(j,i) = 0.d0
-          do k = 1, 3
-             dEdr(j,k,i) = 0.d0
-          end do
-       end do
-       
+       !jö moved out zeroization
        do nx = -NC, NC
           re(1) = a(1) * nx
           do ny = -NC, NC
@@ -118,7 +122,7 @@ contains
     
     return
     
-  end subroutine calcEhigh
+  end subroutine octu_hexaField
   
   !----------------------------------------------------------------------+
   !     Calculate the octopolar field and its derivative                 |

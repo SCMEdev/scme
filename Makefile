@@ -1,134 +1,115 @@
-# ******************************************************************************************************
-# settings
-
 # disable the built-in (implicit) rules to avoid trying to compile X.o from X.mod (Modula-2 program)
 .SUFFIXES:
 
-OBJDIR = obj
-MODDIR = mod
-SRCDIR = src/
-NEW = new
+b = build
+src = src
+#NEW = new
+
+#dirs = $(OBJDIR) $(MODDIR)
+dirs = $b
 
 #have added the "new/" directory and PS-files
-vpath %.f90 $(SRCDIR)
-vpath %.f90 $(NEW)
-vpath %.cpp $(SRCDIR)
+vpath %.f90 $(src)
+#vpath %.f90 $(NEW)
+#vpath %.cpp $(SRCDIR)
 
 FC = gfortran
 CC = g++
-FFLAGS = -O3 -I$(MODDIR) -J$(MODDIR)
-CFLAGS = -O2 -I$(MODDIR) -J$(MODDIR) -lstdc++
-## Flags for mor optimizations and 49 passes at home:
-#-Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
-# -Ofast
-FFLAGS = $(opti) -pg -I$(MODDIR) -J$(MODDIR)
-CFLAGS = $(opti) -I$(MODDIR) -J$(MODDIR) -lstdc++
-#-fopenmp
-#-floop-unroll-and-jam -ftree-loop-if-convert
-#vect = -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution
+opti = -O0
 
-OBJ = $(addprefix $(OBJDIR)/, \
+## optimization:
+#opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
+## warn all:
+#-Wall
+
+FFLAGS = $(opti) -pg -I$b -J$b
+CFLAGS = $(opti) -I$b -J$b -lstdc++
+
+
+OBJ = $(addprefix $b/, \
 	scme_ps.o calc_derivs.o calc_higher_order.o \
-	data_types.o parameters.o \
+	data_types.o \
 	multipole_parameters.o polariz_parameters.o \
 	calcEnergy_mod.o calc_lower_order.o \
 	inducePoles.o \
-	atomicForces_mod.o molforce.o mdutil.o \
 	molecProperties.o \
-	ps_pes.o ps_dms.o constants.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o)
+	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
+	localAxes_mod.o )
 	
-#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o
+#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o parameters.o constants.o molforce.o mdutil.o 	atomicForces_mod.o \
+
 #OBJC = $(addprefix $(OBJDIR)/, ps.o)
 #HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
 
-#all: $(OBJDIR)/scme.o
+#/// Build
+
 all:
 	make -j4 it
 
-it:$(OBJDIR)/libscme.a
-
-# *****************************************************************************************************************
-
-# linking
-#
+it:$b/libscme.a
 
 # library
-$(OBJDIR)/libscme.a: $(OBJ)
-	ar rcs $@ $^
 
-# compiling
+$b/libscme.a: $(OBJ) $(dirs)
+	ar rcs $@ $(OBJ) $b/*.mod
 
-#$(OBJDIR)/.f90.o:
-#	$(FC) $(FFLAGS) -c -o $@ $<
+$b:
+	mkdir $@
 
-#$(OBJDIR)/.cpp.o: $(HEADERS)
-#	$(CC) $(CFLAGS) -c -o $@ $<
 
-$(OBJDIR)/%.o: %.f90
+$b/%.o: %.f90
 	$(FC) $(FFLAGS) -c -o $@ $<
 
-#$(OBJDIR)/%.o: %.cpp
-#	$(CC) $(CFLAGS) -c -o $@ $<
+#//// Clean
+.PHONY: clean
+clean:
+	rm -f $b/*
 
-#/////////////////////////////////////////////////// Dependencies //////
+
+#/// Dependencies
+
 # special dependencies:
-$(OBJDIR)/sf_disp_tangtoe.o:$(OBJDIR)/parameters.o
-$(OBJDIR)/atomicForces_mod.o:$(OBJDIR)/molforce.o
-$(OBJDIR)/molforce.o:$(OBJDIR)/mdutil.o
-$(OBJDIR)/ps_dms.o	$(OBJDIR)/ps_pes.o:$(OBJDIR)/constants.o
-
-$(OBJDIR)/molecProperties.o	\
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o:	\
-$(OBJDIR)/sf_disp_tangtoe.o \
+$b/molecProperties.o	\
+$b/calc_derivs.o		\
+$b/calc_lower_order.o	\
+$b/calc_higher_order.o:	\
+$b/sf_disp_tangtoe.o \
 
 
 # scme dep. on most
-$(OBJDIR)/scme_ps.o:		\
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/data_types.o		\
-$(OBJDIR)/parameters.o		\
-$(OBJDIR)/polariz_parameters.o	\
-$(OBJDIR)/molecProperties.o	\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o	\
-$(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/atomicForces_mod.o	\
-$(OBJDIR)/calcEnergy_mod.o	\
-$(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/ps_pes.o \
-$(OBJDIR)/ps_dms.o \
-$(OBJDIR)/printer_mod.o \
-$(OBJDIR)/sf_disp_tangtoe.o \
-$(OBJDIR)/force_torqueCM.o \
-
-# most dep. on data_types
-$(OBJDIR)/molecProperties.o	\
-$(OBJDIR)/calc_derivs.o		\
-$(OBJDIR)/calc_lower_order.o	\
-$(OBJDIR)/calc_higher_order.o	\
-$(OBJDIR)/printer_mod.o \
-$(OBJDIR)/force_torqueCM.o \
-$(OBJDIR)/sf_disp_tangtoe.o \
-$(OBJDIR)/ps_dms.o	\
-$(OBJDIR)/ps_pes.o \
-$(OBJDIR)/molforce.o	\
-$(OBJDIR)/atomicForces_mod.o	\
-$(OBJDIR)/force_torqueCM.o		\
-$(OBJDIR)/inducePoles.o		\
-$(OBJDIR)/calcEnergy_mod.o	\
-$(OBJDIR)/mdutil.o		\
-$(OBJDIR)/polariz_parameters.o	\
-$(OBJDIR)/multipole_parameters.o\
-$(OBJDIR)/parameters.o:		\
-$(OBJDIR)/data_types.o		\
+$b/scme_ps.o:		\
+$b/calc_derivs.o		\
+$b/data_types.o		\
+$b/polariz_parameters.o	\
+$b/molecProperties.o	\
+$b/calc_lower_order.o	\
+$b/calc_higher_order.o	\
+$b/inducePoles.o		\
+$b/calcEnergy_mod.o	\
+$b/multipole_parameters.o\
+$b/ps_pes.o \
+$b/ps_dms.o \
+$b/printer_mod.o \
+$b/sf_disp_tangtoe.o \
+$b/force_torqueCM.o \
+$b/localAxes_mod.o \
 
 
 
-.PHONY: clean
-clean:
-	rm $(OBJDIR)/*.o $(OBJDIR)/*.a $(MODDIR)/*.mod
+$b/localAxes_mod.o \
+$b/molecProperties.o	\
+$b/calc_derivs.o		\
+$b/calc_lower_order.o	\
+$b/calc_higher_order.o	\
+$b/printer_mod.o \
+$b/force_torqueCM.o \
+$b/sf_disp_tangtoe.o \
+$b/ps_dms.o	\
+$b/ps_pes.o \
+$b/force_torqueCM.o		\
+$b/inducePoles.o		\
+$b/calcEnergy_mod.o	\
+$b/polariz_parameters.o	\
+$b/multipole_parameters.o: \
+$b/data_types.o		\
 
-
-# *********************************************************************************************************************

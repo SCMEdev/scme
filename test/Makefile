@@ -1,54 +1,77 @@
-scme_obj = ../obj
-scme_mod = ../mod
+#Definitions
+scme_obj = ../build
+scme_mod = ../build
 scme_src = ../src
-#test_build = build
+
+#scme_sources = $(shell ls ../src/*.f90)
+#scme_objects = $(patsubst  ../src/%, ../build/%, $(scme_sources:.f90=.o))
+
+b=build
+
 
 FC = gfortran
-FFLAGS = -O3 -cpp -I../mod/
-#FFLAGS = -O0 -cpp -pg -I$(scme_mod) 
+FFLAGS = -O0 -cpp -pg -I$(scme_mod) -J$b
 #-fopenmp
 ## flags for home:
 #-Ofast -cpp -pg -I$(scme_mod) -fopenmp
 #-fopenmp 
 
+#default
 all:
+	make scme
 	make run.x
 	make 2run.x
 
-run.x: run_tests.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
-	$(FC) $(FFLAGS) -o run.x $^
+# commands:
+klean_all__SCME_AND_TEST:
+	(cd ../ && make clean) 
+	make clean
+
+diff_reference__RUN:
+	./2run.x |diff - reference.dat
+
+renew_reference_and_print__RUN:
+	./2run.x |tee  reference.dat
+
+just__RUN:
+	./2run.x
+
+clean:
+	rm -f build/* *.x
+
+clean-scme:
+	rm -f ../build/* 
 
 
-## The 9 and 15 and 32 and 64 H2O tests:
-2run.x: run_tests2.o mifu_asserts.o test_scme.o $(scme_obj)/libscme.a
-	$(FC) $(FFLAGS) -o $@ $^
+#executables:
+common_obj=$(addprefix $b/, mifu_asserts.o test_scme.o )
 
-run_tests2.o: run_tests2.f90 mifu_asserts.mod test_scme.mod
-	$(FC) $(FFLAGS) -c run_tests2.f90
+run.x: $b/run_tests.o $(common_obj) $(scme_obj)/libscme.a
+
+
+2run.x: $b/run_tests2.o $(common_obj) $(scme_obj)/libscme.a
+
+
+#rules:
+%.x:
+	$(FC) $(FFLAGS) -o $@ $^ 
+
+$b/%.o:%.f90
+	$(FC) $(FFLAGS) -c $< -o $@
+
+$b:
+	mkdir $@
 
 scme:
 	(cd ../ && make) 
 
-klean_scme:
-	(cd ../ && make clean) 
+#object dependencies:
+$b/run_tests2.o\
+$b/run_tests.o:\
+$(common_obj)
 
-#$(scme_obj)/libscme.a: $(wildcard ../$(scme_src)/*.f90)
-#	cd ../ && make 
-#run_tests.o mifu_asserts.o test_scme.o  $(scme_obj)/libscme.a
+$b/test_scme.o:\
+$b/mifu_asserts.o
 
 
-run_tests.o: run_tests.f90 mifu_asserts.mod test_scme.mod
-	$(FC) $(FFLAGS) -c run_tests.f90
 
-mifu_asserts.mod: mifu_asserts.o
-
-mifu_asserts.o: mifu_asserts.f90
-	$(FC) $(FFLAGS) -c mifu_asserts.f90
-
-test_scme.mod: test_scme.o
-
-test_scme.o: test_scme.f90 mifu_asserts.mod
-	$(FC) $(FFLAGS) -c test_scme.f90
-
-clean:
-	rm -f *.o *.mod *.x *~

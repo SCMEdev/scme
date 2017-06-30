@@ -1,7 +1,7 @@
       
 module ps_pes      
-use constants, only:a0_A, A_a0,cm1_eV !bohr in ansgtrom, angstrom in bohr, cm-1 in eV
-use data_types, only:dp               !integer, parameter :: dp = selected_real_kind(15, 307)
+!use constants, only:a0_A, A_a0,cm1_eV !bohr in ansgtrom, angstrom in bohr, cm-1 in eV
+use data_types, only:dp  ,a0_A, A_a0,cm1_eV             !integer, parameter :: dp = selected_real_kind(15, 307)
 implicit none
 !-----------------------------------------------------------------------
 !      subroutine vibpot(rij,v,n)
@@ -446,8 +446,8 @@ contains !//////////////////////////////////////////////////////////////
    ! materialized in the summation order the terms in 'v' below.
    ! The reason for that I am not sure of.                         
    !--------------------------------------------------------------------
-     real(dp) , intent(in)  :: x(3,3)    !x(OHH,xyz)
-     real(dp) , intent(out) :: v,dvdr(9) !v(n),dr(9,n) 
+     real(dp) , intent(in)  :: x(3,3)    !x(xyz,OHH)
+     real(dp) , intent(out) :: v,dvdr(3,3)!,dvdr(9)! !v(n),dr(9,n) 
      
    !internal variables       
      real(dp) :: x1,x2,x3,xx(3)  
@@ -465,9 +465,9 @@ contains !//////////////////////////////////////////////////////////////
      !print*, ce
      
      !OHH order; rr is vector distance      
-     rr1  = ( x(2,:) - x(1,:) ) !H1-O
-     rr2  = ( x(3,:) - x(1,:) ) !H2-O
-     rr12 = ( x(2,:) - x(3,:) ) !H1-H2
+     rr1  = ( x(:,1) - x(:,3) ) !H1-O
+     rr2  = ( x(:,2) - x(:,3) ) !H2-O
+     rr12 = ( x(:,1) - x(:,2) ) !H1-H2
      
      !r=norm(rr) is scalara distance
      r1  = sqrt(sum( rr1**2 ))
@@ -533,9 +533,13 @@ contains !//////////////////////////////////////////////////////////////
         dVcdcth = efac*sum3                                          ! same as potnasa
         
         do ii = 1,3 !ii=xyz
-             dvdr(3 + ii) = dvoh1*rr1(ii) + dvhh*rr12(ii) + dVcdr1*rr1(ii) + dVcdcth*(rr2(ii)/(r1*r2) - cos_hoh*rr1(ii)/(r1*r1)) !H1
-             dvdr(6 + ii) = dvoh2*rr2(ii) - dvhh*rr12(ii) + dVcdr2*rr2(ii) + dVcdcth*(rr1(ii)/(r1*r2) - cos_hoh*rr2(ii)/(r2*r2)) !H2
-             dvdr(0 + ii) = -( dvdr(3 + ii) + dvdr(6 + ii) ) ! O 
+             !dvdr(0 + ii) = dvoh1*rr1(ii) + dvhh*rr12(ii) + dVcdr1*rr1(ii) + dVcdcth*(rr2(ii)/(r1*r2) - cos_hoh*rr1(ii)/(r1*r1)) !H1
+             !dvdr(3 + ii) = dvoh2*rr2(ii) - dvhh*rr12(ii) + dVcdr2*rr2(ii) + dVcdcth*(rr1(ii)/(r1*r2) - cos_hoh*rr2(ii)/(r2*r2)) !H2
+             !dvdr(6 + ii) = -( dvdr(0 + ii) + dvdr(3 + ii) ) ! O 
+             
+             dvdr(ii,1) = dvoh1*rr1(ii) + dvhh*rr12(ii) + dVcdr1*rr1(ii) + dVcdcth*(rr2(ii)/(r1*r2) - cos_hoh*rr1(ii)/(r1*r1)) !H1
+             dvdr(ii,2) = dvoh2*rr2(ii) - dvhh*rr12(ii) + dVcdr2*rr2(ii) + dVcdcth*(rr1(ii)/(r1*r2) - cos_hoh*rr2(ii)/(r2*r2)) !H2
+             dvdr(ii,3) = -( dvdr(ii,1) + dvdr(ii,2) ) ! O 
              
         enddo
         dvdr=dvdr*cm1_eV

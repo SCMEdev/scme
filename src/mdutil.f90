@@ -5,7 +5,7 @@ module mdutil
   implicit none
   
   private
-  public cross, dot, inv6
+  public inv6
   
 contains
   
@@ -91,43 +91,43 @@ contains
   end subroutine inverseSym
   
   !-----------------------------------------------------------------------
-  subroutine inverse(x, y)
-    !
-    !     Subroutine to invert a 3x3 matrix.
-    !
-    ! Note: not used -PRB
-    
-    integer :: i,j
-    real(dp) x(3,3), y(3,3), det
-    
-    det = - x(1,3)*x(2,2)*x(3,1) + x(1,2)*x(2,3)*x(3,1)
-    det = det + x(1,3)*x(2,1)*x(3,2) - x(1,1)*x(2,3)*x(3,2)
-    det = det - x(1,2)*x(2,1)*x(3,3) + x(1,1)*x(2,2)*x(3,3)
-    
-    if ((det .lt. 1e-13) .and. (det .gt. -1e-13)) then
-       print '(A)', ' Error in inverse(x,y). det = 0.'
-       stop
-    end if
-    
-    y(1,1) = -x(2,3) * x(3,2) + x(2,2) * x(3,3)
-    y(1,2) =  x(1,3) * x(3,2) - x(1,2) * x(3,3)
-    y(1,3) = -x(1,3) * x(2,2) + x(1,2) * x(2,3)
-    
-    y(2,1) =  x(2,3) * x(3,1) - x(2,1) * x(3,3)
-    y(2,2) = -x(1,3) * x(3,1) + x(1,1) * x(3,3)
-    y(2,3) =  x(2,1) * x(1,3) - x(1,1) * x(2,3)
-    
-    y(3,1) = -x(3,1) * x(2,2) + x(2,1) * x(3,2)
-    y(3,2) =  x(1,2) * x(3,1) - x(1,1) * x(3,2)
-    y(3,3) = -x(1,2) * x(2,1) + x(1,1) * x(2,2)
-    
-    do i = 1, 3
-       do j = 1, 3
-          y(i,j) = y(i,j) / det
-       end do
-    end do
-    
-  end subroutine inverse
+!  subroutine inverse(x, y)
+!    !
+!    !     Subroutine to invert a 3x3 matrix.
+!    !
+!    ! Note: not used -PRB
+!    
+!    integer :: i,j
+!    real(dp) x(3,3), y(3,3), det
+!    
+!    det = - x(1,3)*x(2,2)*x(3,1) + x(1,2)*x(2,3)*x(3,1)
+!    det = det + x(1,3)*x(2,1)*x(3,2) - x(1,1)*x(2,3)*x(3,2)
+!    det = det - x(1,2)*x(2,1)*x(3,3) + x(1,1)*x(2,2)*x(3,3)
+!    
+!    if ((det .lt. 1e-13) .and. (det .gt. -1e-13)) then
+!       print '(A)', ' Error in inverse(x,y). det = 0.'
+!       stop
+!    end if
+!    
+!    y(1,1) = -x(2,3) * x(3,2) + x(2,2) * x(3,3)
+!    y(1,2) =  x(1,3) * x(3,2) - x(1,2) * x(3,3)
+!    y(1,3) = -x(1,3) * x(2,2) + x(1,2) * x(2,3)
+!    
+!    y(2,1) =  x(2,3) * x(3,1) - x(2,1) * x(3,3)
+!    y(2,2) = -x(1,3) * x(3,1) + x(1,1) * x(3,3)
+!    y(2,3) =  x(2,1) * x(1,3) - x(1,1) * x(2,3)
+!    
+!    y(3,1) = -x(3,1) * x(2,2) + x(2,1) * x(3,2)
+!    y(3,2) =  x(1,2) * x(3,1) - x(1,1) * x(3,2)
+!    y(3,3) = -x(1,2) * x(2,1) + x(1,1) * x(2,2)
+!    
+!    do i = 1, 3
+!       do j = 1, 3
+!          y(i,j) = y(i,j) / det
+!       end do
+!    end do
+!    
+!  end subroutine inverse
   
   !-----------------------------------------------------------------------
   subroutine inv6(r1, r2, r3, y, flag)

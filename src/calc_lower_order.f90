@@ -8,11 +8,11 @@ module calc_lower_order
   implicit none
   
   private
-  public calcEdip_quad
+  public dip_quadField
   
 contains
   
-  subroutine calcEdip_quad(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eT, dEdr, rMax2, iSlab)
+  subroutine dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eT, dEdr, rMax2, iSlab)
     
     implicit none
     
@@ -51,13 +51,15 @@ contains
 !    !$omp parallel do shared(rCM, a, a2, NC, uD, uQ, NCz,rMax2, dEdr, nM) &
 !    !$omp private(eT, jj, kk, nx, i, j, k, re, ny, nz, dr, r2, r1, swFunc, r3, r5, r7, eD, dpole, u, dEdr1, eq, qpole) &
 !    !$omp default(none)
+
+!       do jj = 1, 3
+!          do kk = 1, 3
+!          end do
+!       end do
+    eT=0
+    dEdr = 0
+
     do i = 1, nM
-       do jj = 1, 3
-          eT(jj,i) = 0.0_dp
-          do kk = 1, 3
-             dEdr(kk,jj,i) = 0.0_dp
-          end do
-       end do
        do nx = -NC, NC
           re(1) = a(1) * nx
           do ny = -NC, NC
@@ -125,7 +127,7 @@ contains
 !    !$omp end parallel do 
     return
     
-  end subroutine calcEdip_quad
+  end subroutine dip_quadField
   
   !----------------------------------------------------------------------+
   !     Calculate the dipolar field and its derivative                   |
