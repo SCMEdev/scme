@@ -6,3 +6,4 @@ gap/*
 *.o
 *.x
 *.out
+*.dat

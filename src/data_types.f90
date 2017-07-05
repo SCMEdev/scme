@@ -3,7 +3,7 @@ module data_types
   implicit none
   
   private
-  public dp, h2o, tt_b, num_cells,A_a0, a0_A, cm1_eV, coulomb_k !, ea0_Deb, eA_Deb, xyz, hho, kk1,kk2,
+  public dp, tt_b, num_cells,A_a0, a0_A, cm1_eV, coulomb_k !, ea0_Deb, eA_Deb, xyz, hho, kk1,kk2,
   
   integer, parameter :: dp = selected_real_kind(15, 307) ! double precision ~ 8 byte float
 
@@ -27,17 +27,17 @@ module data_types
   
 
 !position type
-  type h2o
-   real(dp), dimension(3) :: h1, h2, o
-  end type
-
-type xyz 
-  real(dp) :: x(3)
-end type
-
-type hho
-  type(xyz) :: a(3)
-end type
+!  type h2o
+!   real(dp), dimension(3) :: h1, h2, o
+!  end type
+!
+!type xyz 
+!  real(dp) :: x(3)
+!end type
+!
+!type hho
+!  type(xyz) :: a(3)
+!end type
 
 
 !force type  

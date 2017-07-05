@@ -1,7 +1,7 @@
 ! This module print tensors of rank 1 to 5 with the generic interface "printer of all the s ranks. 
 module printer_mod
 
-  use data_types, only: dp, h2o
+  use data_types, only: dp!, h2o
   
   implicit none
   integer, parameter :: un=6
@@ -15,7 +15,7 @@ interface printer
 end interface
 
   private
-  public printer, printer_h2o_linear, h2o_to_linear, xyz_hho_to_linear
+  public printer, xyz_hho_to_linear !, printer_h2o_linear, h2o_to_linear
 
 
 contains !/////////////////////////////////////////////
@@ -40,45 +40,6 @@ end subroutine
 
 
 
-! Prints h2o type in fa order. 
-! It takes type(h2o) and outputs a vector: [H1x H1y H1z H2x H2y H2z H1x H1y H1z H2x H2y H2z ... Ox Oy Oz ...]
-subroutine printer_h2o_linear(a,text)
-  character(*) text
-  type(h2o) :: a(:)
-  integer l, m, xyz
-   call printer_text(text)
-   l = size(a)
-   
-   do m = 1,l
-     do xyz = 1,3
-       write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' H1:',a(m)%h1(xyz)
-     enddo
-     do xyz = 1,3
-       write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' H2:',a(m)%h2(xyz)
-     enddo
-   enddo
-   do m = 1,l
-     do xyz = 1,3
-       write(un,'(a,I3,a,3'//dblf//')') '   Mol:',m,' O :',a(m)%o(xyz)
-     enddo
-   enddo
-
-end subroutine 
- 
-subroutine h2o_to_linear(a,alin,nM)
-  integer, intent(in) :: nM
-  type(h2o), intent(in) :: a(nM)
-  real(dp) , intent(out) :: alin(nM*9)
-  integer l, m, xyz
-  alin=0
-   do m = 1,nM
-     do xyz = 1,3
-       alin((2*m-2)*3 + xyz) = a(m)%h1(xyz)
-       alin((2*m-1)*3 + xyz) = a(m)%h2(xyz)
-       alin((2*nM+m-1)*3 + xyz)  = a(m)%o(xyz)
-     enddo
-   enddo
-end subroutine 
 
 
 !//////////////////////////////////////////////////// Tensor Printers for "printer" interface above:

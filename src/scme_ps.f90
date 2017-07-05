@@ -15,7 +15,7 @@
 
 ! NB!!!_______________________________________________________________________
 ! This verison of the code is under development and experimental. 
-! It is not equivalent to the code the paper. 
+! It is not equivalent to the code in the paper. 
 ! If you want to use it contact Me at jonatan.ostrom@gmail.com
 
 
@@ -36,7 +36,7 @@
 module scme
 
   ! Parameters:
-  use data_types, only:A_a0,dp,h2o, num_cells, coulomb_k !, ea0_Deb, eA_Deb,kk1,kk2 
+  use data_types, only:A_a0,dp, num_cells, coulomb_k !, ea0_Deb, eA_Deb,kk1,kk2    !,h2o
   use multipole_parameters, only: q0, o0, h0 !d0, 
   use polariz_parameters, only: dd0, dq0, hp0, qq0
   
@@ -53,9 +53,9 @@ module scme
   
   use ps_dms, only: vibdms
   use ps_pes, only: vibpes
-  use printer_mod, only: printer, h2o_to_linear, xyz_hho_to_linear !printer_h2o_linear, 
+  use printer_mod, only: printer, xyz_hho_to_linear !printer_h2o_linear, !, h2o_to_linear
   
-  use localAxes_mod, only:localAxes2, create_xyz_hho, get_cm,force_and_torque_on_atoms,create_xyz_hho_new !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, 
+  use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, get_cm,force_and_torque_on_atoms,create_xyz_hho_new !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, !, create_xyz_hho
 
   implicit none
   private
@@ -193,7 +193,9 @@ call printer(rCM, 'rCM',s,prod)
     !/ Let PSD define the molecular (local) axes by the rotation matrix "x" 
     do m = 1,nM
 !       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
-       call localAxes2(dpole0(:,m),xyz_hho(:,:,m),x(:,:,m))
+       !call dipoleAxes(dpole0(:,m),xyz_hho(:,:,m),x(:,:,m))
+       !call bisectorAxes(xyz_hho(:,:,m),x(:,:,m))
+       call plusAxes(xyz_hho(:,:,m),x(:,:,m))
     enddo
 call printer(x,'x',s,prod)    
 

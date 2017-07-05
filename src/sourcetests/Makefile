@@ -1,7 +1,7 @@
 
 
 all:
-	gfortran ../printer_mod.f90 ../data_types.f90 ../localAxes_mod.f90 program.f90
+	gfortran -cpp ../data_types.f90 ../ps_dms.f90 ../printer_mod.f90 ../localAxes_mod.f90 program.f90
 
 run:
 	./a.out

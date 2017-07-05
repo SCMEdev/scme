@@ -68,6 +68,9 @@ clean:
 
 #/// Dependencies
 
+$b/localAxes_mod.o:$b/printer_mod.o 
+
+
 # special dependencies:
 $b/molecProperties.o	\
 $b/calc_derivs.o		\
