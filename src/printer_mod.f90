@@ -89,35 +89,35 @@ end subroutine
 
 
 
-subroutine p_int(a,text,s,production)
+subroutine p_int(a,text,s)!,production)
   character(*) text
   integer a
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
    call printer_text_scalar(text)
    write(un,intf) a
 end subroutine
 
-subroutine p_real(a,text,s,production)
+subroutine p_real(a,text,s)!,production)
   character(*) text
   real(dp) a
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
    call printer_text_scalar(text)
    write(un,'('//dblf//')') a
 end subroutine
 
-subroutine p_real_vec(a,text,s,production)
+subroutine p_real_vec(a,text,s)!,production)
   character(*) text
   character(3) :: ch_cols
   character(20):: forma
   real(dp) a(:)
   integer length, i
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
 
   length = size(a)
   call printer_text(text)
@@ -134,15 +134,15 @@ subroutine p_real_vec(a,text,s,production)
 end subroutine
 
 
-subroutine p_real_mat(a,text,s,production)
+subroutine p_real_mat(a,text,s)!,production)
   character(*) :: text
   character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,i
   real(dp)     :: a(:,:)
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -162,15 +162,15 @@ subroutine p_real_mat(a,text,s,production)
    endif
 end subroutine
 
-subroutine p_real_3d(a,text,s,production)
+subroutine p_real_3d(a,text,s)!,production)
   character(*) :: text
   character(3) :: ch_cols, ch_slices
   character(20):: forma
   integer rows,cols,slices,slice,i
   real(dp)     :: a(:,:,:)
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -194,15 +194,15 @@ subroutine p_real_3d(a,text,s,production)
    enddo
 end subroutine
 
-subroutine p_real_4d(a,text,s,production)
+subroutine p_real_4d(a,text,s)!,production)
   character(*) :: text
   character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,slices,slice,i, i4s, i4
   real(dp)     :: a(:,:,:,:)
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
 
    rows = size(a,1)
    cols = size(a,2)
@@ -230,15 +230,15 @@ subroutine p_real_4d(a,text,s,production)
    enddo
 end subroutine
 
-subroutine p_real_5d(a,text,s,production)
+subroutine p_real_5d(a,text,s)!,production)
   character(*) :: text
   character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,slices,slice,i, i4s, i4, i5s, i5
   real(dp)     :: a(:,:,:,:,:)
   integer s
-  logical production
-  if(production)return
+  !logical production
+  !if(production)return
 
    rows = size(a,1)
    cols = size(a,2)

@@ -33,6 +33,8 @@
 !---------
 ! Conversion factors are from CODATA2014, NIST
 
+
+
 module scme
 
   ! Parameters:
@@ -63,7 +65,7 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, ohh_fa, u_tot,dip_perm,dip_ind)
+  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot)!,dip_perm,dip_ind)
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -71,9 +73,9 @@ contains !//////////////////////////////////////////////////////////////
     real(dp), intent(in) :: coords(3,n_atoms)
     real(dp), intent(in) :: lattice(3)
     !j real(dp), intent(out) :: fa(n_atoms*3)
-    real(dp), intent(out) :: ohh_fa(3,n_atoms) !j Better. and: trying to get into quip
+    real(dp), intent(out) :: hho_fa(3,n_atoms) !j Better. and: trying to get into quip
     real(dp), intent(out) :: u_tot
-    real(dp), intent(out), optional :: dip_perm(3,n_atoms/3), dip_ind(3,n_atoms/3)
+    !real(dp), intent(out), optional :: dip_perm(3,n_atoms/3), dip_ind(3,n_atoms/3)
     ! ----------------------------------------
 
     ! Constants and parameters.
@@ -152,7 +154,7 @@ contains !//////////////////////////////////////////////////////////////
     
     integer :: s !transposing
     logical :: prod
-    prod = .false.!.true.!
+    prod = .true.!.false.!
     s=2
     !// Routine Starts /////////////////////////////////////////////////
     
@@ -168,6 +170,9 @@ contains !//////////////////////////////////////////////////////////////
     a2(1) = lattice(1)/2.0_dp
     a2(2) = lattice(2)/2.0_dp
     a2(3) = lattice(3)/2.0_dp
+    
+    
+#include "debug.h"
 
     ! Recover broken molecules due to periodic boundary conditions.
     !call recoverMolecules(coords, ra, nH, nO, a, a2) !JÖ rw
@@ -176,14 +181,14 @@ contains !//////////////////////////////////////////////////////////////
     call recoverMolecules_new(coords, ra, nM, a, a2) !JÖ rw
     call create_xyz_hho_new(ra,xyz_hho,nM)
     
-call printer(coords, 'coords',s,prod)    
-call printer(ra, 'ra',s,prod)    
-call printer(xyz_hho, 'xyz_hho',s,prod)    
+tprint(coords, 'coords',s)    
+tprint(ra, 'ra',s)    
+tprint(xyz_hho, 'xyz_hho',s)    
     
     ! compute centers of mass (cm)
     call get_cm(xyz_hho,rCM,nM)
     
-call printer(rCM, 'rCM',s,prod)    
+tprint(rCM, 'rCM',s)    
 
     !// Multipole Interaction //////////////////////////////////////////
     
@@ -194,7 +199,8 @@ call printer(rCM, 'rCM',s,prod)
        dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
     end do
     
-    dip_perm=dpole0 !/output
+    !dip_perm=dpole0 !/output
+    
     !/ Let PSD define the molecular (local) axes by the rotation matrix "x" 
     do m = 1,nM
 !       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
@@ -202,7 +208,7 @@ call printer(rCM, 'rCM',s,prod)
        !call bisectorAxes(xyz_hho(:,:,m),x(:,:,m))
        call plusAxes(xyz_hho(:,:,m),x(:,:,m))
     enddo
-call printer(x,'x',s,prod)    
+tprint(x,'x',s)    
 
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
@@ -243,7 +249,7 @@ call printer(x,'x',s,prod)
        call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
     end do
     
-    dip_ind=dpole
+    !dip_ind=dpole
     
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)
@@ -306,7 +312,7 @@ call printer(x,'x',s,prod)
     
     do m = 1,nM
       do ia = 1,3 !o,h,h
-        ohh_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
+        hho_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
       enddo
     enddo
     
@@ -315,21 +321,21 @@ call printer(x,'x',s,prod)
     
     
     !// Debug output ///////////////////////////////////////////////////!(pipe to file, diff to see change, comment to mute)
-call printer(u_multipole,'u_multipole',s,prod)
-call printer(uDisp,'uDisp',s,prod)
-call printer(u_ps,'u_ps',s,prod)
-call printer(u_tot,'u_tot',s,prod)
+tprint(u_multipole,'u_multipole',s)
+tprint(uDisp,'uDisp',s)
+tprint(u_ps,'u_ps',s)
+tprint(u_tot,'u_tot',s)
     
     
     !call h2o_to_linear(aforces,fa_test,nM)
     !call printer(fa_test,'aforces linear')
     
     !call printer(fa,'xa_forces linear')
-call printer(xa_forces,'xa_forces',s,prod) 
-call printer(ohh_fa,'ohh_fa',s,prod) 
+tprint(xa_forces,'xa_forces',s) 
+tprint(hho_fa,'hho_fa',s) 
 
     !s=0
-!call printer(1,'1',s,prod)    
+!call printer(1,'1',s)    
     
     
 

@@ -2,14 +2,14 @@
 .SUFFIXES:
 
 b = build
-src = src
+s = src
 #NEW = new
 
 #dirs = $(OBJDIR) $(MODDIR)
 dirs = $b
 
 #have added the "new/" directory and PS-files
-vpath %.f90 $(src)
+vpath %.f90 $(s)
 #vpath %.f90 $(NEW)
 #vpath %.cpp $(SRCDIR)
 
@@ -22,7 +22,8 @@ opti = -O0
 ## warn all:
 #-Wall
 
-FFLAGS = $(opti) -pg -I$b -J$b
+#Debug prerpcessor flag only in this makefile, makes the program print stuff with the print routine:
+FFLAGS = $(opti) -pg -I$b -J$b -cpp -D'DEBUG'
 CFLAGS = $(opti) -I$b -J$b -lstdc++
 
 
@@ -96,6 +97,7 @@ $b/printer_mod.o \
 $b/sf_disp_tangtoe.o \
 $b/force_torqueCM.o \
 $b/localAxes_mod.o \
+$s/debug.h\
 
 
 
