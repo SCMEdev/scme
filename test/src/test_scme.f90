@@ -6,6 +6,8 @@
 
 module test_scme
   use mifu_asserts
+  use printer_mod, only: printer
+  use data_types, only: au_to_debye, coulomb_k, a0_A, A_a0
 
   ! Include the module we test.
   use scme
@@ -304,44 +306,73 @@ module test_scme
     integer :: i
     real*8  :: u_tot = 0.0d0
     real*8  :: u_tot_ref = 0.0d0
-    real*8,dimension(n_atoms*3) :: coordinates
+    real*8,dimension(3,n_atoms) :: coordinates
     real*8,dimension(3)         :: cell
-    real*8,dimension(n_atoms*3) :: forces
-    real*8,dimension(n_atoms*3) :: ref_forces
+    real*8,dimension(3,n_atoms) :: forces
+    real*8,dimension(3,n_atoms) :: ref_forces
+    real*8,dimension(3,n_atoms/3) :: dip_perm,dip_ind
     integer p
     ! ----------------------------------------
-    p=1
-           coordinates(p:p+2) = [-2.006698000d+00 , -4.223270000d-01,  2.219847000d+00]!H1w1
-    p=p+3; coordinates(p:p+2) = [-6.010540000d-01 , -5.969720000d-01,  1.553718000d+00]!H2w1
-    p=p+3; coordinates(p:p+2) = [-2.516835000d+00 , -7.667650000d-01, -1.733766000d+00]!H1w2
-    p=p+3; coordinates(p:p+2) = [-1.888941000d+00 , -4.796530000d-01, -3.476240000d-01]!H2w2
-    p=p+3; coordinates(p:p+2) = [-9.898310000d-01 ,  1.592736000d+00, -8.774190000d-01]!H1w3
-    p=p+3; coordinates(p:p+2) = [-9.477200000d-01 ,  1.533567000d+00,  6.252280000d-01]!H2w3
-    p=p+3; coordinates(p:p+2) = [ 1.542224000d+00 , -3.936920000d-01,  1.344373000d+00]!H1w4
-    p=p+3; coordinates(p:p+2) = [ 9.795570000d-01 , -1.522041000d+00,  5.278330000d-01]!H2w4
-    p=p+3; coordinates(p:p+2) = [ 1.470709000d+00 , -5.709330000d-01, -1.277710000d+00]!H1w5
-    p=p+3; coordinates(p:p+2) = [ 6.516100000d-02 , -1.118951000d+00, -1.522886000d+00]!H2w5
-    p=p+3; coordinates(p:p+2) = [ 2.674716000d+00 ,  1.735342000d+00, -2.379950000d-01]!H1w6
-    p=p+3; coordinates(p:p+2) = [ 1.141637000d+00 ,  1.532266000d+00, -1.401210000d-01]!H2w6
-    p=p+3; coordinates(p:p+2) = [-1.502169000d+00 , -1.913590000d-01,  1.434927000d+00]!O w1
-    p=p+3; coordinates(p:p+2) = [-1.744575000d+00 , -3.823480000d-01, -1.309144000d+00]!O w2
-    p=p+3; coordinates(p:p+2) = [-5.604090000d-01 ,  2.017830000d+00, -1.219840000d-01]!O w3
-    p=p+3; coordinates(p:p+2) = [ 9.648030000d-01 , -1.165765000d+00,  1.439987000d+00]!O w4
-    p=p+3; coordinates(p:p+2) = [ 9.747050000d-01 , -1.401503000d+00, -1.335970000d+00]!O w5
-    p=p+3; coordinates(p:p+2) = [ 2.002280000d+00 ,  1.057824000d+00, -1.245020000d-01]!O w6
+!this was for the old version of the ra,fa arrays
+!    p=1
+!           coordinates(p:p+2) = [-2.006698000d+00 , -4.223270000d-01,  2.219847000d+00]!H1w1
+!    p=p+3; coordinates(p:p+2) = [-6.010540000d-01 , -5.969720000d-01,  1.553718000d+00]!H2w1
+!    p=p+3; coordinates(p:p+2) = [-2.516835000d+00 , -7.667650000d-01, -1.733766000d+00]!H1w2
+!    p=p+3; coordinates(p:p+2) = [-1.888941000d+00 , -4.796530000d-01, -3.476240000d-01]!H2w2
+!    p=p+3; coordinates(p:p+2) = [-9.898310000d-01 ,  1.592736000d+00, -8.774190000d-01]!H1w3
+!    p=p+3; coordinates(p:p+2) = [-9.477200000d-01 ,  1.533567000d+00,  6.252280000d-01]!H2w3
+!    p=p+3; coordinates(p:p+2) = [ 1.542224000d+00 , -3.936920000d-01,  1.344373000d+00]!H1w4
+!    p=p+3; coordinates(p:p+2) = [ 9.795570000d-01 , -1.522041000d+00,  5.278330000d-01]!H2w4
+!    p=p+3; coordinates(p:p+2) = [ 1.470709000d+00 , -5.709330000d-01, -1.277710000d+00]!H1w5
+!    p=p+3; coordinates(p:p+2) = [ 6.516100000d-02 , -1.118951000d+00, -1.522886000d+00]!H2w5
+!    p=p+3; coordinates(p:p+2) = [ 2.674716000d+00 ,  1.735342000d+00, -2.379950000d-01]!H1w6
+!    p=p+3; coordinates(p:p+2) = [ 1.141637000d+00 ,  1.532266000d+00, -1.401210000d-01]!H2w6
+!    p=p+3; coordinates(p:p+2) = [-1.502169000d+00 , -1.913590000d-01,  1.434927000d+00]!O w1
+!    p=p+3; coordinates(p:p+2) = [-1.744575000d+00 , -3.823480000d-01, -1.309144000d+00]!O w2
+!    p=p+3; coordinates(p:p+2) = [-5.604090000d-01 ,  2.017830000d+00, -1.219840000d-01]!O w3
+!    p=p+3; coordinates(p:p+2) = [ 9.648030000d-01 , -1.165765000d+00,  1.439987000d+00]!O w4
+!    p=p+3; coordinates(p:p+2) = [ 9.747050000d-01 , -1.401503000d+00, -1.335970000d+00]!O w5
+!    p=p+3; coordinates(p:p+2) = [ 2.002280000d+00 ,  1.057824000d+00, -1.245020000d-01]!O w6
 
-    print*, "things in coordinates should be ",6*3*3," and it is: ", p+2
+    p=1
+           coordinates(:,p) = [-2.006698000d+00 , -4.223270000d-01,  2.219847000d+00]!H1w1
+    p=p+1; coordinates(:,p) = [-6.010540000d-01 , -5.969720000d-01,  1.553718000d+00]!H2w1
+    p=p+1; coordinates(:,p) = [-1.502169000d+00 , -1.913590000d-01,  1.434927000d+00]!O w1
+    p=p+1; coordinates(:,p) = [-2.516835000d+00 , -7.667650000d-01, -1.733766000d+00]!H1w2
+    p=p+1; coordinates(:,p) = [-1.888941000d+00 , -4.796530000d-01, -3.476240000d-01]!H2w2
+    p=p+1; coordinates(:,p) = [-1.744575000d+00 , -3.823480000d-01, -1.309144000d+00]!O w2
+    p=p+1; coordinates(:,p) = [-9.898310000d-01 ,  1.592736000d+00, -8.774190000d-01]!H1w3
+    p=p+1; coordinates(:,p) = [-9.477200000d-01 ,  1.533567000d+00,  6.252280000d-01]!H2w3
+    p=p+1; coordinates(:,p) = [-5.604090000d-01 ,  2.017830000d+00, -1.219840000d-01]!O w3
+    p=p+1; coordinates(:,p) = [ 1.542224000d+00 , -3.936920000d-01,  1.344373000d+00]!H1w4
+    p=p+1; coordinates(:,p) = [ 9.795570000d-01 , -1.522041000d+00,  5.278330000d-01]!H2w4
+    p=p+1; coordinates(:,p) = [ 9.648030000d-01 , -1.165765000d+00,  1.439987000d+00]!O w4
+    p=p+1; coordinates(:,p) = [ 1.470709000d+00 , -5.709330000d-01, -1.277710000d+00]!H1w5
+    p=p+1; coordinates(:,p) = [ 6.516100000d-02 , -1.118951000d+00, -1.522886000d+00]!H2w5
+    p=p+1; coordinates(:,p) = [ 9.747050000d-01 , -1.401503000d+00, -1.335970000d+00]!O w5
+    p=p+1; coordinates(:,p) = [ 2.674716000d+00 ,  1.735342000d+00, -2.379950000d-01]!H1w6
+    p=p+1; coordinates(:,p) = [ 1.141637000d+00 ,  1.532266000d+00, -1.401210000d-01]!H2w6
+    p=p+1; coordinates(:,p) = [ 2.002280000d+00 ,  1.057824000d+00, -1.245020000d-01]!O w6
+
+    print*, "# coordinates should be ",6*3*3,". It is: ", p,'atoms*3=',p*3, 'coordinates'
     cell(1) = 35.000
     cell(2) = 35.000
     cell(3) = 35.000
 
-    forces(:) = 0.d0
+    forces = 0
 
     ! Call the scme function.
     do i=1,1
-       call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
+       call scme_calculate(n_atoms, coordinates, cell, forces, u_tot,dip_perm,dip_ind)
     end do
-
+    
+    call printer(coordinates,'coordinates',2,.false.)
+    call printer(forces,'forces',2,.false.)
+    call printer(u_tot,'u_tot',2,.false.)
+    
+    call printer(dip_perm*A_a0*au_to_debye,'dip_perm',2,.false.)
+    call printer(dip_ind *A_a0*au_to_debye,'dip_ind',2,.false.)
+    
   end subroutine 
 
 
@@ -403,6 +434,9 @@ module test_scme
     do i=1,1
        call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
     end do
+    
+    
+
 
   end subroutine 
 

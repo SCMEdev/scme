@@ -10,7 +10,8 @@ b := build
 
 
 FC = gfortran
-FFLAGS = -O0 -cpp -pg -I$(scme_mod) -J$b
+FFLAGS = -O0 -cpp -I$(scme_mod) -J$b
+#-pg
 #-fopenmp
 ## flags for home:
 #-Ofast -cpp -pg -I$(scme_mod) -fopenmp
@@ -37,14 +38,14 @@ just__RUN:
 	./2run.x
 
 clean:
-	rm -f build/* *.x
+	rm -rf build *.x
 
 clean-scme:
 	rm -f ../build/* 
 
 
 #executables:
-common_obj=$(addprefix $b/, mifu_asserts.o test_scme.o )
+common_obj=$(addprefix $b/, mifu_asserts.o test_scme.o ) 
 
 run.x: $b/run_tests.o $(common_obj) $(scme_obj)/libscme.a
 
@@ -56,7 +57,7 @@ run.x: $b/run_tests.o $(common_obj) $(scme_obj)/libscme.a
 %.x:
 	$(FC) $(FFLAGS) -o $@ $^ 
 
-$b/%.o:$s/%.f90
+$b/%.o:$s/%.f90 $b
 	$(FC) $(FFLAGS) -c $< -o $@
 
 $b:

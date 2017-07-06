@@ -205,7 +205,7 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
    do i = 1, nWater !j molecules.  I should change raOrig to at(3,n_atoms) or at(3,3,n_water)
       
       ! This is the new 3 by N_atoms coordinate matrix
-      coords(:,(i-1)*3+1) = at%pos(:,water_monomer_index(2,i)) !j coords is hho ordered
+      coords(:,(i-1)*3+1) = at%pos(:,water_monomer_index(2,i)) !j coords is hho ordered in scme
       coords(:,(i-1)*3+2) = at%pos(:,water_monomer_index(3,i))
       coords(:,(i-1)*3+3) = at%pos(:,water_monomer_index(1,i))
       

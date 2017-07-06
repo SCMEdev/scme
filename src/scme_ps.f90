@@ -63,7 +63,7 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, ohh_fa, u_tot)
+  subroutine scme_calculate(n_atoms, coords, lattice, ohh_fa, u_tot,dip_perm,dip_ind)
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -73,6 +73,7 @@ contains !//////////////////////////////////////////////////////////////
     !j real(dp), intent(out) :: fa(n_atoms*3)
     real(dp), intent(out) :: ohh_fa(3,n_atoms) !j Better. and: trying to get into quip
     real(dp), intent(out) :: u_tot
+    real(dp), intent(out), optional :: dip_perm(3,n_atoms/3), dip_ind(3,n_atoms/3)
     ! ----------------------------------------
 
     ! Constants and parameters.
@@ -151,7 +152,7 @@ contains !//////////////////////////////////////////////////////////////
     
     integer :: s !transposing
     logical :: prod
-    prod = .true.!.false.!
+    prod = .false.!.true.!
     s=2
     !// Routine Starts /////////////////////////////////////////////////
     
@@ -175,6 +176,9 @@ contains !//////////////////////////////////////////////////////////////
     call recoverMolecules_new(coords, ra, nM, a, a2) !JÖ rw
     call create_xyz_hho_new(ra,xyz_hho,nM)
     
+call printer(coords, 'coords',s,prod)    
+call printer(ra, 'ra',s,prod)    
+call printer(xyz_hho, 'xyz_hho',s,prod)    
     
     ! compute centers of mass (cm)
     call get_cm(xyz_hho,rCM,nM)
@@ -190,6 +194,7 @@ call printer(rCM, 'rCM',s,prod)
        dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
     end do
     
+    dip_perm=dpole0 !/output
     !/ Let PSD define the molecular (local) axes by the rotation matrix "x" 
     do m = 1,nM
 !       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
@@ -237,6 +242,8 @@ call printer(x,'x',s,prod)
        call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
        call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
     end do
+    
+    dip_ind=dpole
     
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)
