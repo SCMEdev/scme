@@ -1,21 +1,18 @@
 #Definitions
 scme_root := ../../
-scme_obj := ../../build
-scme_mod := ../../build
+scme_build := ../../build
 scme_src := ../../src
-#scme_sources = $(shell ls ../src/*.f90)
-#scme_objects = $(patsubst  ../src/%, ../build/%, $(scme_sources:.f90=.o))
 
 s := src
 b := build
 
 
 FC = gfortran
-FFLAGS = -O0 -cpp -I$(scme_mod) -J$b
+FFLAGS = -O0 -cpp -I$(scme_build) -J$b
 #-pg
 #-fopenmp
 ## flags for home:
-#-Ofast -cpp -pg -I$(scme_mod) -fopenmp
+#-Ofast -cpp -pg -I$(scme_build) -fopenmp
 #-fopenmp 
 
 #default
@@ -39,19 +36,16 @@ just__RUN:
 	./2run.x
 
 clean:
-	rm -rf build *.x
-
-clean-scme:
-	rm -f ../build/* 
+	rm -rf build *.x $(scme_build)/* 
 
 
 #executables:
 common_obj=$(addprefix $b/, mifu_asserts.o test_scme.o ) 
 
-run.x: $b/run_tests.o $(common_obj) $(scme_obj)/libscme.a
+run.x: $b/run_tests.o $(common_obj) $(scme_build)/libscme.a
 
 
-2run.x: $b/run_tests2.o $(common_obj) $(scme_obj)/libscme.a
+2run.x: $b/run_tests2.o $(common_obj) $(scme_build)/libscme.a
 
 
 #rules:
