@@ -1,12 +1,12 @@
 #Definitions
-scme_obj = ../build
-scme_mod = ../build
-scme_src = ../src
-
+scme_obj := ../build
+scme_mod := ../build
+scme_src := ../src
 #scme_sources = $(shell ls ../src/*.f90)
 #scme_objects = $(patsubst  ../src/%, ../build/%, $(scme_sources:.f90=.o))
 
-b=build
+s := src
+b := build
 
 
 FC = gfortran
@@ -56,7 +56,7 @@ run.x: $b/run_tests.o $(common_obj) $(scme_obj)/libscme.a
 %.x:
 	$(FC) $(FFLAGS) -o $@ $^ 
 
-$b/%.o:%.f90
+$b/%.o:$s/%.f90
 	$(FC) $(FFLAGS) -c $< -o $@
 
 $b:
