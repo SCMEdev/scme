@@ -148,7 +148,7 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
    type(MPI_Context), intent(in), optional :: mpi
    integer, intent(out), optional :: error
 
-   integer :: nWater, i, a
+   integer :: nWater, i, a, m
    integer, dimension(:,:), allocatable :: water_monomer_index
    real(dp) :: uTot
    real(dp), dimension(3) :: lattice
@@ -222,7 +222,16 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
    call scme_calculate(at%N,coords, lattice, fa, uTot)
 #endif
    
-   if(present(f)) f = fa !j copy over the forces to the quip-defined array f from scme-specified fa
+   
+   if(present(f))then 
+    do m = 1,nWater !jö Rearange from HHO (in fa in SCME) to OHH ( in f in QUIP)
+      f(:,(m-1)*3+1)=fa(:,(m-1)*3+3) !O
+      f(:,(m-1)*3+2)=fa(:,(m-1)*3+1) !H1
+      f(:,(m-1)*3+3)=fa(:,(m-1)*3+2) !H1
+    enddo
+   endif 
+   
+   !if(present(f)) f = fa !j copy over the forces to the quip-defined array f from scme-specified fa ! How come the order gets correct? 
    
    if (present(e)) e = uTot !j if (present): Refers to optional arguments
 
