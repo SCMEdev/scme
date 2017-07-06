@@ -81,7 +81,7 @@ libfx.a: nttm3f
 	${MAKE} -C ${BUILDDIR} QUIP_ROOT=${QUIP_ROOT} VPATH=${PWD}/src/ThirdParty/nttm3f -I${PWD} -I${PWD}/arch $@
 
 libscme.a: default_scme
-	cp ${PWD}/src/ThirdParty/scme/quip/Makefile ${BUILDDIR}/Makefile
+	cp ${PWD}/src/ThirdParty/scme/quip/Makefile.SCME ${BUILDDIR}/Makefile
 	${MAKE} -C ${BUILDDIR} QUIP_ROOT=${QUIP_ROOT} VPATH=${PWD}/src/ThirdParty/scme/src -I${PWD} -I${PWD}/arch $@
 
 libmtp.a: mtp
