@@ -1,7 +1,8 @@
 #Definitions
-scme_obj := ../build
-scme_mod := ../build
-scme_src := ../src
+scme_root := ../../
+scme_obj := ../../build
+scme_mod := ../../build
+scme_src := ../../src
 #scme_sources = $(shell ls ../src/*.f90)
 #scme_objects = $(patsubst  ../src/%, ../build/%, $(scme_sources:.f90=.o))
 
@@ -19,13 +20,13 @@ FFLAGS = -O0 -cpp -I$(scme_mod) -J$b
 
 #default
 all:
-	make scme
+	make scme 
 	make run.x
 	make 2run.x
 
 # commands:
 klean_all__SCME_AND_TEST:
-	(cd ../ && make clean) 
+	(cd $(scme_root) && make clean) 
 	make clean
 
 diff_reference__RUN:
@@ -64,7 +65,7 @@ $b:
 	mkdir $@
 
 scme:
-	(cd ../ && make) 
+	(cd $(scme_root) && make) 
 
 #object dependencies:
 $b/run_tests2.o\

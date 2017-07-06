@@ -363,15 +363,15 @@ module test_scme
 
     ! Call the scme function.
     do i=1,1
-       call scme_calculate(n_atoms, coordinates, cell, forces, u_tot,dip_perm,dip_ind)
+       call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)!,dip_perm,dip_ind)
     end do
     
-    call printer(coordinates,'coordinates',2,.false.)
-    call printer(forces,'forces',2,.false.)
-    call printer(u_tot,'u_tot',2,.false.)
-    
-    call printer(dip_perm*A_a0*au_to_debye,'dip_perm',2,.false.)
-    call printer(dip_ind *A_a0*au_to_debye,'dip_ind',2,.false.)
+!    call printer(coordinates,'coordinates',2,.false.)
+!    call printer(forces,'forces',2,.false.)
+!    call printer(u_tot,'u_tot',2,.false.)
+!    
+!    call printer(dip_perm*A_a0*au_to_debye,'dip_perm',2,.false.)
+!    call printer(dip_ind *A_a0*au_to_debye,'dip_ind',2,.false.)
     
   end subroutine 
 
