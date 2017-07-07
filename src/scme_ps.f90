@@ -222,38 +222,43 @@ tprint(x,'x',s)
     !/ Rotate polarizability tensors into local coordinate systems
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     
-    !/ Compute the electric field (F) and gradient (dF) for the static octupole and hexadecapole
-    ! why dont we induce those, we have the polarizabilities!?
-    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab) 
-    ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
-
-    
-    !/ Induce dipole and quadrupole to self consistency
-    converged = .false.
-    iteration = 0
-    do while (.not. converged)
-    iteration = iteration + 1
-
-       call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-       ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
-       
-       !call addFields(eH, eD, eT, nM)
-       eT = eH + eD !add fields
-       call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
-       
-
-       ! Induce dipoles and quadrupoles.
-       converged = .true.
-
-       call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-       call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
-    end do
+    ! !/ Compute the electric field (F) and gradient (dF) for the static octupole and hexadecapole
+    ! ! why dont we induce those, we have the polarizabilities!?
+    ! call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab) 
+    ! ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
+    ! 
+    ! 
+    ! !/ Induce dipole and quadrupole to self consistency
+    ! converged = .false.
+    ! iteration = 0
+    ! do while (.not. converged)
+    ! iteration = iteration + 1
+    ! 
+    !    call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+    !    ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
+    !    
+    !    !call addFields(eH, eD, eT, nM)
+    !    eT = eH + eD !add fields
+    !    call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+    !    
+    ! 
+    !    ! Induce dipoles and quadrupoles.
+    !    converged = .true.
+    ! 
+    !    call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+    !    call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+    ! end do
     
     !dip_ind=dpole
     
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)
 
+tprint(d1v, 'd1v',s)
+tprint(d2v, 'd2v',s)
+tprint(d3v, 'd3v',s)
+tprint(d4v, 'd4v',s)
+!tprint(d5v, 'd5v',s)
     !/ Compute the forces on the centers of mass
     call forceCM(dpole, qpole, opole, hpole, d2v, d3v, d4v, d5v, nM, fsf, fCM)
 

@@ -112,7 +112,7 @@ contains
                    call hField(dr, r2, r9, r11, eH, hpole(:,:,:,:,j), u, dEdr1)
                    uH = uH + u
                    eT(:,i) = eT(:,i) + eH(:) * swFunc
-                   dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:) * swFunc
+                   dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:) * swFunc !JÖreduced interaction order
                    !
                 end do bike
              end do

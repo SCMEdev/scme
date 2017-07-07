@@ -15,7 +15,7 @@ contains
   !----------------------------------------------------------------------+
   !     Calculate derivatives of the electric field.                     |
   !----------------------------------------------------------------------+
-  subroutine calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab)
+  subroutine calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, ed1, ed2, ed3, ed4, ed5, rMax2, fsf, iSlab)
 
     implicit none
     integer nM, NC, NCz
@@ -31,8 +31,8 @@ contains
     logical*1, intent(in) ::  iSlab
     
     real(dp), intent(out) ::  fsf(:,:)
-    real(dp), intent(out) ::  d1v(:,:), d2v(:,:,:), d3v(:,:,:,:)
-    real(dp), intent(out) ::  d4v(:,:,:,:,:), d5v(:,:,:,:,:,:) 
+    real(dp), intent(out) ::  ed1(:,:), ed2(:,:,:), ed3(:,:,:,:)
+    real(dp), intent(out) ::  ed4(:,:,:,:,:), ed5(:,:,:,:,:,:) 
 
                   
 
@@ -45,6 +45,7 @@ contains
     real(dp), save :: re(3), dr(3), r1, r2, swFunc, dSdr
     integer , save :: i, j, k, l, s, n, m, ii, nx, ny, nz
     integer , save :: in2(2), in3(3), in4(4), in5(5)
+    
 
 !JÖ    real(dp) :: d(3), q(3,3), o(3,3,3), h(3,3,3,3)
 !JÖ    real(dp), pointer :: d(:), q(:,:), o(:,:,:), h(:,:,:,:)
@@ -72,8 +73,8 @@ contains
 !    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
 !    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
 !    
-!    real(dp) d1v(3,maxCoo/3), d2v(3,3,maxCoo/3), d3v(3,3,3,maxCoo/3)
-!    real(dp) d4v(3,3,3,3,maxCoo/3), d5v(3,3,3,3,3,maxCoo/3), rMax2
+!    real(dp) ed1(3,maxCoo/3), ed2(3,3,maxCoo/3), ed3(3,3,3,maxCoo/3)
+!    real(dp) ed4(3,3,3,3,maxCoo/3), ed5(3,3,3,3,3,maxCoo/3), rMax2
 !    
 !    real(dp) d1d(3), d2d(3,3), d3d(3,3,3)
 !    real(dp) d4d(3,3,3,3), d5d(3,3,3,3,3)
@@ -98,30 +99,30 @@ contains
     
     !do n = 1, nM
     !   do i = 1, 3
-    !      d1v(i,n) = 0.0_dp
+    !      ed1(i,n) = 0.0_dp
     !      fsf(i,n) = 0.0_dp
     !      do j = i, 3
-    !         d2v(i,j,n) = 0.0_dp
+    !         ed2(i,j,n) = 0.0_dp
     !         do k = j, 3
-    !            d3v(i,j,k,n) = 0.0_dp
+    !            ed3(i,j,k,n) = 0.0_dp
     !            do l = k, 3
-    !               d4v(i,j,k,l,n) = 0.0_dp
+    !               ed4(i,j,k,l,n) = 0.0_dp
     !               do s = l, 3
-    !                  d5v(i,j,k,l,s,n) = 0.0_dp
+    !                  ed5(i,j,k,l,s,n) = 0.0_dp
     !               end do
     !            end do
     !         end do
     !      end do
     !   end do
     !end do
-    d1v = 0
+    ed1 = 0
     fsf = 0
-    d2v = 0
-    d3v = 0
-    d4v = 0
-    d5v = 0
+    ed2 = 0
+    ed3 = 0
+    ed4 = 0
+    ed5 = 0
 !  print*, "some tensor in calcDv"
-!  print*, 0,d1v(:,2)
+!  print*, 0,ed1(:,2)
     
     !$$$      t1 = 0.0_dp
     !$$$      t2 = 0.0_dp
@@ -134,7 +135,7 @@ contains
     
     !!$omp parallel &
     !!$omp default(none) &
-    !!$omp private(d1d,d2d,d3d,d4d,d5d,  d1a,d2a,d3a,d4a,d5a, d1v,d2v,d3v,d4v,d5v,  re, dr, r1, r2, &
+    !!$omp private(d1d,d2d,d3d,d4d,d5d,  d1a,d2a,d3a,d4a,d5a, ed1,ed2,ed3,ed4,ed5,  re, dr, r1, r2, &
     !!$omp         swFunc, dSdr, i, j, k, l, s, m, n, ii, nx, ny, nz, in2,in3,in4,in5  ) &   !,d,q,o,h
     !!$omp shared(nM, NC, a, NCz, rCM, a2, rMax2,dpole,qpole,opole,hpole,iSlab,fsf)
 ! d,q,o,h
@@ -181,6 +182,7 @@ contains
                    !call dDpole(d, dr, d1a, d2a, d3a, d4a, d5a)
                    call dDpole(dpole(:,m), dr, d1a, d2a, d3a, d4a, d5a)
                    
+                   !d5a = 0
                    
                    !$$$                     print *, n, m
                    !$$$                     print *, rCM(2,n), rCM(2,m), a(2)
@@ -199,7 +201,17 @@ contains
                    !q = qpole(:,:,m)
                    !call dQpole(q, dr, d1d, d2d, d3d, d4d, d5d)
                    call dQpole(qpole(:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
-                   call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
+                   
+                   d1a = d1a + d1d
+                   d2a = d2a + d2d
+                   d3a = d3a + d3d
+                   d4a = d4a + d4d
+                   d5a = d5a + d5d
+                   
+                   
+                   
+                   
+                   !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
                    
                    !$$$                     print *, d1a(1), d1a(2), d1a(3)
                    !$$$                     print *, d1d(1), d1d(2), d1d(3)
@@ -214,7 +226,12 @@ contains
                    !o = opole(:,:,:,m)
                    !call dOpole(o, dr, d1d, d2d, d3d, d4d, d5d)
                    call dOpole(opole(:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
-                   call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
+                   !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
+                   d1a = d1a + d1d
+                   d2a = d2a + d2d
+                   d3a = d3a + d3d
+                   d4a = d4a + d4d
+                   d5a = d5a + d5d
                    
                    !$$$                     print *, d1a(1), d1a(2), d1a(3)
                    !$$$                     print *, d1d(1), d1d(2), d1d(3)
@@ -231,16 +248,21 @@ contains
                    !h = hpole(:,:,:,:,m)
                    !call dHpole(h, dr, d1d, d2d, d3d, d4d, d5d)
                    call dHpole(hpole(:,:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
-                   call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
-                   call addDeriv(d1v, d2v, d3v, d4v, d5v, d1a, d2a, d3a, d4a, d5a, n, swFunc)
+                   !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
+                   d1a = d1a + d1d
+                   d2a = d2a + d2d
+                   d3a = d3a + d3d
+                   d4a = d4a + d4d
+                   d5a = d5a + d5d
+                   
+                   call addDeriv(ed1, ed2, ed3, ed4, ed5, d1a, d2a, d3a, d4a, d5a, n, swFunc)
                    
                    !$$$                     print *, d1a(1), d1a(2), d1a(3)
-                   !$$$                     print *, d1v(1,1), d1v(2,1), d1v(3,1)
+                   !$$$                     print *, ed1(1,1), ed1(2,1), ed1(3,1)
                    !$$$                     stop
                    
                    
-                   call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,&
-                        opole, hpole, fsf)
+                   call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,opole, hpole, fsf)
                    
 !11              end do
                 end do crescent
@@ -264,7 +286,7 @@ contains
     
     !     Copy all the permutations. (Is this really necessary??)
     !$$$      ti = irtc()
-!  print*, 1,d1v(:,2)
+!  print*, 1,ed1(:,2)
     
     !!$omp parallel do &
     !!$omp private
@@ -272,7 +294,7 @@ contains
     
     !!!!&
     !!!!!$omp default(private) &
-    !!!!!$omp shared(d2v, d3v, d4v, d5v)
+    !!!!!$omp shared(ed2, ed3, ed4, ed5)
     
     
     !!$omp do
@@ -284,9 +306,9 @@ contains
           call insertIN(in2, 2)
           
           !do n = 1, nM
-          !   d2v(i,j,n) = d2v(in2(1), in2(2), n)
+          !   ed2(i,j,n) = ed2(in2(1), in2(2), n)
           !end do
-          d2v(i,j,:) = d2v(in2(1), in2(2), :)
+          ed2(i,j,:) = ed2(in2(1), in2(2), :)
           
           do k = 1, 3
              !do ii = 1, 2
@@ -298,9 +320,9 @@ contains
              call insertIN(in3, 3)
              
              !do n = 1, nM
-             !   d3v(i,j,k,n) = d3v(in3(1),in3(2),in3(3),n)
+             !   ed3(i,j,k,n) = ed3(in3(1),in3(2),in3(3),n)
              !end do
-             d3v(i,j,k,:) = d3v(in3(1),in3(2),in3(3),:)
+             ed3(i,j,k,:) = ed3(in3(1),in3(2),in3(3),:)
              
              do l = 1, 3
                 !do ii = 1, 3
@@ -312,9 +334,9 @@ contains
                 call insertIN(in4, 4)
                 
                 !do n = 1, nM
-                !   d4v(i,j,k,l,n) = d4v(in4(1),in4(2),in4(3),in4(4),n)
+                !   ed4(i,j,k,l,n) = ed4(in4(1),in4(2),in4(3),in4(4),n)
                 !end do
-                d4v(i,j,k,l,:) = d4v(in4(1),in4(2),in4(3),in4(4),:)
+                ed4(i,j,k,l,:) = ed4(in4(1),in4(2),in4(3),in4(4),:)
                 
                 do m = 1, 3
                    !do ii = 1, 4
@@ -327,9 +349,9 @@ contains
                    call insertIN(in5, 5)
                    
                    !do n = 1, nM
-                   !   d5v(i,j,k,l,m,n) = d5v(in5(1),in5(2),in5(3) ,in5(4),in5(5),n)
+                   !   ed5(i,j,k,l,m,n) = ed5(in5(1),in5(2),in5(3) ,in5(4),in5(5),n)
                    !end do
-                   d5v(i,j,k,l,m,:) = d5v(in5(1),in5(2),in5(3) ,in5(4),in5(5),:)
+                   ed5(i,j,k,l,m,:) = ed5(in5(1),in5(2),in5(3) ,in5(4),in5(5),:)
                    
                 end do
              end do
@@ -338,7 +360,7 @@ contains
     end do
     !!$omp end do
     !!$omp end parallel 
-!  print*, 2,d1v(:,2)
+!  print*, 2,ed1(:,2)
     
     !$$$      tf = irtc()
     !$$$      t4 = (tf-ti) * 1e-9
@@ -391,13 +413,13 @@ contains
   end function delta
   
   !-----------------------------------------------------------------------
-  pure subroutine addDeriv(d1v, d2v, d3v, d4v, d5v, d1d, d2d, d3d, d4d, d5d, n, swFunc)
+  pure subroutine addDeriv(ed1, ed2, ed3, ed4, ed5, d1d, d2d, d3d, d4d, d5d, n, swFunc)
     
     implicit none
 
 !JÖ inout:    
-    real(dp), intent(inout) :: d1v(:,:), d2v(:,:,:), d3v(:,:,:,:)
-    real(dp), intent(inout) :: d4v(:,:,:,:,:), d5v(:,:,:,:,:,:)
+    real(dp), intent(inout) :: ed1(:,:), ed2(:,:,:), ed3(:,:,:,:)
+    real(dp), intent(inout) :: ed4(:,:,:,:,:), ed5(:,:,:,:,:,:)
     
     real(dp), intent(in) :: d1d(:), d2d(:,:), d3d(:,:,:)
     real(dp), intent(in) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
@@ -407,8 +429,8 @@ contains
 !JÖ internal:     
     integer :: i, j, k, l, s !JÖ , save
 
-!    real(dp) d1v(3,maxCoo/3), d2v(3,3,maxCoo/3), d3v(3,3,3,maxCoo/3)
-!    real(dp) d4v(3,3,3,3,maxCoo/3), d5v(3,3,3,3,3,maxCoo/3)
+!    real(dp) ed1(3,maxCoo/3), ed2(3,3,maxCoo/3), ed3(3,3,3,maxCoo/3)
+!    real(dp) ed4(3,3,3,3,maxCoo/3), ed5(3,3,3,3,3,maxCoo/3)
 !    
 !    real(dp) d1d(3), d2d(3,3), d3d(3,3,3)
 !    real(dp) d4d(3,3,3,3), d5d(3,3,3,3,3)
@@ -418,26 +440,26 @@ contains
 
     
     do i = 1, 3
-       d1v(i,n) = d1v(i,n) + d1d(i) * swFunc
+       ed1(i,n) = ed1(i,n) + d1d(i) * swFunc
        do j = i, 3
-          d2v(i,j,n) = d2v(i,j,n) + d2d(i,j) * swFunc
+          ed2(i,j,n) = ed2(i,j,n) + d2d(i,j) * swFunc
           do k = j, 3
-             d3v(i,j,k,n) = d3v(i,j,k,n) + d3d(i,j,k) * swFunc
+             ed3(i,j,k,n) = ed3(i,j,k,n) + d3d(i,j,k) * swFunc
              do l = k, 3
-                d4v(i,j,k,l,n) = d4v(i,j,k,l,n) + d4d(i,j,k,l) * swFunc
+                ed4(i,j,k,l,n) = ed4(i,j,k,l,n) + d4d(i,j,k,l) * swFunc
                 do s = l, 3
-                   d5v(i,j,k,l,s,n) = d5v(i,j,k,l,s,n) + d5d(i,j,k,l,s ) * swFunc
+                   ed5(i,j,k,l,s,n) = ed5(i,j,k,l,s,n) + d5d(i,j,k,l,s ) * swFunc
                 end do
              end do
           end do
        end do
     end do
     
-    !d1v(:,n)          = d1v(:,n)         + d1d * swFunc
-    !d2v(:,:,n)        = d2v(:,:,n)       + d2d * swFunc
-    !d3v(:,:,:,n)      = d3v(:,:,:,n)     + d3d * swFunc
-    !d4v(:,:,:,:,n)    = d4v(:,:,:,:,n)   + d4d * swFunc
-    !d5v(:,:,:,:,:,n)  = d5v(:,:,:,:,:,n) + d5d * swFunc
+    !ed1(:,n)          = ed1(:,n)         + d1d * swFunc
+    !ed2(:,:,n)        = ed2(:,:,n)       + d2d * swFunc
+    !ed3(:,:,:,n)      = ed3(:,:,:,n)     + d3d * swFunc
+    !ed4(:,:,:,:,n)    = ed4(:,:,:,:,n)   + d4d * swFunc
+    !ed5(:,:,:,:,:,n)  = ed5(:,:,:,:,:,n) + d5d * swFunc
     
     return
     
