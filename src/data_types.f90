@@ -3,7 +3,7 @@ module data_types
   implicit none
   
   private
-  public dp, tt_b, num_cells,A_a0, a0_A, cm1_eV, coulomb_k, au_to_debye !, ea0_Deb, eA_Deb, xyz, hho, kk1,kk2,
+  public dp, tt_b, num_cells,A_a0, a0_A, cm1_eV, coulomb_k, au_to_debye,pi !, ea0_Deb, eA_Deb, xyz, hho, kk1,kk2,
   
   integer, parameter :: dp = selected_real_kind(15, 307) ! double precision ~ 8 byte float
 

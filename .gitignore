@@ -8,3 +8,4 @@ gap/*
 *.out
 *.dat
 *.xyz
+*.symlink
