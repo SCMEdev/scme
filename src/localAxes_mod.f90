@@ -117,7 +117,7 @@ subroutine force_and_torque_on_atoms(tau,fCM,w,f,rCM)
  real(dp), parameter :: m(3) = [1.0_dp, 1.0_dp, 16.0_dp], Mm = sum(m) !are these in the right units??? does i matter? dont think so
  integer a
  
-   t2 = norm_2(tau) !length square of torque
+   t2 = norm_square(tau) !length square of torque
 
    r(:,1) = w(:,1)-rCM   !w%h1 - rCM !extract oh distances
    r(:,2) = w(:,2)-rCM   !w%h2 - rCM
@@ -126,7 +126,7 @@ subroutine force_and_torque_on_atoms(tau,fCM,w,f,rCM)
 
    do a = 1,aim
       txr(:,a) = cross(tau,r(:,a))
-      I(a) = m(a)/t2*norm_2(txr(:,a))
+      I(a) = m(a)/t2*norm_square(txr(:,a))
    enddo
 !call printer(txr,'txr')   
    
@@ -164,7 +164,7 @@ subroutine bisectorAxes(w,rot)
    r1 = w(:,1) - w(:,3)!w%h1 - w%o    ! O--H1 and O--H2 vectors
    r2 = w(:,2) - w(:,3)!w%h2 - w%o
    
-   frac12 = norm_2(r1) / norm_2(r2)
+   frac12 = norm(r1) / norm(r2)
    
    bis = r1 + r2*frac12 ! bisector between OH-vectors
    bis = normalize(bis)
@@ -250,11 +250,19 @@ recursive function normalize(b) result(res)
    res = b*( 1.0_dp/dsqrt(sum(b**2)) )
 end function
 
-recursive function norm_2(d) result(d2)
+recursive function norm_square(d) result(d2)
  real(dp), intent(in) :: d(3)
  real(dp) :: d2
    d2 = d(1)*d(1) + d(2)*d(2) + d(3)*d(3)
 end function
+
+recursive function norm(d) result(d1)
+ real(dp), intent(in) :: d(3)
+ real(dp) :: d1
+   d1 = dsqrt(sum(d**2))
+end function
+
+
 
 end module
 
