@@ -15,7 +15,7 @@ contains
   !----------------------------------------------------------------------+
   !     Calculate derivatives of the electric field.                     |
   !----------------------------------------------------------------------+
-  subroutine calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, ed1, ed2, ed3, ed4, ed5, rMax2, fsf, iSlab)
+  subroutine calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, ed1, ed2, ed3, ed4, ed5, rMax2, fsf, iSlab,full)
 
     implicit none
     integer nM, NC, NCz
@@ -24,6 +24,7 @@ contains
     real(dp), intent(in) ::  opole(:,:,:,:), hpole(:,:,:,:,:)
     !, target :: dpole(:,:), qpole(:,:,:)
     !, target :: opole(:,:,:,:), hpole(:,:,:,:,:)
+    logical,intent(in) :: full
 
 
     
@@ -205,9 +206,10 @@ contains
                    d1a = d1a + d1d
                    d2a = d2a + d2d
                    d3a = d3a + d3d
-                   d4a = d4a + d4d
-                   d5a = d5a + d5d
-                   
+                   if(full)then
+                     d4a = d4a + d4d
+                     d5a = d5a + d5d
+                   endif
                    
                    
                    
@@ -229,9 +231,11 @@ contains
                    !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
                    d1a = d1a + d1d
                    d2a = d2a + d2d
-                   d3a = d3a + d3d
-                   d4a = d4a + d4d
-                   d5a = d5a + d5d
+                   if(full)then
+                     d3a = d3a + d3d
+                     d4a = d4a + d4d
+                     d5a = d5a + d5d
+                   endif
                    
                    !$$$                     print *, d1a(1), d1a(2), d1a(3)
                    !$$$                     print *, d1d(1), d1d(2), d1d(3)
@@ -250,10 +254,12 @@ contains
                    call dHpole(hpole(:,:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
                    d1a = d1a + d1d
-                   d2a = d2a + d2d
-                   d3a = d3a + d3d
-                   d4a = d4a + d4d
-                   d5a = d5a + d5d
+                   if(full)then
+                     d2a = d2a + d2d
+                     d3a = d3a + d3d
+                     d4a = d4a + d4d
+                     d5a = d5a + d5d
+                   endif
                    
                    call addDeriv(ed1, ed2, ed3, ed4, ed5, d1a, d2a, d3a, d4a, d5a, n, swFunc)
                    

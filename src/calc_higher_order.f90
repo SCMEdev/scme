@@ -12,7 +12,7 @@ module calc_higher_order
   
 contains
   
-  subroutine octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eT, dEdr, rMax2, iSlab)
+  subroutine octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eT, dEdr, rMax2, iSlab,full)
     
     implicit none
     
@@ -30,6 +30,8 @@ contains
     real(dp), intent(out)   :: uH
     real(dp), intent(out)   :: dEdr(:,:,:) !3,3,maxCoo/3
     real(dp), intent(out)   ::  eT(:,:) !3,maxCoo/3
+    
+    logical, intent(in) :: full
 
 !JÖ internal: 
     integer  i, j, k, l, NCz, nx, ny, nz !itagl(maxatoms),
@@ -112,7 +114,9 @@ contains
                    call hField(dr, r2, r9, r11, eH, hpole(:,:,:,:,j), u, dEdr1)
                    uH = uH + u
                    eT(:,i) = eT(:,i) + eH(:) * swFunc
-                   dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:) * swFunc !JÖreduced interaction order
+                   if(full)then
+                     dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:) * swFunc !JÖreduced interaction order
+                   endif
                    !
                 end do bike
              end do
