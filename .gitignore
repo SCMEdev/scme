@@ -9,3 +9,4 @@ gap/*
 *.dat
 *.xyz
 *.symlink
+reference*
