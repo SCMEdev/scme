@@ -10,14 +10,16 @@ contains !///
 SUBROUTINE main()
     integer,parameter :: xyz=3,dxyz=3,hho=3, rra=3
     real(dp) wg(xyz,hho), wi(rra)
-    real(dp) dp1(xyz,hho),dp2(xyz,hho),p(hho)
+    real(dp) dp1(xyz,hho),dp2(xyz,hho),dp3(xyz,hho),p(hho)
     real(dp) quadrupole(xyz,xyz)
     !real(dp) dQ_h1(xyz,xyz,xyz),dQ_h2(xyz,xyz,xyz),dQ_o(xyz,xyz,xyz)
     real(dp) ch1(xyz),ch2(xyz),co(xyz)
     real(dp) rMEC(xyz)
     real(dp) ang,rad,rh, oz, hx
     real(dp) :: cec(xyz,hho),cer2(hho), m(hho)
+    
     real(dp) dQ(xyz,xyz,dxyz,hho)
+    real(dp) dQ1(xyz,xyz,dxyz),dQ2(xyz,xyz,dxyz),dQo(xyz,xyz,dxyz)
     integer a,c
 
     
@@ -42,10 +44,17 @@ SUBROUTINE main()
     call printer(wg,'wg',2)
     
     call expansion_coordinates(wg,rMEC,cec,cer2)
-    call quad_charges(cec,cer2, p, dp1, dp2)
+    call quad_charges(cec,cer2, p, dp1, dp2, dp3)
     call quad_tensor(cec,cer2,p,quadrupole)
     
-    call quad_derivs(cec,cer2,p,quadrupole,m,dQ)
+    call dQ_atomic(cec,cer2,p,quadrupole,m,dQ1,1)
+    call dQ_atomic(cec,cer2,p,quadrupole,m,dQ2,2)
+    call dQ_atomic(cec,cer2,p,quadrupole,m,dQo,3)
+    
+    dQ(:,:,:,1)=dq1
+    dQ(:,:,:,2)=dq2
+    dQ(:,:,:,3)=dqo
+    
     
     do a = 1,hho
     do c = 1,xyz
@@ -68,10 +77,10 @@ print*, 'trace', matrix_trace(q0)
 END SUBROUTINE main !////////////////
 
 
-SUBROUTINE quad_charges(cec,cer2, p, dp1, dp2)
+SUBROUTINE quad_charges(cec,cer2, p, dp1, dp2,dp3)
     integer,parameter    :: xyz=3,hho=3, rra=3
     real(dp),intent(in)  :: cec(xyz,hho),cer2(hho)
-    real(dp),intent(out) :: p(hho), dp1(xyz,hho),dp2(xyz,hho)
+    real(dp),intent(out) :: p(hho), dp1(xyz,hho),dp2(xyz,hho),dp3(xyz,hho)
     real(dp) hx2
     
     !hx2=cec(1,1)**2
@@ -85,6 +94,7 @@ SUBROUTINE quad_charges(cec,cer2, p, dp1, dp2)
     
     dp1 = 0
     dp2 = 0
+    dp3 = 0
 END SUBROUTINE quad_charges!////////////
 
 
@@ -129,128 +139,57 @@ SUBROUTINE quad_tensor(cec,cer2,p,q)  !wg = global coordinates
 END SUBROUTINE
 
 ! Derivatives of the quadrupole matrix w.r.t global coordinates of atom a in a center of mass expansion
-SUBROUTINE quad_derivs(cec,cer2,p,q,m,dQ)
+SUBROUTINE dQ_atomic(cec,cer2,p,q,m,dQ,a)
     integer,parameter :: xyz=3,hho=3, dxyz=3, xy=2
     real(dp),intent(in)  :: cec(xyz,hho),cer2(hho), p(hho), q(xyz,xyz), m(hho)
-    real(dp),intent(out) ::dQ(xyz,xyz,dxyz,hho)
+    real(dp),intent(out) ::dQ(xyz,xyz,dxyz)
     !real(dp) dQ_h1(xyz,xyz,dxyz), dQ_h2(xyz,xyz,dxyz), dQ_o(xyz,xyz,dxyz)
-    integer c,a,d,od
+    integer, intent(in) :: a
+    integer c,d,od
     real(dp) mM(hho), mM1(hho)
     
-    integer k, k1,k2,kk,c1,c2 !,cs(xyz,dxyz)
-    integer, parameter,dimension(3) :: c1v=[1,1,2],c2v=[2,3,3],kv=[3,2,1] 
-    
-!        c1v(:) =[1,1,2]
-!        c2v(:) =[2,3,3]
-!        kv(:)  =[3,2,1]    
-    
-    do a = 1,hho
+    integer k, c1,c2 !,cs(xyz,dxyz)
+        
+        
+        
         
         !cm scaling
         mM(:) = m(:)/18d0
         mM1(:) = 1-mM(:)
         
+        ! on-diagonal
         do d = 1,xyz
             do c = 1,xyz
                 if(d==c)then 
-                  dQ(d,d,c,a) = 2*mM1(a)*p(a)*cec(c,a) !diagonal w.r.t same coordinate
+                  dQ(d,d,c) = 2*mM1(a)*p(a)*cec(c,a) !diagonal w.r.t same coordinate
                 else 
-                  dQ(d,d,c,a) = -mM1(a)*p(a)*cec(c,a)  !diagonal w.r.t other coordinate
+                  dQ(d,d,c) = -mM1(a)*p(a)*cec(c,a)  !diagonal w.r.t other coordinate
                 endif
             enddo
         enddo
         
+        !off-diagonal:        
+        dQ(1,2,1) = 1.5*mM1(a)*p(a)*cec(2,a)
+        dQ(1,2,2) = 1.5*mM1(a)*p(a)*cec(1,a)
+        dQ(1,2,3) = 0
+        
+        dQ(2,1,:) = dQ(1,2,:)  !symmetrize
         
         
-          
-        !off-diagonal:
+        dQ(1,3,1) = 1.5*mM1(a)*p(a)*cec(3,a)
+        dQ(1,3,3) = 1.5*mM1(a)*p(a)*cec(1,a)
+        dQ(1,3,2) = 0
         
-        !dQ(1,2,1,a) = 1.5*mM1(a)*p(a)*cec(2,a)
-        !dQ(1,2,2,a) = 1.5*mM1(a)*p(a)*cec(1,a)
-        !dQ(1,2,3,a) = 0
-        !
-        !dQ(2,1,:,a) = dQ(1,2,:,a)  !symmetrize
-        !
-        !
-        !dQ(1,3,1,a) = 1.5*mM1(a)*p(a)*cec(3,a)
-        !dQ(1,3,3,a) = 1.5*mM1(a)*p(a)*cec(1,a)
-        !dQ(1,3,2,a) = 0
-        !
-        !dQ(3,1,:,a) = dQ(1,3,:,a)  !symmetrize
-        !
-        !
-        !dQ(2,3,2,a) = 1.5*mM1(a)*p(a)*cec(3,a)
-        !dQ(2,3,3,a) = 1.5*mM1(a)*p(a)*cec(2,a)
-        !dQ(2,3,1,a) = 0
-        !
-        !dQ(3,2,:,a) = dQ(2,3,:,a)  !symmetrize
+        dQ(3,1,:) = dQ(1,3,:)  !symmetrize
         
         
-        !k=3
-        !do c1 = 1,2
-        !  do c2 = c1+1,3
-        !    
-        !    dQ(c1,c2,c2,a) = 1.5*mM1(a)*p(a)*cec(c1,a)
-        !    dQ(c1,c2,c1,a) = 1.5*mM1(a)*p(a)*cec(c2,a)
-        !    dQ(c1,c2,k,a) = 0
-        !    
-        !    
-        !    dQ(c2,c1,:,a) = dQ(c1,c2,:,a) !symmetrize
-        !    k=k-1
-        !    
-        !    
-        !  enddo
-        !enddo !equivalent to noloop
+        dQ(2,3,2) = 1.5*mM1(a)*p(a)*cec(3,a)
+        dQ(2,3,3) = 1.5*mM1(a)*p(a)*cec(2,a)
+        dQ(2,3,1) = 0
         
+        dQ(3,2,:) = dQ(2,3,:)  !symmetrize
         
-
-        
-        
-        do c = 1,dxyz
-            
-            c1 = c1v(c)
-            c2 = c2v(c)
-            k  = kv(c)
-            
-            dQ(c1,c2,c2,a) = 1.5*mM1(a)*p(a)*cec(c1,a)
-            dQ(c1,c2,c1,a) = 1.5*mM1(a)*p(a)*cec(c2,a)
-            dQ(c1,c2,k,a) = 0
-            
-            
-            dQ(c2,c1,:,a) = dQ(c1,c2,:,a) !symmetrize
-            
-            
-        enddo
-        
-        
-        !do c1 = 1,2
-        !  do c2 = c1+1,3
-        !    do k = 1,3
-        !      
-        !      if(k==c1)then
-        !      k1=c1
-        !      k2=c2
-        !      kk=1
-        !      elseif(k==c2)then
-        !      k1=c2
-        !      k2=c1
-        !      kk=1
-        !      else
-        !      k1=k
-        !      k2=1 !arbitrary
-        !      kk=0
-        !      endif
-        !      
-        !      dQ(c1,c2,k1,a) = kk*1.5*mM1(a)*p(a)*cec(k2,a)
-        !      dQ(c2,c1,k1,a) = dQ(c1,c2,k1,a) !symmetrize
-        !    enddo
-        !  enddo
-        !enddo
-        
-        
-    enddo
-    
-      
+    !enddo
 
 END SUBROUTINE
 
@@ -325,3 +264,88 @@ END PROGRAM
     !ch1= [-0.757d0, 0d0, 0d0]
     !ch2= [ 0.757d0, 0d0, 0d0]
     !co = [ 0d0  , 0d0, 0.57d0]
+
+
+!off diagonal tests:
+!        do c = 1,dxyz
+!            
+!            c1 = c1v(c)
+!            c2 = c2v(c)
+!            k  = kv(c)
+!            
+!            dQ(c1,c2,c2) = 1.5*mM1(a)*p(a)*cec(c1,a)
+!            dQ(c1,c2,c1) = 1.5*mM1(a)*p(a)*cec(c2,a)
+!            dQ(c1,c2,k) = 0
+!            
+!            
+!            dQ(c2,c1,:) = dQ(c1,c2,:,a) !symmetrize
+!            
+!            
+!        enddo
+
+        !dQ(1,2,1,a) = 1.5*mM1(a)*p(a)*cec(2,a)
+        !dQ(1,2,2,a) = 1.5*mM1(a)*p(a)*cec(1,a)
+        !dQ(1,2,3,a) = 0
+        !
+        !dQ(2,1,:,a) = dQ(1,2,:,a)  !symmetrize
+        !
+        !
+        !dQ(1,3,1,a) = 1.5*mM1(a)*p(a)*cec(3,a)
+        !dQ(1,3,3,a) = 1.5*mM1(a)*p(a)*cec(1,a)
+        !dQ(1,3,2,a) = 0
+        !
+        !dQ(3,1,:,a) = dQ(1,3,:,a)  !symmetrize
+        !
+        !
+        !dQ(2,3,2,a) = 1.5*mM1(a)*p(a)*cec(3,a)
+        !dQ(2,3,3,a) = 1.5*mM1(a)*p(a)*cec(2,a)
+        !dQ(2,3,1,a) = 0
+        !
+        !dQ(3,2,:,a) = dQ(2,3,:,a)  !symmetrize
+        
+        
+        !k=3
+        !do c1 = 1,2
+        !  do c2 = c1+1,3
+        !    
+        !    dQ(c1,c2,c2,a) = 1.5*mM1(a)*p(a)*cec(c1,a)
+        !    dQ(c1,c2,c1,a) = 1.5*mM1(a)*p(a)*cec(c2,a)
+        !    dQ(c1,c2,k,a) = 0
+        !    
+        !    
+        !    dQ(c2,c1,:,a) = dQ(c1,c2,:,a) !symmetrize
+        !    k=k-1
+        !    
+        !    
+        !  enddo
+        !enddo !equivalent to noloop
+        
+        
+
+        
+        
+        
+        
+        !do c1 = 1,2
+        !  do c2 = c1+1,3
+        !    do k = 1,3
+        !      
+        !      if(k==c1)then
+        !      k1=c1
+        !      k2=c2
+        !      kk=1
+        !      elseif(k==c2)then
+        !      k1=c2
+        !      k2=c1
+        !      kk=1
+        !      else
+        !      k1=k
+        !      k2=1 !arbitrary
+        !      kk=0
+        !      endif
+        !      
+        !      dQ(c1,c2,k1,a) = kk*1.5*mM1(a)*p(a)*cec(k2,a)
+        !      dQ(c2,c1,k1,a) = dQ(c1,c2,k1,a) !symmetrize
+        !    enddo
+        !  enddo
+        !enddo
