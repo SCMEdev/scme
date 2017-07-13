@@ -138,7 +138,8 @@ SUBROUTINE quad_tensor(cec,cer2,p,q)  !wg = global coordinates
     
 END SUBROUTINE
 
-! Derivatives of the quadrupole matrix w.r.t global coordinates of atom a in a center of mass expansion
+
+
 SUBROUTINE dQ_atomic(cec,cer2,p,q,m,dQ,a)
     integer,parameter :: xyz=3,hho=3, dxyz=3, xy=2
     real(dp),intent(in)  :: cec(xyz,hho),cer2(hho), p(hho), q(xyz,xyz), m(hho)
@@ -149,42 +150,47 @@ SUBROUTINE dQ_atomic(cec,cer2,p,q,m,dQ,a)
     real(dp) mM(hho), mM1(hho)
     
     integer k, c1,c2 !,cs(xyz,dxyz)
-        
+        real(dp) ceca(xyz), pa,prea
         
         
         
         !cm scaling
-        mM(:) = m(:)/18d0
-        mM1(:) = 1-mM(:)
+        
+        
+        prea= 1-m(a)/18d0
+        ceca(:)=cec(:,a)
+        pa=p(a)
+        
+        
         
         ! on-diagonal
         do d = 1,xyz
             do c = 1,xyz
                 if(d==c)then 
-                  dQ(d,d,c) = 2*mM1(a)*p(a)*cec(c,a) !diagonal w.r.t same coordinate
+                  dQ(d,d,c) = 2*prea*pa*ceca(c) !diagonal w.r.t same coordinate
                 else 
-                  dQ(d,d,c) = -mM1(a)*p(a)*cec(c,a)  !diagonal w.r.t other coordinate
+                  dQ(d,d,c) = -prea*pa*ceca(c)  !diagonal w.r.t other coordinate
                 endif
             enddo
         enddo
         
         !off-diagonal:        
-        dQ(1,2,1) = 1.5*mM1(a)*p(a)*cec(2,a)
-        dQ(1,2,2) = 1.5*mM1(a)*p(a)*cec(1,a)
+        dQ(1,2,1) = 1.5*prea*pa*ceca(2)
+        dQ(1,2,2) = 1.5*prea*pa*ceca(1)
         dQ(1,2,3) = 0
         
         dQ(2,1,:) = dQ(1,2,:)  !symmetrize
         
         
-        dQ(1,3,1) = 1.5*mM1(a)*p(a)*cec(3,a)
-        dQ(1,3,3) = 1.5*mM1(a)*p(a)*cec(1,a)
+        dQ(1,3,1) = 1.5*prea*pa*ceca(3)
+        dQ(1,3,3) = 1.5*prea*pa*ceca(1)
         dQ(1,3,2) = 0
         
         dQ(3,1,:) = dQ(1,3,:)  !symmetrize
         
         
-        dQ(2,3,2) = 1.5*mM1(a)*p(a)*cec(3,a)
-        dQ(2,3,3) = 1.5*mM1(a)*p(a)*cec(2,a)
+        dQ(2,3,2) = 1.5*prea*pa*ceca(3)
+        dQ(2,3,3) = 1.5*prea*pa*ceca(2)
         dQ(2,3,1) = 0
         
         dQ(3,2,:) = dQ(2,3,:)  !symmetrize
@@ -349,3 +355,58 @@ END PROGRAM
         !    enddo
         !  enddo
         !enddo
+
+!! Derivatives of the quadrupole matrix w.r.t global coordinates of atom a in a center of mass expansion
+!SUBROUTINE dQ_atomic__const_charge(cec,cer2,p,q,m,dQ,a)
+!    integer,parameter :: xyz=3,hho=3, dxyz=3, xy=2
+!    real(dp),intent(in)  :: cec(xyz,hho),cer2(hho), p(hho), q(xyz,xyz), m(hho)
+!    real(dp),intent(out) ::dQ(xyz,xyz,dxyz)
+!    !real(dp) dQ_h1(xyz,xyz,dxyz), dQ_h2(xyz,xyz,dxyz), dQ_o(xyz,xyz,dxyz)
+!    integer, intent(in) :: a
+!    integer c,d,od
+!    real(dp) mM(hho), mM1(hho)
+!    
+!    integer k, c1,c2 !,cs(xyz,dxyz)
+!        
+!        
+!        
+!        
+!        !cm scaling
+!        mM(:) = m(:)/18d0
+!        mM1(:) = 1-mM(:)
+!        
+!        ! on-diagonal
+!        do d = 1,xyz
+!            do c = 1,xyz
+!                if(d==c)then 
+!                  dQ(d,d,c) = 2*mM1(a)*p(a)*cec(c,a) !diagonal w.r.t same coordinate
+!                else 
+!                  dQ(d,d,c) = -mM1(a)*p(a)*cec(c,a)  !diagonal w.r.t other coordinate
+!                endif
+!            enddo
+!        enddo
+!        
+!        !off-diagonal:        
+!        dQ(1,2,1) = 1.5*mM1(a)*p(a)*cec(2,a)
+!        dQ(1,2,2) = 1.5*mM1(a)*p(a)*cec(1,a)
+!        dQ(1,2,3) = 0
+!        
+!        dQ(2,1,:) = dQ(1,2,:)  !symmetrize
+!        
+!        
+!        dQ(1,3,1) = 1.5*mM1(a)*p(a)*cec(3,a)
+!        dQ(1,3,3) = 1.5*mM1(a)*p(a)*cec(1,a)
+!        dQ(1,3,2) = 0
+!        
+!        dQ(3,1,:) = dQ(1,3,:)  !symmetrize
+!        
+!        
+!        dQ(2,3,2) = 1.5*mM1(a)*p(a)*cec(3,a)
+!        dQ(2,3,3) = 1.5*mM1(a)*p(a)*cec(2,a)
+!        dQ(2,3,1) = 0
+!        
+!        dQ(3,2,:) = dQ(2,3,:)  !symmetrize
+!        
+!    !enddo
+!
+!END SUBROUTINE
