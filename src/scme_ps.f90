@@ -150,6 +150,8 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) :: xyz_hho(3,3,n_atoms/3) !xyz,hho,nM
     real(dp) :: xa_forces(3,3,n_atoms/3) !xyz,hho,nM
     
+    logical, parameter :: USE_PS_PES = .true.!.false.!
+    
     integer ia
     
     logical full
@@ -302,28 +304,29 @@ tprint(d4v, 'd4v',s)
     call oxygen_dispersion(xyz_hho, xa_forces, uDisp, nM, a, a2) !uDisp created here
     
     
-    !// Partridge-Schwenke PES /////////////////////////////////////////
-    u_ps=0
-    do m=1,nM
-       
-       call vibpes(xyz_hho(:,:,m),ps_pes,ps_grad)!,ps_pes) *A2b
-       
-       u_ps = u_ps + ps_pes
-       
-       xa_forces(:,:,m) = xa_forces(:,:,m) - ps_grad
-       
-    end do
-    
-    !// Output /////////////////////////////////////////////////////////
-    u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
-    !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
-    
-    do m = 1,nM
-      do ia = 1,3 !o,h,h
-        hho_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
-      enddo
-    enddo
-    
+    if(USE_PS_PES)then
+        !// Partridge-Schwenke PES /////////////////////////////////////////
+        u_ps=0
+        do m=1,nM
+           
+           call vibpes(xyz_hho(:,:,m),ps_pes,ps_grad)!,ps_pes) *A2b
+           
+           u_ps = u_ps + ps_pes
+           
+           xa_forces(:,:,m) = xa_forces(:,:,m) - ps_grad
+           
+        end do
+        
+        !// Output /////////////////////////////////////////////////////////
+        u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
+        !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
+        
+        do m = 1,nM
+          do ia = 1,3 !o,h,h
+            hho_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
+          enddo
+        enddo
+    endif!(USE_PS_PES)
 
     
     
