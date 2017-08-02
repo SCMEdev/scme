@@ -65,7 +65,7 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot)!,dip_perm,dip_ind)
+  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot,in_FULL,in_USE_REP,in_USE_PS_PES)!,dip_perm,dip_ind)
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -86,6 +86,20 @@ contains !//////////////////////////////////////////////////////////////
     ! Parameter flags for controlling behavior.
     logical*1, parameter :: iSlab = .false.
     logical*1, save :: converged
+    !logical, parameter :: USE_PS_PES = .true. !.false.! 
+    !logical, parameter :: FULL = .false. !.true.! 
+    !logical, parameter :: USE_REP = .true.!.false.!
+    
+    ! // optional arguments
+    
+    logical, intent(in), optional :: in_FULL != .false. !.true.! 
+    logical, intent(in), optional :: in_USE_REP != .true.!.false.!
+    logical, intent(in), optional :: in_USE_PS_PES != .true.!.false.!
+    
+    logical :: FULL 
+    logical :: USE_REP 
+    logical :: USE_PS_PES
+    
 
     ! Local variables for energies.
     real(dp), save :: uQ, uH, uES, uDisp, uD, uCore
@@ -150,16 +164,25 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) :: xyz_hho(3,3,n_atoms/3) !xyz,hho,nM
     real(dp) :: xa_forces(3,3,n_atoms/3) !xyz,hho,nM
     
-    logical, parameter :: USE_PS_PES = .true.!.false.!
     
     integer ia
     
-    logical full
+    
+    real(dp) a_oo, b_oo, u_rep, rr_ox(3), r_ox
+    integer ox1, ox2
+    
     
     integer :: s !transposing
     s=2
     
-    full=.false.!.true.
+    FULL=.true.
+    USE_REP=.false.
+    USE_PS_PES=.true.
+    
+    if(present(in_FULL))FULL=in_FULL
+    if(present(in_USE_REP))USE_REP=in_USE_REP
+    if(present(in_USE_PS_PES))USE_PS_PES=in_USE_PS_PES
+    
     
     !// Routine Starts /////////////////////////////////////////////////
     
@@ -229,7 +252,7 @@ tprint(x,'x',s)
     
      !/ Compute the electric field (F) and gradient (dF) for the static octupole and hexadecapole
      ! why dont we induce those, we have the polarizabilities!?
-     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,full) 
+     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
      ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
      
      
@@ -257,7 +280,7 @@ tprint(x,'x',s)
     !dip_ind=dpole
     
     !/ Compute filed gradients of the electric fields, to 5th order
-    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,full)
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
 
 tprint(d1v, 'd1v',s)
 tprint(d2v, 'd2v',s)
@@ -316,19 +339,33 @@ tprint(d4v, 'd4v',s)
            xa_forces(:,:,m) = xa_forces(:,:,m) - ps_grad
            
         end do
-        
-        !// Output /////////////////////////////////////////////////////////
-        u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
-        !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
-        
-        do m = 1,nM
-          do ia = 1,3 !o,h,h
-            hho_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
-          enddo
-        enddo
     endif!(USE_PS_PES)
+    
+    !// Output /////////////////////////////////////////////////////////
+    u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
+    !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
+    
+    do m = 1,nM
+      do ia = 1,3 !o,h,h
+        hho_fa(:,(m-1)*3+ia) = xa_forces(:,ia,m)
+      enddo
+    enddo
 
     
+    !// Add repulsion
+    if(USE_REP)then
+        a_oo = 8.2452752
+        b_oo = 3.47752327
+        u_rep = 0
+        do ox1 = 1,nM-1
+           do ox2 = ox1+1,nM
+               rr_ox = xyz_hho(:,3,ox1) - xyz_hho(:,3,ox2)
+               r_ox = sqrt( sum(rr_ox**2) )
+               u_rep = u_rep + dexp (a_oo - b_oo*r_ox)
+           enddo
+        enddo
+    u_tot = u_tot + u_rep      !Repulsion energy
+    endif!(USE_REP)
     
     
     !// Debug output ///////////////////////////////////////////////////!(pipe to file, diff to see change, comment to mute)
