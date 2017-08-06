@@ -65,7 +65,7 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot,in_FULL,in_USE_REP,in_USE_PS_PES)!,dip_perm,dip_ind)
+  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot,  USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP)
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -86,19 +86,8 @@ contains !//////////////////////////////////////////////////////////////
     ! Parameter flags for controlling behavior.
     logical*1, parameter :: iSlab = .false.
     logical*1, save :: converged
-    !logical, parameter :: USE_PS_PES = .true. !.false.! 
-    !logical, parameter :: FULL = .false. !.true.! 
-    !logical, parameter :: USE_REP = .true.!.false.!
+
     
-    ! // optional arguments
-    
-    logical, intent(in), optional :: in_FULL != .false. !.true.! 
-    logical, intent(in), optional :: in_USE_REP != .true.!.false.!
-    logical, intent(in), optional :: in_USE_PS_PES != .true.!.false.!
-    
-    logical :: FULL 
-    logical :: USE_REP 
-    logical :: USE_PS_PES
     
 
     ! Local variables for energies.
@@ -171,17 +160,39 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) a_oo, b_oo, u_rep, rr_ox(3), r_ox
     integer ox1, ox2
     
+    integer, parameter :: xyz = 3
+    integer combi, m1, m2
+    real(dp) rr_oo(xyz), rr_oh(xyz,4), rr_hh(xyz,4), r_oo, r_oh, r_hh, aa_hh, aa_oh, aa_oo, A_oh, A_hh
     
     integer :: s !transposing
+    
+    
+    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP
+    logical ::                      PES , FULL , OO_REP   , ALL_REP
+    
+    
+    !Default optional arguments
+    PES=.true.
+    FULL=.true.
+    OO_REP=.false.
+    ALL_REP=.false.
+    
+    
+    if(present(USE_PS_PES))     PES       = USE_PS_PES
+    if(present(USE_FULL_RANK))  FULL         = USE_FULL_RANK
+    if(present(USE_OO_REP))     OO_REP       = USE_OO_REP
+    if(present(USE_ALL_REP))    ALL_REP      = USE_ALL_REP
+    
+    
+    
+    
+    
+    
+    
+    
     s=2
     
-    FULL=.true.
-    USE_REP=.false.
-    USE_PS_PES=.true.
     
-    if(present(in_FULL))FULL=in_FULL
-    if(present(in_USE_REP))USE_REP=in_USE_REP
-    if(present(in_USE_PS_PES))USE_PS_PES=in_USE_PS_PES
     
     
     !// Routine Starts /////////////////////////////////////////////////
@@ -327,7 +338,7 @@ tprint(d4v, 'd4v',s)
     call oxygen_dispersion(xyz_hho, xa_forces, uDisp, nM, a, a2) !uDisp created here
     
     
-    if(USE_PS_PES)then
+    if(PES)then
         !// Partridge-Schwenke PES /////////////////////////////////////////
         u_ps=0
         do m=1,nM
@@ -353,19 +364,109 @@ tprint(d4v, 'd4v',s)
 
     
     !// Add repulsion
-    if(USE_REP)then
-        a_oo = 8.2452752
-        b_oo = 3.47752327
+
+!        a_oo = 8.23041822482709224512_dp !fitted to full rank interactions
+!        b_oo = 3.48317298891623838841_dp
+
+!        a_oo = 8.28581239473008496178_dp !fitted to reduced rank interactions
+!        b_oo = 3.49709147777022710812_dp
+
+    if(OO_REP)then
+        
+        if(FULL)then
+          a_oo = 2872.579_dp!<full
+          b_oo = 3.387391_dp!<full       !3.384538_dp
+        else
+          !stop"put in the fitting parameters for full rank OO repulsion"
+          a_oo = 2872.579
+          b_oo = 3.387391
+        endif
+        
         u_rep = 0
         do ox1 = 1,nM-1
            do ox2 = ox1+1,nM
                rr_ox = xyz_hho(:,3,ox1) - xyz_hho(:,3,ox2)
-               r_ox = sqrt( sum(rr_ox**2) )
-               u_rep = u_rep + dexp (a_oo - b_oo*r_ox)
+               r_ox = dsqrt( sum(rr_ox**2) )
+               u_rep = u_rep + a_oo*dexp (- b_oo*r_ox)
            enddo
         enddo
-    u_tot = u_tot + u_rep      !Repulsion energy
-    endif!(USE_REP)
+        u_tot = u_tot + u_rep      !Repulsion energy
+    elseif(ALL_REP)then
+        
+        if(FULL)then
+          A_hh =  18.87599_dp !<full
+          A_oh =  3658.516_dp !<full
+          A_oo =  2342.881_dp !<full
+          aa_hh =  3.71965_dp !<full
+          aa_oh =  6.59638_dp !<full
+          aa_oo = 3.348177_dp !<full
+        else
+          A_hh =  13.87612_dp! 7.851853_dp!  !<redu
+          A_oh =  2700.478_dp! 326.0703_dp!  !<redu
+          A_oo =  2191.782_dp! 1381.591_dp!  !<redu
+          aa_hh = 3.595182_dp!   2.8051_dp!  !<redu 
+          aa_oh = 6.272737_dp! 4.854904_dp!  !<redu
+          aa_oo = 3.322673_dp! 3.192549_dp!  !<redu
+        endif
+ 
+
+
+
+
+
+
+
+ 
+ 
+        
+        !yy  = A_oo*dexp( -      aa_oo*d_oo) 
+        !yy = yy + A_oh*dexp( -  aa_oh*d_oh1)
+        !yy = yy + A_oh*dexp( -  aa_oh*d_oh2)
+        !yy = yy + A_oh*dexp( -  aa_oh*d_h1o)
+        !yy = yy + A_oh*dexp( -  aa_oh*d_h2o)
+        !yy = yy + A_hh*dexp( -  aa_hh*d_h1h1)
+        !yy = yy + A_hh*dexp( -  aa_hh*d_h1h2)
+        !yy = yy + A_hh*dexp( -  aa_hh*d_h2h1)
+        !yy = yy + A_hh*dexp( -  aa_hh*d_h2h2)        
+        
+        u_rep = 0
+        do m1 = 1,nM-1
+           do m2 = m1+1,nM
+               rr_oo(:  ) = xyz_hho(:,3,m1) - xyz_hho(:,3,m2)
+               rr_oh(:,1) = xyz_hho(:,3,m1) - xyz_hho(:,1,m2)
+               rr_oh(:,2) = xyz_hho(:,3,m1) - xyz_hho(:,2,m2)
+               rr_oh(:,3) = xyz_hho(:,1,m1) - xyz_hho(:,3,m2)
+               rr_oh(:,4) = xyz_hho(:,2,m1) - xyz_hho(:,3,m2)
+               rr_hh(:,1) = xyz_hho(:,1,m1) - xyz_hho(:,1,m2)
+               rr_hh(:,2) = xyz_hho(:,1,m1) - xyz_hho(:,2,m2)
+               rr_hh(:,3) = xyz_hho(:,2,m1) - xyz_hho(:,1,m2)
+               rr_hh(:,4) = xyz_hho(:,2,m1) - xyz_hho(:,2,m2)
+               
+               r_oo = dsqrt(sum(rr_oo(:)**2))
+               
+               u_rep = u_rep + A_oo*dexp (- aa_oo*r_oo)
+               
+               do combi = 1,4
+                   r_oh = dsqrt(sum(rr_oh(:,combi)**2))
+                   r_hh = dsqrt(sum(rr_hh(:,combi)**2))
+                   
+                   u_rep = u_rep + A_oh*dexp (- aa_oh*r_oh)
+                   u_rep = u_rep + A_hh*dexp (- aa_hh*r_hh)
+                   
+               enddo
+               
+           enddo
+        enddo
+        u_tot = u_tot + u_rep      !Repulsion energy
+     endif
+        
+        
+        
+        
+        
+        
+        
+        
     
     
     !// Debug output ///////////////////////////////////////////////////!(pipe to file, diff to see change, comment to mute)
