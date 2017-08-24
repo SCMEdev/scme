@@ -58,14 +58,16 @@ module scme
   use printer_mod, only: printer, xyz_hho_to_linear !printer_h2o_linear, !, h2o_to_linear
   
   use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, get_cm,force_and_torque_on_atoms,create_xyz_hho_new !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, !, create_xyz_hho
-
+  
+  use qpole, only: get_quadrupoles, expansion_coordinates
+  
   implicit none
   private
   public scme_calculate
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot,  USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP)
+  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot,  USE_PS_PES, USE_FULL_RANK, USE_OO_REP, USE_ALL_REP, USE_VAR_QUAD) 
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -160,15 +162,16 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) a_oo, b_oo, u_rep, rr_ox(3), r_ox
     integer ox1, ox2
     
-    integer, parameter :: xyz = 3
+    integer, parameter :: xyz = 3, hho = 3, rra = 3 !to keep track of indices
     integer combi, m1, m2
     real(dp) rr_oo(xyz), rr_oh(xyz,4), rr_hh(xyz,4), r_oo, r_oh, r_hh, aa_hh, aa_oh, aa_oo, A_oh, A_hh
     
     integer :: s !transposing
     
+    real(dp) :: cec(xyz,hho,n_atoms/3),cer2(hho,n_atoms/3), rCE(xyz,n_atoms/3)
     
-    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP
-    logical ::                      PES , FULL , OO_REP   , ALL_REP
+    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD
+    logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD
     
     
     !Default optional arguments
@@ -176,12 +179,14 @@ contains !//////////////////////////////////////////////////////////////
     FULL=.true.
     OO_REP=.false.
     ALL_REP=.false.
+    VAR_QUAD=.false.
     
     
-    if(present(USE_PS_PES))     PES       = USE_PS_PES
+    if(present(USE_PS_PES))     PES          = USE_PS_PES
     if(present(USE_FULL_RANK))  FULL         = USE_FULL_RANK
     if(present(USE_OO_REP))     OO_REP       = USE_OO_REP
     if(present(USE_ALL_REP))    ALL_REP      = USE_ALL_REP
+    if(present(USE_VAR_QUAD))   VAR_QUAD     = USE_VAR_QUAD
     
     
     
@@ -220,12 +225,17 @@ contains !//////////////////////////////////////////////////////////////
     call recoverMolecules_new(coords, ra, nM, a, a2) !JÖ rw
     call create_xyz_hho_new(ra,xyz_hho,nM)
     
-tprint(coords, 'coords',s)    
-tprint(ra, 'ra',s)    
-tprint(xyz_hho, 'xyz_hho',s)    
+!tprint(coords, 'coords',s)    
+!tprint(ra, 'ra',s)    
+!tprint(xyz_hho, 'xyz_hho',s)    
     
     ! compute centers of mass (cm)
     call get_cm(xyz_hho,rCM,nM)
+    call expansion_coordinates(xyz_hho,rCE,cec,cer2,nM)
+    
+    
+    
+tprint(rCE, 'rCE',s)    
     
 tprint(rCM, 'rCM',s)    
 
@@ -252,6 +262,13 @@ tprint(x,'x',s)
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
     call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
+
+tprint(qpole0,'qpole0 old',s)    
+    
+    if(USE_VAR_QUAD) call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
+    
+    
+tprint(qpole0,'qpole0 new',s)    
     
     !/ Save first reference value of dipole and quadrupole before the "induction loop"
     !call setUnpolPoles(dpole, qpole, dpole0, qpole0, nM)
@@ -293,10 +310,10 @@ tprint(x,'x',s)
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
 
-tprint(d1v, 'd1v',s)
-tprint(d2v, 'd2v',s)
-tprint(d3v, 'd3v',s)
-tprint(d4v, 'd4v',s)
+!tprint(d1v, 'd1v',s)
+!tprint(d2v, 'd2v',s)
+!tprint(d3v, 'd3v',s)
+!tprint(d4v, 'd4v',s)
 !tprint(d5v, 'd5v',s)
     !/ Compute the forces on the centers of mass
     call forceCM(dpole, qpole, opole, hpole, d2v, d3v, d4v, d5v, nM, fsf, fCM)
@@ -401,14 +418,29 @@ tprint(d4v, 'd4v',s)
           aa_oh =  6.59638_dp !<full
           aa_oo = 3.348177_dp !<full
         else
-          A_hh =  13.87612_dp! 7.851853_dp!  !<redu
-          A_oh =  2700.478_dp! 326.0703_dp!  !<redu
-          A_oo =  2191.782_dp! 1381.591_dp!  !<redu
-          aa_hh = 3.595182_dp!   2.8051_dp!  !<redu 
-          aa_oh = 6.272737_dp! 4.854904_dp!  !<redu
-          aa_oo = 3.322673_dp! 3.192549_dp!  !<redu
+          if(VAR_QUAD)then
+            A_hh  = 3.245391_dp ! 
+            A_oh  = 2873.137_dp ! 
+            A_oo  =  2304.67_dp ! 
+            aa_hh = 2.832741_dp ! 
+            aa_oh = 6.104925_dp ! 
+            aa_oo = 3.338482_dp ! 
+          else
+            A_hh =  13.87612_dp! 7.851853_dp!  !<redu
+            A_oh =  2700.478_dp! 326.0703_dp!  !<redu
+            A_oo =  2191.782_dp! 1381.591_dp!  !<redu
+            aa_hh = 3.595182_dp!   2.8051_dp!  !<redu 
+            aa_oh = 6.272737_dp! 4.854904_dp!  !<redu
+            aa_oo = 3.322673_dp! 3.192549_dp!  !<redu
+          endif
         endif
  
+
+
+
+
+
+
 
 
 
