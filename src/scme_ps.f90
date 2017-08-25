@@ -67,7 +67,16 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, coords, lattice, hho_fa, u_tot,  USE_PS_PES, USE_FULL_RANK, USE_OO_REP, USE_ALL_REP, USE_VAR_QUAD) 
+  subroutine scme_calculate(n_atoms, &
+                            coords, &
+                            lattice, &
+                            hho_fa, &
+                            u_tot, &
+                            USE_PS_PES, &
+                            USE_FULL_RANK, &
+                            USE_OO_REP, &
+                            USE_ALL_REP, &
+                            USE_VAR_QUAD) 
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -265,7 +274,7 @@ tprint(x,'x',s)
 
 tprint(qpole0,'qpole0 old',s)    
     
-    if(USE_VAR_QUAD) call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
+    if(VAR_QUAD) call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
     
     
 tprint(qpole0,'qpole0 new',s)    

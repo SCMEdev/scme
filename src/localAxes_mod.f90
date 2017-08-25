@@ -114,7 +114,7 @@ subroutine force_and_torque_on_atoms(tau,fCM,w,f,rCM)
  !type(h2o), intent(inout) :: f
  real(dp) :: txr(3,aim), r(3,aim), ft(3,aim), ff(3,aim)
  real(dp) :: I(aim), Itot, t2
- real(dp), parameter :: m(3) = [1.0_dp, 1.0_dp, 16.0_dp], Mm = sum(m) !are these in the right units??? does i matter? dont think so
+ real(dp), parameter :: m(3) = [1.0_dp, 1.0_dp, 16.0_dp], Mm = m(1)+m(2)+m(3)![j sum(m) didn't work with flang] !are these in the right units??? does i matter? dont think so
  integer a
  
    t2 = norm_square(tau) !length square of torque

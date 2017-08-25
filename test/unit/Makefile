@@ -8,7 +8,7 @@ b := build
 
 
 FC = gfortran
-FFLAGS = -O0 -cpp -I$(scme_build) -J$b
+FFLAGS = -O0 -cpp -I$(scme_build) -J$b $(comline)
 #-pg
 #-fopenmp
 ## flags for home:
