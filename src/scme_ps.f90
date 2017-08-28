@@ -61,6 +61,8 @@ module scme
   
   use qpole, only: get_quadrupoles, expansion_coordinates
   
+  use opole, only: octupole_tensor
+  
   implicit none
   private
   public scme_calculate

@@ -35,7 +35,7 @@ OBJ = $(addprefix $b/, \
 	inducePoles.o \
 	molecProperties.o \
 	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
-	localAxes_mod.o qpole.o)
+	localAxes_mod.o qpole.o opole.o)
 	
 #	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o parameters.o constants.o molforce.o mdutil.o 	atomicForces_mod.o \
 
@@ -69,6 +69,7 @@ clean:
 
 #/// Dependencies
 
+
 $b/qpole.o\
 $b/localAxes_mod.o:\
 $b/printer_mod.o 
@@ -101,7 +102,10 @@ $b/force_torqueCM.o \
 $b/localAxes_mod.o \
 $s/debug.h\
 $b/qpole.o\
+$b/opole.o\
 
+
+$b/opole.o\
 $b/qpole.o\
 $b/localAxes_mod.o \
 $b/molecProperties.o	\
