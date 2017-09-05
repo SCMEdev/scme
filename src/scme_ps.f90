@@ -61,7 +61,7 @@ module scme
   
   use qpole, only: get_quadrupoles, expansion_coordinates
   
-  use opole, only: octupole_tensor
+  use opole, only: get_octupoles
   
   implicit none
   private
@@ -143,7 +143,7 @@ contains !//////////////////////////////////////////////////////////////
     ! Multipoles (0 referes to the unpolarized di- and quadrupole)
     real(dp) :: dpole(3,n_atoms/3)      ,dpole0(3,n_atoms/3)
     real(dp) :: qpole(3,3,n_atoms/3)    ,qpole0(3,3,n_atoms/3)
-    real(dp) :: opole(3,3,3,n_atoms/3)
+    real(dp) :: opole(3,3,3,n_atoms/3),                            opole_orig(3,3,3,n_atoms/3) ! for testing
     real(dp) :: hpole(3,3,3,3,n_atoms/3)
 
     ! Polarizabilities (defined in polariz_parameters)
@@ -273,13 +273,19 @@ tprint(x,'x',s)
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
     call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
+    opole_orig = opole
+    
+    !if(VAR_QUAD) 
+    call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
+    call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
+    
+    !opole = opole_orig
 
-tprint(qpole0,'qpole0 old',s)    
-    
-    if(VAR_QUAD) call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
-    
-    
-tprint(qpole0,'qpole0 new',s)    
+!tprint(qpole0,'qpole0 old',s)    
+
+tprint(opole,'opole',s)
+tprint(opole_orig,'opole_orig',s)    
+tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)    
     
     !/ Save first reference value of dipole and quadrupole before the "induction loop"
     !call setUnpolPoles(dpole, qpole, dpole0, qpole0, nM)

@@ -65,4 +65,34 @@ subroutine octupole_tensor(cec,cer2,charges,oct)
     
 end subroutine
 
+subroutine octupole_charges(cec,cer2,charges)
+    integer, parameter    :: xyz=3,hho=3
+    real(dp), intent(in)  :: cec(xyz,hho),cer2(hho)
+    real(dp), intent(out) :: charges(hho)
+    
+    charges = [ 0.45874068338048468_dp, 0.45874068338048468_dp, 3.5561989864075145_dp ] !hho
+end subroutine
+
+subroutine get_octupoles(cec,cer2,oct,nM)
+    integer, intent(in)   :: nM
+    integer, parameter    :: xyz=3,hho=3
+    real(dp), intent(in)  :: cec(xyz,hho,nM),cer2(hho,nM)
+    real(dp), intent(out) :: oct(xyz,xyz,xyz,nM)
+    !internal:
+    real(dp) :: one_cec(xyz,hho), one_cer2(hho), one_oct(xyz,xyz,xyz), charges(hho)
+    integer m
+    
+    do m = 1,nM
+      one_cec  = cec(:,:,m) !single <- all
+      one_cer2 = cer2(:,m)  !single <- all
+      
+      call octupole_charges(one_cec,one_cer2,charges)
+      call octupole_tensor(one_cec,cer2,charges,one_oct)
+      
+      oct(:,:,:,m) = one_oct !all <- single
+      
+    enddo
+    
+end subroutine
+
 end module
