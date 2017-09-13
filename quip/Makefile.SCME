@@ -43,7 +43,7 @@ SCME_OBJECTS = \
 	inducePoles.o \
 	molecProperties.o \
 	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
-	localAxes_mod.o qpole.o\
+	localAxes_mod.o qpole.o opole.o \
 	
 	
 ## <<<<<<<
@@ -81,12 +81,14 @@ printer_mod.o \
 sf_disp_tangtoe.o \
 force_torqueCM.o \
 localAxes_mod.o \
-qpole.o\
+qpole.o \
+opole.o \
 
 
 # most dep. on data_types
 
-qpole.o\
+opole.o \
+qpole.o \
 localAxes_mod.o \
 molecProperties.o	\
 calc_derivs.o		\

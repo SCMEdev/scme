@@ -11,16 +11,20 @@ contains !/////////////////
 
 
 subroutine octupole_tensor(cec,cer2,charges,oct)
-    integer, parameter   :: xyz=3,hho=3
-    real(dp), intent(in) :: cec(xyz,hho),cer2(hho),charges(hho)
+    !integer, parameter   :: xyz=3,hho=3
+    !real(dp), intent(in) :: cec(xyz,hho),cer2(hho),charges(hho)
+    integer, parameter   :: xyz=3
+    real(dp), intent(in) :: cec(:,:),cer2(:),charges(:) !xyz,sites;sites;sites
     real(dp), intent(out) :: oct(xyz,xyz,xyz)
     ! internal:
     real(dp) ch05
     integer i
+    integer nsites
+    nsites = size(charges)
     
     ! _linearly_indipendent_ octupole components added up from each charge site
     oct=0
-    do i = 1,hho 
+    do i = 1,nsites!hho 
       ch05 = charges(i)*0.5_dp
       oct(1,1,1) = oct(1,1,1) + ch05*( 5_dp*cec(1,i)**3 - cer2(i)*(3*cec(1,i)) )
       oct(2,2,2) = oct(2,2,2) + ch05*( 5_dp*cec(2,i)**3 - cer2(i)*(3*cec(2,i)) )
@@ -87,7 +91,7 @@ subroutine get_octupoles(cec,cer2,oct,nM)
       one_cer2 = cer2(:,m)  !single <- all
       
       call octupole_charges(one_cec,one_cer2,charges)
-      call octupole_tensor(one_cec,cer2,charges,one_oct)
+      call octupole_tensor(one_cec,one_cer2,charges,one_oct)
       
       oct(:,:,:,m) = one_oct !all <- single
       
