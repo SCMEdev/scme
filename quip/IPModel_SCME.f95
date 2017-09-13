@@ -68,6 +68,7 @@ type IPModel_SCME
   !integer, allocatable :: atomic_num(:), type_of_atomic_num(:)
 
   real(dp) :: cutoff = 0.0_dp
+  logical :: full_interaction_order, use_repulsion, use_PS_PES, use_super_repulsion,use_variable_quadrupole
 
   character(len=STRING_LENGTH) :: label
 
@@ -105,13 +106,18 @@ subroutine IPModel_SCME_Initialise_str(this, args_str, param_str)
   call initialise(params)
   this%label=''
   call param_register(params, 'label', '', this%label, help_string="No help yet.  This source file was $LastChangedBy$")
+  call param_register(params, 'full_interaction_order', 'T', this%full_interaction_order, help_string="Whether to truncate the interaction order calculation at 5th order")
+  call param_register(params, 'use_repulsion', 'F', this%use_repulsion, help_string="Whether to use repulsion in SCME")
+  call param_register(params, 'use_super_repulsion', 'F', this%use_super_repulsion, help_string="Whether to use improved all-atom repulsion in SCME")
+  call param_register(params, 'use_PS_PES', 'T', this%use_PS_PES, help_string="Whether to use the PS potential energy surface")
+  call param_register(params, 'use_variable_quadrupole', 'F', this%use_variable_quadrupole, help_string="Whether to use the geometry dependent quadrupole")
   if (.not. param_read_line(params, args_str, ignore_unknown=.true.,task='IPModel_SCME_Initialise_str args_str')) then
     call system_abort("IPModel_SCME_Initialise_str failed to parse label from args_str="//trim(args_str))
   endif
   call finalise(params)
 
-  if( trim(this%label) /= "version_20160315" ) then
-     call system_abort("IPModel_SCME_Initialise_str: SCME with updated parameters/damping. Make sure your potential is compatible. Proceed with caution, email Albert for instructions.")
+  if( trim(this%label) /= "version_20170802" ) then
+     call system_abort("IPModel_SCME_Initialise_str: SCME with updated parameters/damping. Make sure your potential is compatible. Proceed with caution, email Albert for instructions if in doubt.")
   endif
   !call IPModel_SCME_read_params_xml(this, param_str)
   this%cutoff = 2.0_dp
@@ -170,7 +176,7 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
    endif
    
    if (present(f)) then
-   !   RAISE_ERROR('IPModel_SCME_Calc - forces not implemented',error)
+      RAISE_ERROR('IPModel_SCME_Calc - forces not implemented',error)
       call check_size('Force',f,(/3,at%Nbuffer/),'IPModel_SCME_Calc', error)
       f = 0.0_dp
    end if
@@ -219,7 +225,8 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
  
 #ifdef HAVE_SCME
    !call scme_calculate(at%N,raOri, lattice, fa, uTot)
-   call scme_calculate(at%N,coords, lattice, fa, uTot)
+   call scme_calculate(at%N,coords, lattice, fa, uTot, USE_PS_PES=this%use_PS_PES, USE_FULL_RANK=this%full_interaction_order, &
+           USE_OO_REP=this%use_repulsion, USE_ALL_REP=this%use_super_repulsion,USE_VAR_QUAD=this%use_variable_quadrupole)
 #endif
    
    
