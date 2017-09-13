@@ -1,7 +1,7 @@
 scme_build=../build
 modflags = -I$(scme_build) -J$(scme_build)
 
-objs = $(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o localAxes_mod.o)
+objs = $(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o polariz_parameters.o)
 
 prog.x: $(objs) get_poldip.f90
 	gfortran $(modflags) $^ -o $@

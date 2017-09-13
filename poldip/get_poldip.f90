@@ -7,6 +7,7 @@ use qpole,only:expansion_coordinates
 use localAxes_mod,only: cross
 use opole
 use qpole, only:matrix_trace
+use polariz_parameters, only: dd0
 implicit none
 
 call main()
@@ -36,7 +37,8 @@ subroutine main()
     
     real(dp) alpha(xyz,xyz), iso(hholl)
     
-    integer al, be, at, i
+    integer at, i
+    
     
     
     mass = [1d0,1d0,16d0]
@@ -92,6 +94,25 @@ call printer(coords,'coords',2)
 call printer(cec5,'cec5',2)    
 call printer(square_dist5,'square_dist5',1)    
     
+    call alpha_tensor_from_iso(alpha   ,square_dist5,cer2,iso,cec5,cec)
+    
+end subroutine !//////////
+
+
+
+
+subroutine alpha_tensor_from_iso(alpha   ,square_dist5,cer2,iso,cec5,cec) 
+! This routine computes the dipole-dipole polarizability tensor from scalar isotropic site polarizabilities
+
+    integer,parameter :: xyz=3,hholl=5,nsites=5, hho=3
+    !integer, intent(in) :: 
+    real(dp),intent(out) :: alpha(xyz,xyz)
+    real(dp),intent( in) :: square_dist5(hholl),cer2(hho),cec5(xyz,hholl),cec(xyz,hho)
+    
+    real(dp) :: iso(nsites)
+    integer :: al,be,at, i
+    real(dp) :: iso_alp(hho)
+    
     iso(1) = 5d0
     iso(2) = 5d0
     iso(3) = 0d0
@@ -109,6 +130,26 @@ call printer(square_dist5,'square_dist5',1)
           !  the internal coordinates might suffer from using the trace-less trick with no lone-pairs. 
           !  That is true also for the multipoles above dipole!
           ! The question is fi they should all have the same lone-pair sites... SHould work, since we can vary the charges. 
+          !
+          ! Both the isotropic and anisotropic contributions need, however, be geonetry dipendent, at some point. 
+          ! with no tracelessness the isotropic part is also allowed to vary, and it would increase
+          ! with increasing molecular size, which could be sensible...?
+          !
+          ! The symmetric stretch mode probably doesn't alter the anisotropy much, but rather the isotropic contribution. 
+          ! Meanwhile the bend-mode probably alters the anisotropic part the most. 
+          ! maybe a sensible approximation is to make the anisotropic part depend only on h1h2, and the isotropic only on oh1+oh2. 
+          ! Anyway, with isotropic sites formalism, this separation cant be made. 
+          !    How to make the site-polarizabilities vary with geometry might however be affected in this way. 
+          !    If we have an isotropic part then this one can be altered only with h1+h2
+          !    while the site-plzties vary only with the bend
+          ! The alternative is to have 4 or 5 site polarizabilities and then make them vary with the geometry to 
+          !    to alter both the isotropic and aniso part. Autmatically giving a larger polarizability with a larger
+          !    molecule may be a natural benefit. 
+          !
+          ! for the lone pais site we may want to have a "reciprocal cross product rule" 
+          !  so the sites get closer not only when the moecule gets straight, but also
+          !  when the hydrogens get further appart, since O and HO dont have lone-pairs. 
+          !  this somehow resembles electronic rearrangement / state change / internal conversion
           if (al==be) then 
             alpha(al,be) = alpha(al,be) - iso(at)*square_dist5(at)/3d0
           endif
@@ -122,11 +163,72 @@ call printer(square_dist5,'square_dist5',1)
 call printer(alpha,'alpha traceless anisotropy',2)
     print*, 'trace', matrix_trace(alpha)
     do i = 1,xyz
-      alpha(i,i) = alpha(i,i) + 9.5d0 
+      alpha(i,i) = alpha(i,i) + 9.6697586_dp !the isotropic dipole polarizability
+ 
     enddo
     
 call printer(alpha,'alpha',2)
     
+    ! 3-site (atomic) traceless anisotropy contribution
+    call hho_iso_alphas(cec,cer2, iso_alp)
+    
+    call printer(iso_alp,'iso_alp',2)
+    
+    alpha = 0
+    do al = 1,xyz
+      do be = 1,xyz
+        do at = 1,hho
+          
+          alpha(al,be) = alpha(al,be) + iso_alp(at) * 3*cec(al,at)*cec(be,at) 
+          
+          if (al==be) then 
+            alpha(al,be) = alpha(al,be) - iso_alp(at)*cer2(at)
+          endif
+          
+        enddo
+      enddo
+    enddo    
+    alpha = alpha*0.5
+    
+call printer(alpha,'alpha for found charges',2)
+    
+    do i = 1,xyz
+      alpha(i,i) = alpha(i,i) + 1.43290917218_dp   
+    enddo
+call printer(alpha,'alpha for found charges + iso-alpha',2)
+    
+end subroutine
+
+
+
+SUBROUTINE hho_iso_alphas(cec,cer2, alp)
+    integer,parameter    :: xyz=3,hho=3, rra=3
+    real(dp),intent(in)  :: cec(xyz,hho),cer2(hho)
+    real(dp),intent(out) :: alp(hho)
+    real(dp) hx2, dd1(xyz,xyz)
+    integer ii
+    
+    dd1 = dd0 
+    do ii = 1,xyz
+      dd1(ii,ii) = dd1(ii,ii) - 1.43290917218_dp   
+    enddo
+    call printer(dd0,'dd0',2)
+    call printer(dd1,'dd1',2)
+    hx2=cec(1,1)**2
+    alp(1) = ( dd1(1,1) - dd1(2,2) ) / (3*hx2)
+    alp(2)=alp(1)
+    alp(3)= -2*( dd1(1,1) - alp(1)*(3*hx2-cer2(1)) )/cer2(3)
+    
+    !p(1)=0.617152455762941d0
+    !p(2)=p(1)
+    !p(3)=-3.268376558140222d0
+    !dpda = 0
+END SUBROUTINE 
+
+
+end program
+
+
 !    
 !
 !call printer(exp_cent,'exp_cent',2)    
@@ -175,7 +277,4 @@ call printer(alpha,'alpha',2)
 !    call printer(octupole-o0,'diff',2)    
 !    
     
-end subroutine
 
-
-end program
