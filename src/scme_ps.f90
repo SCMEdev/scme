@@ -57,7 +57,9 @@ module scme
   use ps_pes, only: vibpes
   use printer_mod, only: printer, xyz_hho_to_linear !printer_h2o_linear, !, h2o_to_linear
   
-  use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, get_cm,force_and_torque_on_atoms,create_xyz_hho_new !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, !, create_xyz_hho
+  use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, &
+                          get_cm,force_and_torque_on_atoms,create_xyz_hho_new 
+                          !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, !, create_xyz_hho
   
   use qpole, only: get_quadrupoles, expansion_coordinates
   
@@ -69,16 +71,18 @@ module scme
 
 contains !//////////////////////////////////////////////////////////////
 
-  subroutine scme_calculate(n_atoms, &
-                            coords, &
-                            lattice, &
-                            hho_fa, &
-                            u_tot, &
-                            USE_PS_PES, &
-                            USE_FULL_RANK, &
-                            USE_OO_REP, &
-                            USE_ALL_REP, &
-                            USE_VAR_QUAD) 
+  subroutine scme_calculate(n_atoms &
+                            ,coords &
+                            ,lattice &
+                            ,hho_fa &
+                            ,u_tot &
+                            ,USE_PS_PES &
+                            ,USE_FULL_RANK &
+                            ,USE_OO_REP &
+                            ,USE_ALL_REP &
+                            ,USE_VAR_QUAD &
+                            ,USE_VAR_OCT &
+                            ) 
 
     implicit none
     integer, intent(in) :: n_atoms
@@ -181,8 +185,8 @@ contains !//////////////////////////////////////////////////////////////
     
     real(dp) :: cec(xyz,hho,n_atoms/3),cer2(hho,n_atoms/3), rCE(xyz,n_atoms/3)
     
-    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD
-    logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD
+    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT
+    logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD, VAR_OCT
     
     
     !Default optional arguments
@@ -191,6 +195,7 @@ contains !//////////////////////////////////////////////////////////////
     OO_REP=.false.
     ALL_REP=.false.
     VAR_QUAD=.false.
+    VAR_OCT=.false.
     
     
     if(present(USE_PS_PES))     PES          = USE_PS_PES
@@ -198,6 +203,7 @@ contains !//////////////////////////////////////////////////////////////
     if(present(USE_OO_REP))     OO_REP       = USE_OO_REP
     if(present(USE_ALL_REP))    ALL_REP      = USE_ALL_REP
     if(present(USE_VAR_QUAD))   VAR_QUAD     = USE_VAR_QUAD
+    if(present(USE_VAR_OCT))    VAR_OCT      = USE_VAR_OCT
     
     
     
@@ -273,11 +279,11 @@ tprint(x,'x',s)
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
     call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
-    opole_orig = opole
+    !opole_orig = opole
     
     !if(VAR_QUAD) 
-    call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
-    call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
+    if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
+    if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
     
     !opole = opole_orig
 
