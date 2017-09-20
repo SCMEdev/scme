@@ -1,41 +1,44 @@
 MODULE qpole
-use printer_mod, only:printer
-use localAxes_mod,only: norm, norm_square
+!use printer_mod, only:printer
+!use localAxes_mod,only: norm, norm_square
 use data_types, only: dp, pi
-use multipole_parameters, only: q0
+!use multipole_parameters, only: q0
 implicit none
 
 
 contains !///
 
 
-SUBROUTINE expansion_coordinates(wm,rCE,cec,cer2,nM)
-    integer,parameter    :: xyz=3,hho=3
-    integer, intent(in) :: nM
-    real(dp),intent(in)  :: wm(xyz,hho,nM)
-    real(dp),intent(out) :: rCE(xyz,nM), cec(xyz,hho,nM),cer2(hho,nM) 
+SUBROUTINE expansion_coordinates(molecules,rCE,cec,cer2,nM,nsites)
+    integer,parameter    :: xyz=3
+    integer, intent(in) :: nM,nsites
+    real(dp),intent(in)  :: molecules(xyz,nsites,nM)
+    real(dp),intent(out) :: rCE(xyz,nM), cec(xyz,nsites,nM),cer2(nsites,nM) 
     
     !internal:
-    real(dp) atoms(xyz,hho), CE(xyz),exp_coords(xyz,hho), norm_squares(hho)
-    integer a, m 
+    real(dp) atoms(xyz,nsites), exp_center(xyz),exp_coords(xyz,nsites), norm_squares(nsites)
+    integer site, m 
+    !nsites = size( molecules(1,:,1) )
+    !print*, nsites
+    !stop
     
     
     do m = 1,nM
       
-      atoms(:,:) = wm(:,:,m)
+      atoms(:,:) = molecules(:,:,m)
       
-      CE(:) = ( atoms(:,1) + atoms(:,2) + 16*atoms(:,3) ) / 18d0
+      exp_center(:) = ( atoms(:,1) + atoms(:,2) + 16*atoms(:,3) ) / 18d0
       
-      do a = 1,hho
+      do site = 1,nsites
       
-        exp_coords(:,a) = atoms(:,a) - CE(:) !center of expansion coordinates
+        exp_coords(:,site) = atoms(:,site) - exp_center(:) 
       
-        norm_squares(a) = sum( exp_coords(:,a)**2 )
+        norm_squares(site) = sum( exp_coords(:,site)**2 )
         !their square norms
       
       enddo
       
-      rCE(:,m) = CE(:)
+      rCE(:,m) = exp_center(:)
       
       cec(:,:,m) = exp_coords(:,:)
       cer2(:,m) = norm_squares(:)

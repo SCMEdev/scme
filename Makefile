@@ -1,126 +1,68 @@
-# disable the built-in (implicit) rules to avoid trying to compile X.o from X.mod (Modula-2 program)
-.SUFFIXES:
+### VARIABLES
+b:=build
+s:=src
 
-b = build
-s = src
-#NEW = new
-
-#dirs = $(OBJDIR) $(MODDIR)
-dirs = $b
-
-#have added the "new/" directory and PS-files
-vpath %.f90 $(s)
-#vpath %.f90 $(NEW)
-#vpath %.cpp $(SRCDIR)
-
-FC = gfortran
-CC = g++
-opti = -O0
-
-## optimization:
+FC:=gfortran
+#FC:=flang
+opti:= -O0
 #opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
-## warn all:
 #-Wall
 
-#Debug prerpcessor flag only in this makefile, makes the program print stuff with the print routine:
-FFLAGS = $(opti) -pg -I$b -J$b -cpp -D'DEBUG'
-CFLAGS = $(opti) -I$b -J$b -lstdc++
+FFLAGS:= $(opti) -pg -I$b -J$b -cpp -D'DEBUG_PRINTING'
+#CFLAGS:= $(opti) -I$b -J$b -lstdc++
+
+### FILE NAMES (according to dependencies)
+# Depend only on data_types:
+bulk_names:=\
+	multipole_parameters polariz_parameters \
+	calcEnergy_mod inducePoles ps_pes ps_dms printer_mod \
+	sf_disp_tangtoe force_torqueCM localAxes_mod qpole opole
+
+# Depend also on swiching-func (sf):
+sf_names:=\
+	calc_derivs calc_higher_order\
+	calc_lower_order molecProperties
+
+# Depends on all/none (ENDpoints of dep.-tree)
+end_names:=\
+	scme_ps data_types
+
+### OBJECT LISTS:
+sf_obj  := $(addprefix $b/, $(sf_names:=.o) )
+most_obj:= $(sf_obj)   $(addprefix $b/, $(bulk_names:=.o))
+all_obj := $(most_obj) $(addprefix $b/, $(end_names:=.o) )
+
+lib:=$b/libscme.a
 
 
-OBJ = $(addprefix $b/, \
-	scme_ps.o calc_derivs.o calc_higher_order.o \
-	data_types.o \
-	multipole_parameters.o polariz_parameters.o \
-	calcEnergy_mod.o calc_lower_order.o \
-	inducePoles.o \
-	molecProperties.o \
-	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
-	localAxes_mod.o qpole.o opole.o)
-	
-#	 max_parameters.o forceCM_mod.o torqueCM_mod.o tang_toennies.o rho.o dispersion_mod.o coreInt_mod.o ps.o parameters.o constants.o molforce.o mdutil.o 	atomicForces_mod.o \
-
-#OBJC = $(addprefix $(OBJDIR)/, ps.o)
-#HEADERS = $(addprefix $(OBJDIR)/, constants.h ps.h)
-
-#/// Build
-
+### RULES:
 all:
-	make -j4 it
+	make -j4 $(lib)
 
-it:$b/libscme.a
+# (.mod-files still needed for compilation)
+$(lib): $(all_obj) 
+	ar rcs $@ $^
 
-# library
-
-$b/libscme.a: $(OBJ) $(dirs)
-	ar rcs $@ $(OBJ) $b/*.mod
+$b/%.o: $s/%.f90 
+	$(FC) $(FFLAGS) -o $@ -c $<
 
 $b:
 	mkdir $@
 
-
-$b/%.o: %.f90
-	$(FC) $(FFLAGS) -c -o $@ $<
-
-#//// Clean
 .PHONY: clean
 clean:
 	rm -f $b/*
 
 
-#/// Dependencies
+### DEPENDENCIES
+# swich-func dep:
+$(sf_obj): $b/sf_disp_tangtoe.o 
 
+# scme depends on all:
+$b/scme_ps.o: $(most_obj) $b/data_types.o
 
-$b/qpole.o\
-$b/localAxes_mod.o:\
-$b/printer_mod.o 
+# all depend on data_types:
+$(most_obj) $b/scme_ps.o: $b/data_types.o
 
-
-# special dependencies:
-$b/molecProperties.o	\
-$b/calc_derivs.o		\
-$b/calc_lower_order.o	\
-$b/calc_higher_order.o:	\
-$b/sf_disp_tangtoe.o \
-
-
-# scme dep. on most
-$b/scme_ps.o:		\
-$b/calc_derivs.o		\
-$b/data_types.o		\
-$b/polariz_parameters.o	\
-$b/molecProperties.o	\
-$b/calc_lower_order.o	\
-$b/calc_higher_order.o	\
-$b/inducePoles.o		\
-$b/calcEnergy_mod.o	\
-$b/multipole_parameters.o\
-$b/ps_pes.o \
-$b/ps_dms.o \
-$b/printer_mod.o \
-$b/sf_disp_tangtoe.o \
-$b/force_torqueCM.o \
-$b/localAxes_mod.o \
-$s/debug.h\
-$b/qpole.o\
-$b/opole.o\
-
-
-$b/opole.o\
-$b/qpole.o\
-$b/localAxes_mod.o \
-$b/molecProperties.o	\
-$b/calc_derivs.o		\
-$b/calc_lower_order.o	\
-$b/calc_higher_order.o	\
-$b/printer_mod.o \
-$b/force_torqueCM.o \
-$b/sf_disp_tangtoe.o \
-$b/ps_dms.o	\
-$b/ps_pes.o \
-$b/force_torqueCM.o		\
-$b/inducePoles.o		\
-$b/calcEnergy_mod.o	\
-$b/polariz_parameters.o	\
-$b/multipole_parameters.o: \
-$b/data_types.o		\
+# printer dep:
 

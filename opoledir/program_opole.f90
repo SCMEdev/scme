@@ -1,11 +1,45 @@
 program jkdls
-use printer_mod, only:printer
-!use localAxes_mod,only: norm, norm_square
+use localAxes_mod,only: norm, norm_square
 use data_types, only: dp, pi
+use printer_mod, only:printer
 use multipole_parameters, only: o0
 use qpole,only:expansion_coordinates
 use opole
 implicit none
+
+!use localAxes_mod,only: norm, norm_square
+!!use data_types, only: dp, pi
+!use printer_mod, only:printer
+!!use multipole_parameters, only: o0
+!use qpole,only:expansion_coordinates
+!use opole
+!!implicit none
+!
+!
+!implicit none
+!
+!
+!integer,parameter :: dp = kind(0d0)
+!integer,parameter :: pi = 3.1415926535_dp
+!
+!  real(dp), parameter :: a0_A        = 0.52917721067_dp   !Codata 2014      0.52917721092_dp   !! CODATA 2010 0.529 177 210 67(12) later
+!real(dp), parameter :: o0_1 = -3.27190_dp, o0_2 = 1.36606_dp, o0_3 = 1.90585_dp
+!real(dp), parameter :: a0_len  = a0_A!1.0_dp/ang_to_au    !bohr to other length, now (angstrom, A)
+!real(dp), parameter :: ea0_dip = a0_A!au_to_debye
+!  
+!real(dp),parameter, dimension(3,3,3) :: o0 = ea0_dip*a0_len**2 * &
+!       reshape([0.0_dp, 0.0_dp, o0_1,  &       ! (1,1,1), (1,1,2), (1,1,3)
+!       0.0_dp, 0.0_dp, 0.0_dp, &       ! (1,2,1), (1,2,2), (1,2,3)
+!       o0_1, 0.0_dp, 0.0_dp,  &       ! (1,3,1), (1,3,2), (1,3,3)
+!       0.0_dp, 0.0_dp, 0.0_dp, &       ! (2,1,1), (2,1,2), (2,1,3)
+!       0.0_dp, 0.0_dp, o0_2,  &       ! (2,2,1), (2,2,2), (2,2,3)
+!       0.0_dp, o0_2, 0.0_dp,  &       ! (2,3,1), (2,3,2), (2,3,3)
+!       o0_1, 0.0_dp, 0.0_dp,  &       ! (3,1,1), (3,1,2), (3,1,3)
+!       0.0_dp, o0_2, 0.0_dp,  &       ! (3,2,1), (3,2,2), (3,2,3)
+!       0.0_dp, 0.0_dp, o0_3], &       ! (3,3,1), (3,3,2), (3,3,3)
+!       shape(o0), order = [3,2,1])
+!  
+!
 
 call main()
 

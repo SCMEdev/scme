@@ -35,7 +35,7 @@ subroutine octupole_tensor(cec,cer2,charges,oct)
       oct(1,2,3) = oct(1,2,3) + ch05*( 5_dp*cec(1,i)*cec(2,i)*cec(3,i) - 0.0_dp )
     enddo
     
-    ! remaining _unique_ components from traceless condition
+    ! remaining _unique_ (but clearly linearly dependent) components from traceless condition
     oct(1,3,3) = -( oct(1,1,1) + oct(1,2,2) )  
     oct(2,3,3) = -( oct(1,1,2) + oct(2,2,2) )
     oct(2,2,3) = -( oct(1,1,3) + oct(3,3,3) )

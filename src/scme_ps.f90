@@ -248,7 +248,7 @@ contains !//////////////////////////////////////////////////////////////
     
     ! compute centers of mass (cm)
     call get_cm(xyz_hho,rCM,nM)
-    call expansion_coordinates(xyz_hho,rCE,cec,cer2,nM)
+    call expansion_coordinates(xyz_hho,rCE,cec,cer2,nM,hho)
     
     
     

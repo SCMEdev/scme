@@ -1,12 +1,36 @@
-scme_build=../build
-modflags = -I$(scme_build) -J$(scme_build)
 
-objs = $(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o)
+#give sourcefile on command line
+ifndef f
+abort:
+	@echo "Call with 'make f=program_file.f90' "
+endif
 
-prog.x: $(objs) program_opole.f90
-	gfortran $(modflags) $^ -o $@
+#scme paths/files
+scme_root:=/home/j/gits/scme
+scme_src:=$(scme_root)/src
+scme_build:=$(scme_root)/build
+scme_lib:=$(scme_build)/libscme.a
 
-#	gfortran ~/gits/scme/src/multipole_parameters.f90 ~/gits/scme/src/localAxes_mod.f90 ~/gits/scme/src/data_types.f90 ~/gits/scme/src/printer_mod.f90 qpole.f90
+FC:=gfortran
 
-$(objs):
-	(cd ../ && make)
+local_src:=$f
+local_obj:=$(local_src:.f90=.o)
+
+prog:=$(local_src:.f90=.x)
+
+
+#order matters here:
+$(prog): $(local_obj) $(scme_lib) 
+	$(FC)  $^ -o $@
+
+%.o: %.f90 $(scme_lib)
+	$(FC) -c $< -o $@ -I$(scme_build) 
+
+
+$(scme_lib): $(wildcard $(scme_src)/*.f90)
+	(cd $(scme_root) && make)
+
+
+clean:
+	rm -f *.o *.x *.mod
+
