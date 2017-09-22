@@ -1,13 +1,13 @@
 program jkdls
 use printer_mod, only:printer
 !use localAxes_mod,only: norm, norm_square
-use data_types, only: dp, pi
+use data_types, only: dp, pi, au_to_debye, a0_A, A_a0, eA_to_debye
 use qpole,only:expansion_coordinates
-use multipole_parameters, only: o0
+use multipole_parameters, only: o0, q0,d0
 use localAxes_mod,only: cross, norm_square
 use opole
 use qpole, only:matrix_trace
-use polariz_parameters, only: dd0
+use polariz_parameters, only: dd0, dq0
 implicit none
 
 call main()
@@ -27,7 +27,12 @@ subroutine main()
     real(dp) :: iso_alp(hho), isotropy, a(xyz),b(xyz), a2,b2,res_a2_b2, l1(xyz),l2(xyz)
     
     ! for octupole!
-    real(dp) oct(xyz,xyz,xyz), charges(hholl)
+    real(dp) oct(xyz,xyz,xyz), charges(hholl), levi(xyz,xyz,xyz), three(xyz,xyz,xyz), entries(xyz)
+    real(dp) ddelta(3,3,3,3)
+    
+    real(dp) hede(3,3,3,3)
+    real(dp) gauss_quad(3) !,quad(3,3)
+    
     
     mass = [1d0,1d0,16d0]
     
@@ -161,20 +166,148 @@ call printer(alpha,'alpha',2)
     
     call octupole_tensor(cec5,square_dist5,charges,oct)
     
-  call printer(oct,'oct 5q',2)
+  call printer(oct,'oct 5q',1)
     
     call octupole_tensor(cec,cer2,charges(1:3),oct)
     
-  call printer(oct,'oct 3q',2)
+  call printer(oct,'oct 3q',1)
+  
+  call printer(dq0*eA_to_debye,'data dq0',1)
+  call printer(o0*eA_to_debye,'data o0',1)
+  call printer(q0*eA_to_debye,'data q0',1)
+  call printer(d0*eA_to_debye,'data d0',1)
+    
+    print*,au_to_debye, eA_to_debye, A_a0
+    
+!    call levicivita(levi)
+!  call printer(levi,'levi',1)
+  
+!    call octa_trace_entries(three)
+!  call printer(three,'three',1)
+
+!    call octa_iso_entries(three)
+!  call printer(three,'three',1)
     
     
     
+    gauss_quad(1) = 1.7407
+    gauss_quad(2) = -1.6508
+    gauss_quad(3) = -0.0899
+    gauss_quad = gauss_quad*3/2
     
+    call printer (gauss_quad,'gauss_quad mp2',1)
+
+    call gaussian_octa(entries)
+  call printer(entries,'gauss oct mp2',1)
+  
+!    call get_deldel(ddelta)
+!  call printer(ddelta,'ddelta',1)
+    
+    call hexad_moments(hede)
 end subroutine !//////////
 
+subroutine levicivita(levi)
+    integer,parameter    :: xyz=3
+    real(dp), intent(out) :: levi(xyz,xyz,xyz)
+    
+    levi = 0
+    levi(1,2,3) = 1d0
+    levi(3,1,2) = 1d0
+    levi(2,3,1) = 1d0
+    
+    levi(1,3,2) = -1d0
+    levi(2,1,3) = -1d0
+    levi(3,2,1) = -1d0
+    
+end subroutine
+    
+subroutine octa_iso_entries(three)
+    integer,parameter    :: xyz=3
+    real(dp), intent(out) :: three(xyz,xyz,xyz)
+    integer al,be
+    real(dp) ent
+    
+    three = 0
+    
+    do al = 1,xyz
+      do be = 1,xyz
+        if (be==1) ent=2
+        if (be==2) ent=3
+        if (be==3) ent=-5
+        three(al,be,be) = ent
+        if (al /= be) then
+          three(be,al,be) = ent
+          three(be,be,al) = ent
+        endif
+      enddo
+    enddo
+    
+end subroutine
+
+subroutine octa_trace_entries(three)
+    integer,parameter    :: xyz=3
+    real(dp), intent(out) :: three(xyz,xyz,xyz)
+    integer al,be,ga
+    
+    three = 0
+    
+    do al = 1,xyz
+      do be = 1,xyz
+        do ga = 1,xyz
+          three(al,be,ga) = 10d0/9d0*delta(al,be) + 1d0/9d0*delta(al,ga) + 0.1d0/9d0*delta(ga,be)
+        enddo
+      enddo
+      
+    enddo
+    
+end subroutine
+
+subroutine gaussian_octa(entries)
+    integer,parameter    :: xyz=3
+    real(dp), intent(out) :: entries(xyz)
+    real(dp) trace
+    entries(1) =  0.0463!zzz
+    entries(2) = -1.0939!xxz
+    entries(3) =  0.2214!yyz
+    trace = sum(entries)/3d0
+    entries = entries - trace
+    
+    entries = entries*5d0/2d0
+    
+    
+end subroutine    
+
+subroutine get_deldel(ddelta)
+    integer,parameter    :: xyz=3 !,hho=3
+    real(dp),intent(out) :: ddelta(3,3,3,3)
+    integer al,be,ga,de
+    do al = 1,3
+      do be = 1,3
+        do ga = 1,3
+          do de = 1,3
+            ddelta(al,be,ga,de) = 10d0/9d0*delta(al,be)*delta(ga,de) &
+                                + 1d0/9d0*delta(al,de)*delta(ga,be) &
+                                + 0.10d0/9d0*delta(al,ga)*delta(de,be)
+          enddo
+        enddo
+      enddo
+    enddo
+end subroutine    
+    
 
 
-
+function delta(al,be) result(res)
+    integer,parameter    :: xyz=3 !,hho=3
+    integer,intent(in) :: al,be
+    real(dp) :: res
+    
+    if(al==be)then
+      res = 1d0
+    else 
+      res = 0d0
+    endif
+    
+end function
 
 
 subroutine get_alpha_from_isos(nsites,cec,cer2,iso_alp,isotropy,alpha)
@@ -207,7 +340,33 @@ call printer(alpha,'traceless alpha for found charges',2)
       alpha(i,i) = alpha(i,i) + isotropy
     enddo
     
-end subroutine !//////
+end subroutine !//////  
+
+subroutine hexad_moments(entries)
+    implicit real(dp) (x-z)
+    real(dp) entries(6)
+    xxxx = -6.5402
+    yyyy = -7.7054
+    zzzz = -7.8992
+    xxyy = -2.7107
+    xxzz = -1.9781
+    yyzz = -2.6673
+    
+    entries(1) = xxxx
+    entries(2) = yyyy
+    entries(3) = zzzz
+    entries(4) = xxyy
+    entries(5) = xxzz
+    entries(6) = yyzz
+    
+    entries = entries*7/2
+    
+    call printer(entries,'entries',1)
+    print*, 'xxxx+xxyy+xxzz',xxxx+xxyy+xxzz
+    print*, 'yyyy+xxyy+yyzz',yyyy+xxyy+yyzz
+    print*, 'zzzz+yyzz+xxzz',zzzz+yyzz+xxzz
+end subroutine
+
 
 SUBROUTINE get_3_iso_alp(cec,cer2,dd0, alp,isotropy)
     integer,parameter    :: xyz=3,hho=3, rra=3

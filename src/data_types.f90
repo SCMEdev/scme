@@ -3,7 +3,7 @@ module data_types
   implicit none
   
   private
-  public dp, tt_b, num_cells,A_a0, a0_A, cm1_eV, coulomb_k, au_to_debye,pi !, ea0_Deb, eA_Deb, xyz, hho, kk1,kk2,
+  public dp, tt_b, num_cells,A_a0, a0_A, cm1_eV, coulomb_k, au_to_debye,pi, eA_to_debye !, ea0_Deb, eA_Deb, xyz, hho, kk1,kk2,
   
   integer, parameter :: dp = selected_real_kind(15, 307) ! double precision ~ 8 byte float
 
@@ -25,6 +25,8 @@ module data_types
   integer, parameter :: num_cells = 0 ! NC
 !parameters.f90 <<
   real(dp), parameter :: au_to_debye = 2.5417709_dp
+  real(dp), parameter :: eA_to_debye = au_to_debye*A_a0
+  
 
 !position type
 !  type h2o
