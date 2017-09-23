@@ -14,11 +14,43 @@ interface printer
                   p_real_5d!, p_h2o, p_h2os
 end interface
 
+interface str
+module procedure i2s, f2s
+end interface
+
   private
-  public printer, xyz_hho_to_linear !, printer_h2o_linear, h2o_to_linear
+  public printer, xyz_hho_to_linear, str !, printer_h2o_linear, h2o_to_linear
 
 
 contains !/////////////////////////////////////////////
+
+
+function i2s(inte) result(ch)
+    integer inte, length
+    character(:), allocatable :: ch
+    character(10) str_length
+    length = int(ceiling(max(log10(dble(inte)),1d0)))
+    allocate (character(length) :: ch)
+    write(str_length,'(I10)') length
+    write(ch,'(I'//trim(str_length)//')') inte
+    
+endfunction
+
+
+function f2s(rea,dec) result(ch)
+    real(dp), intent(in) :: rea
+    integer, intent(in) :: dec
+    integer length
+    character(40) forma
+    character(:), allocatable :: ch
+    length = int(ceiling(log10(rea))) + dec + 1
+    forma = '(F'//i2s(length)//'.'//i2s(dec)//')'
+    
+    allocate ( character(length) :: ch )
+    write(ch,forma) rea
+    
+endfunction
+
 
 !////////////////////////////////////////////////////// Special Printers:
 
