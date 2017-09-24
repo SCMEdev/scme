@@ -14,42 +14,215 @@ interface printer
                   p_real_5d!, p_h2o, p_h2os
 end interface
 
+interface printo
+module procedure print_order1, print_order2, print_order3, print_order4
+end interface
+
+
 interface str
-module procedure i2s, f2s
+module procedure i2s, f2s, l2s!, sp2s
 end interface
 
   private
-  public printer, xyz_hho_to_linear, str !, printer_h2o_linear, h2o_to_linear
+  public printer, xyz_hho_to_linear, str, printo !, printer_h2o_linear, h2o_to_linear
 
 
 contains !/////////////////////////////////////////////
 
 
 function i2s(inte) result(ch)
-    integer inte, length
+    integer inte!, length
     character(:), allocatable :: ch
-    character(10) str_length
-    length = int(ceiling(max(log10(dble(inte)),1d0)))
-    allocate (character(length) :: ch)
-    write(str_length,'(I10)') length
-    write(ch,'(I'//trim(str_length)//')') inte
-    
+    character(10) temp
+    write(temp,'(I10)') inte
+    ch = trim(adjustl(temp))
 endfunction
 
 
 function f2s(rea,dec) result(ch)
     real(dp), intent(in) :: rea
-    integer, intent(in) :: dec
-    integer length
-    character(40) forma
+    integer, intent(in), optional :: dec 
     character(:), allocatable :: ch
-    length = int(ceiling(log10(rea))) + dec + 1
-    forma = '(F'//i2s(length)//'.'//i2s(dec)//')'
+    character(30) temp
+    integer decim
     
-    allocate ( character(length) :: ch )
-    write(ch,forma) rea
+    if(present(dec))then
+        decim=dec
+    else
+        decim=7
+    endif
     
+    write(temp,'(f30.'//i2s(decim)//')') rea
+    ch = trim(adjustl(temp))
 endfunction
+
+!function sp2s(rea,dec) result(ch)
+!    real, intent(in) :: rea
+!    integer, intent(in), optional :: dec 
+!    character(:), allocatable :: ch
+!    character(30) temp
+!    integer decim
+!    
+!    if(present(dec))then
+!        decim=dec
+!    else
+!        decim=7
+!    endif
+!    
+!    write(temp,'(f30.'//i2s(decim)//')') rea
+!    ch = trim(adjustl(temp))
+!endfunction
+
+
+function l2s(logi) result(ch)
+    logical logi
+    character(:), allocatable :: ch
+    if (logi)then
+     ch = "True"
+    else
+     ch = "False"
+    endif
+endfunction
+
+
+!/////////////////////////////// new version
+subroutine print_order4(tensor,order)
+    real(dp), intent(in) :: tensor(3,3,3,3)
+    integer,intent(in)   :: order(4)
+    
+    integer ic(4),ordc(4) !corrected order&index
+    integer i,j,k,l,ii,jj,kk,ll
+    character(12) ctemp(3)
+    character(2) b1,b2
+    !order = [1,2,3,4]
+    ordc = order
+    ordc(1) = order(2)
+    ordc(2) = order(1)
+    
+    do l = 1,3
+        ic(ordc(4)) = l
+        print*, ""!"4-slice"!//str(l)
+        do k = 1,3
+            ic(ordc(3)) = k
+            print*, ""!"  3-slice:"//str(k)
+            do j = 1,3
+                ic(ordc(2)) = j
+                do i = 1,3
+                    ic(ordc(1)) = i
+                      
+                    write (ctemp(i),'(f12.7)') tensor(ic(1),ic(2),ic(3),ic(4))
+                    
+                enddo
+                
+                if (j==1)then !Matrix brackets
+                  b1=" /"; b2=" \"
+                elseif (j==2)then
+                  b1=" |"; b2=" |"
+                else
+                  b1=" \"; b2=" /"
+                endif
+                
+                print*, '   '//b1//ctemp(1)//ctemp(2)//ctemp(3)//b2
+            enddo
+        enddo
+    enddo
+end subroutine
+
+subroutine print_order3(tensor,order)
+    real(dp), intent(in) :: tensor(3,3,3)
+    integer,intent(in)   :: order(3)
+    
+    integer ic(3),ordc(3) !corrected order&index
+    integer i,j,k,ii,jj,kk
+    character(12) ctemp(3)
+    character(2) b1,b2
+    !order = [1,2,3,4]
+    ordc = order
+    ordc(1) = order(2)
+    ordc(2) = order(1)
+    
+    do k = 1,3
+        ic(ordc(3)) = k
+        print*, ""!"  3-slice:"//str(k)
+        do j = 1,3
+            ic(ordc(2)) = j
+            do i = 1,3
+                ic(ordc(1)) = i
+                  
+                write (ctemp(i),'(f12.7)') tensor(ic(1),ic(2),ic(3))
+                
+            enddo
+            
+            if (j==1)then !Matrix brackets
+              b1=" /"; b2=" \"
+            elseif (j==2)then
+              b1=" |"; b2=" |"
+            else
+              b1=" \"; b2=" /"
+            endif
+            
+            print*, '   '//b1//ctemp(1)//ctemp(2)//ctemp(3)//b2
+        enddo
+    enddo
+end subroutine
+
+
+subroutine print_order2(tensor,order)
+    real(dp), intent(in) :: tensor(3,3)
+    integer,intent(in)   :: order(2)
+    
+    integer ic(2),ordc(2) !corrected order&index
+    integer i,j,ii,jj
+    character(12) ctemp(3)
+    character(2) b1,b2
+    ordc(1) = order(2)
+    ordc(2) = order(1)
+    
+    print*, ""
+    do j = 1,3
+        ic(ordc(2)) = j
+        do i = 1,3
+            ic(ordc(1)) = i
+              
+            write (ctemp(i),'(f12.7)') tensor(ic(1),ic(2))
+            
+        enddo
+    
+        if (j==1)then !Matrix brackets
+          b1=" /"; b2=" \"
+        elseif (j==2)then
+          b1=" |"; b2=" |"
+        else
+          b1=" \"; b2=" /"
+        endif
+        
+        print*, '   '//b1//ctemp(1)//ctemp(2)//ctemp(3)//b2
+    enddo
+end subroutine
+
+subroutine print_order1(tensor)
+    real(dp), intent(in) :: tensor(3)
+    
+    integer j
+    character(12) ctemp
+    character(2) b1,b2
+    
+    print*, ""
+    do j = 1,3
+        
+        write (ctemp,'(f12.7)') tensor(j)
+        
+        if (j==1)then !Matrix brackets
+          b1="/ "; b2=" \"
+        elseif (j==2)then
+          b1="| "; b2=" |"
+        else
+          b1="\ "; b2=" /"
+        endif
+        
+        print*, '   '//b1//trim(adjustl(ctemp))//b2
+    enddo
+end subroutine
 
 
 !////////////////////////////////////////////////////// Special Printers:
