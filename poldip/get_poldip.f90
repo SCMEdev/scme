@@ -1,5 +1,5 @@
 program jkdls
-use printer_mod, only:printer
+use printer_mod, only:printer, str, printo
 !use localAxes_mod,only: norm, norm_square
 use data_types, only: dp, pi, au_to_debye, a0_A, A_a0, eA_to_debye
 use qpole,only:expansion_coordinates
@@ -7,7 +7,7 @@ use multipole_parameters, only: o0, q0,d0
 use localAxes_mod,only: cross, norm_square
 use opole
 use qpole, only:matrix_trace
-use polariz_parameters, only: dd0, dq0
+use polariz_parameters, only: dd0, dq0, qq0
 implicit none
 
 call main()
@@ -28,18 +28,21 @@ subroutine main()
     
     ! for octupole!
     real(dp) oct(xyz,xyz,xyz), charges(hholl), levi(xyz,xyz,xyz), three(xyz,xyz,xyz), entries(xyz)
-    real(dp) ddelta(3,3,3,3)
+    !real(dp) ddelta(3,3,3,3)
     
-    real(dp) hede(3,3,3,3)
-    real(dp) gauss_quad(3) !,quad(3,3)
+    real(dp) hede(3,3,3,3), tempmat(3,3)
+    real(dp) gauss_quad(3),trace, rtemp !,quad(3,3)
+    integer itemp
+    character(5) ctemp
     
+    real(dp) out6(6) ,output(15)
     
     mass = [1d0,1d0,16d0]
     
     
-    ang = 104.3475_dp
+    ang = 104.28!<- Batista! 104.3475_dp!<-PS!
     rad = ang/180d0*pi
-    r_h = 0.958649_dp
+    r_h = 0.9590!<-Batista! 0.958649_dp!<-PS!
     
     z_oh = cos(rad*0.5d0)*r_h
     x_h = sin(rad*0.5d0)*r_h
@@ -74,6 +77,7 @@ subroutine main()
     
     
     call expansion_coordinates(coords(:,1:hho),exp_cent,cec,cer2,nm=1,nsites=3)!nM,nsites
+  call printer(cec,'cec',2)
     !cec5(:,1:hho) = cec
     !cec5(:,4) = coords_l1 - exp_cent
     !cec5(:,5) = coords_l2 - exp_cent
@@ -83,12 +87,14 @@ subroutine main()
     
     call expansion_coordinates(coords,exp_cent,cec5,square_dist5,nm=1,nsites=5)!nM,nsites
     
-    !!! DIP-DIP POLARIZABILITY
+    
+    !!! DIP-DIP POLARIZABILITY ///////////////////////////////////////////////////
+if(.false.)then 
     ! 5-SITE ! testing
     
-call printer(coords,'coords',2)    
-call printer(cec5,'cec5',2)    
-call printer(square_dist5,'square_dist5',1)    
+  !call printer(coords,'coords',2)    
+  !call printer(cec5,'cec5',2)    
+  !call printer(square_dist5,'square_dist5',1)    
     
     iso(1) = 5d0
     iso(2) = 5d0
@@ -100,7 +106,7 @@ call printer(square_dist5,'square_dist5',1)
     isotropy = 0
     call get_alpha_from_isos(hholl,cec5,square_dist5,iso,isotropy, alpha)
     
-call printer(alpha,'alpha traceless anisotropy',2)
+  call printer(alpha,'alpha traceless anisotropy',2)
     
     print*, 'trace', matrix_trace(alpha)
     do i = 1,xyz
@@ -108,7 +114,7 @@ call printer(alpha,'alpha traceless anisotropy',2)
  
     enddo
     
-call printer(alpha,'alpha',2)
+  call printer(alpha,'alpha',2)
     
     
     
@@ -173,38 +179,156 @@ call printer(alpha,'alpha',2)
   call printer(oct,'oct 3q',1)
   
   call printer(dq0*eA_to_debye,'data dq0',1)
-  call printer(o0*eA_to_debye,'data o0',1)
   call printer(q0*eA_to_debye,'data q0',1)
   call printer(d0*eA_to_debye,'data d0',1)
     
     print*,au_to_debye, eA_to_debye, A_a0
     
-!    call levicivita(levi)
-!  call printer(levi,'levi',1)
+  call printer(o0*eA_to_debye,'data o0',1)
+    call levicivita(levi)
+  call printer(levi,'levi',1)
   
-!    call octa_trace_entries(three)
-!  call printer(three,'three',1)
+    call octa_trace_entries(three)
+  call printer(three,'three',1)
 
 !    call octa_iso_entries(three)
 !  call printer(three,'three',1)
     
     
+endif
+    !Traceless!
+    gauss_quad(1) =  1.7423_dp!1.7407 !<-PS-geom
+    gauss_quad(2) = -1.6539_dp!-1.6508!<-PS-geom
+    gauss_quad(3) = -0.0884_dp!-0.0899!<-PS-geom
+    gauss_quad = gauss_quad*3/2!/au_to_debye*A_a0
+  call printer (gauss_quad,'gauss_quad traceless mp2',1)
     
-    gauss_quad(1) = 1.7407
-    gauss_quad(2) = -1.6508
-    gauss_quad(3) = -0.0899
-    gauss_quad = gauss_quad*3/2
     
-    call printer (gauss_quad,'gauss_quad mp2',1)
+    !tracefull!!
+    !gauss_quad(1) = -4.4517
+    !gauss_quad(2) = -7.8432
+    !gauss_quad(3) = -6.2824
+    !trace = sum(gauss_quad)/3d0
+    !print*, 'trace', trace
+    !gauss_quad = gauss_quad - trace
+    !
+    !gauss_quad = gauss_quad*3/2/au_to_debye*A_a0
+    !
+    !call printer (gauss_quad,'gauss_quad detraced tracefull mp2',1)
 
     call gaussian_octa(entries)
-  call printer(entries,'gauss oct mp2',1)
-  
+  call printer(entries,'gauss oct mp2',1) !Why dont I need the 5/2 scale factor here???? because it is in the function:) 
+    
+    call detrace_hexadecap(out6,output,.true.)
+    
+    call bat_hexa()
+    
+    
 !    call get_deldel(ddelta)
 !  call printer(ddelta,'ddelta',1)
     
-    call hexad_moments(hede)
+    !call hexad_moments(hede)
+    
+if(.false.)then
+    !call printer(dd0,'dd0',1)
+    !call printer(dq0,'dq0',1)
+    !call printer(dq0(:,1,:),'dq1',1)
+    !call printer(dq0(:,2,:),'dq2',1)
+    !call printer(dq0(:,3,:),'dq3',1)
+    
+    !do i = 1,3
+    !  !write(ctemp,'(I1)') i
+    !  call printer(dq0(i,:,:),'quadrupole induced from '//str(i),1)
+    !enddo
+    !call printer(qq0,'qq0',1)
+    
+    
+    !call print_row([1.2d0,1.3d0,1.4d0])
+    
+    tempmat=dd0
+    tempmat(1,3) = 1d0
+    tempmat(1,2) = 2d0
+    
+    
+    call print_tens(tempmat,2)
+    
+endif 
+    
+    !call printo(qq0,[2,4,1,3])
+    !print*, "hej"
+    !call printo(qq0(:,:,:,1),[2,3,1])
+    !print*, "hej"
+    !
+    !call printo(qq0(3,:,:,1),[1,2])
+    !          
+    !call printo([1.0d0/3,2.0d0/3,3.0d0/4])
+    !
+    !call detrace_hede(out6,output,.true.)
+    
+    !call printer(output,'printer(output)',1)
+    
+    !call printer(out6,'printer(out6)',1)
+    !call printer(qq0,'qq0',1)
+    !call print_tens(dd0,2)
 end subroutine !//////////
+
+subroutine print_row(vec)
+real(dp),intent(in) :: vec(3) 
+write(*,'(3f12.5)') vec
+endsubroutine
+
+subroutine print_tens(obj,order)
+real(dp) :: obj(3,3)
+integer order
+integer i
+do i = 1,3
+  if(order==1)then 
+    call print_row(obj(i,:))
+  elseif(order==2)then
+    call print_row(obj(:,i))
+  else
+    print*, "Not valid order"
+  endif
+enddo
+endsubroutine
+
+
+
+
+!subroutine print_tens3(obj,order)
+!real(dp) :: obj(3,3,3)
+!integer order(3)
+!integer i, io
+!do j = 1,3
+!  print*, 'outermost'
+!  do i = 1,3 !innermost
+!    do io = 1,2
+!      if(order==[1,2,3])then 
+!        call print_row(obj(i,:,j))
+!      elseif(order==[2,1,3])then
+!        call print_row(obj(:,i,j))
+!      elseif(order==[1,2,3])then 
+!        call print_row(obj(i,j,:))
+!      else
+!        print*, "Not valid order"
+!      endif
+!  enddo
+!enddo
+!endsubroutine
+
+!function i2s(integ,int_len,left) result(ch)
+!integer,intent(in) :: integ, int_len
+!integer, intent(in), optional :: left
+!character(int_len) ch
+!character(5) str_len
+!write(str_len,'(I5)') int_len
+!write(ch,'(I'//trim(str_len)//')') integ
+!if(present(left))then
+!  if (left==1) ch = adjustl(ch)
+!endif
+!endfunction
+
+
 
 subroutine levicivita(levi)
     integer,parameter    :: xyz=3
@@ -265,12 +389,19 @@ end subroutine
 subroutine gaussian_octa(entries)
     integer,parameter    :: xyz=3
     real(dp), intent(out) :: entries(xyz)
-    real(dp) trace
-    entries(1) =  0.0463!zzz
-    entries(2) = -1.0939!xxz
-    entries(3) =  0.2214!yyz
-    trace = sum(entries)/3d0
-    entries = entries - trace
+    real(dp) a_trace
+    !XXX=              0.0000  YYY=              0.0000  ZZZ=              0.0370  XYY=             -0.0000
+    !XXY=             -0.0000  XXZ=             -1.1002  XZZ=             -0.0000  YZZ=             -0.0000
+    !YYZ=              0.2205  XYZ=             -0.0000
+
+    entries(1) =  0.0370_dp!<-batistaGeom GussMP2!  0.0463!zzz
+    entries(2) = -1.1002_dp!<-batistaGeom GussMP2! -1.0939!xxz
+    entries(3) =  0.2205_dp!<-batistaGeom GussMP2!  0.2214!yyz
+    a_trace = sum(entries)/5d0
+    
+    entries(1) = entries(1) - a_trace*3
+    entries(2) = entries(2) - a_trace
+    entries(3) = entries(3) - a_trace
     
     entries = entries*5d0/2d0
     
@@ -342,8 +473,163 @@ call printer(alpha,'traceless alpha for found charges',2)
     
 end subroutine !//////  
 
+subroutine detrace_hexadecap(out6, output15, do_print)
+    implicit real(dp) (p-z)
+    real(dp) :: trace3(3)
+    real(dp), intent(out) :: output15(15), out6(6)
+    character(10) :: txt15(15)
+    integer i
+    logical do_print
+    
+    
+    xxxx=             -6.4684_dp; yyyy=             -7.6549_dp; zzzz=             -7.8338_dp; xxxy=             -0.0000_dp;
+    xxxz=             -0.0000_dp; yyyx=             -0.0000_dp; yyyz=              0.0000_dp; zzzx=              0.0000_dp;
+    zzzy=              0.0000_dp; xxyy=             -2.6905_dp; xxzz=             -1.9449_dp; yyzz=             -2.6498_dp;
+    xxyz=              0.0000_dp; yyxz=              0.0000_dp; zzxy=              0.0000_dp;
+    
+    !Traces
+    ! xx: xx,yy,zz
+    ! xz: xx,yy,zz
+    ! yz: zz,xx,yy
+    ! yy: yy,xx,zz
+    ! yx: yy,zz,xx
+    ! zz: zz,xx,yy
+    
+    ! Traces AACC, AA = xx,yy,zz //////////////////////////////////////////////////////
+    sum_xx = xxxx+xxyy+xxzz
+    sum_yy = xxyy+yyyy+yyzz
+    sum_zz = xxzz+yyzz+zzzz
+    
+    ra = sum_xx/35d0
+    rb = sum_yy/35d0
+    rc = sum_zz/35d0
+    
+    xxxx_out = xxxx + 3*(-9*ra + rb + rc)
+    yyyy_out = yyyy + 3*(ra - 9*rb + rc)
+    zzzz_out = zzzz + 3*(ra + rb - 9*rc)
+    
+    xxyy_out = xxyy - 4*ra - 4*rb + rc
+    xxzz_out = xxzz - 4*ra + rb - 4*rc
+    yyzz_out = yyzz + ra - 4*rb - 4*rc
+    
+    ! Traces ABCC, AB = xy,xz,yz //////////////////////////////////////////////////////////
+    sum_xy = xxxy+yyyx+zzxy
+    sum_xz = xxxz+yyxz+zzzx
+    sum_yz = xxyz+yyyz+zzzy
+    
+    ra_xy = sum_xy/7_dp
+    ra_xz = sum_xz/7_dp
+    ra_yz = sum_yz/7_dp
+    
+    xxxy_out = xxxy - ra_xy*3
+    yyyx_out = yyyx - ra_xy*3
+    zzxy_out = zzxy - ra_xy
+    
+    xxxz_out = xxxz - ra_xz*3
+    yyxz_out = yyxz - ra_xz
+    zzzx_out = zzzx - ra_xz*3
+    
+    xxyz_out = xxyz - ra_yz
+    yyyz_out = yyyz - ra_yz*3
+    zzzy_out = zzzy - ra_yz*3
+    
+    
+    output15(1)  = xxxx_out
+    output15(2)  = xxxz_out
+    output15(3)  = zzzy_out
+    output15(4)  = xxyz_out
+    output15(5)  = yyyy_out
+    output15(6)  = yyyx_out
+    output15(7)  = xxyy_out
+    output15(8)  = yyxz_out
+    output15(9)  = zzzz_out
+    output15(10) = yyyz_out
+    output15(11) = xxzz_out
+    output15(12) = zzxy_out
+    output15(13) = xxxy_out
+    output15(14) = zzzx_out
+    output15(15) = yyzz_out
+    output15 = output15*9_dp/2_dp
+    
+    
+    if(do_print)then
+        
+        out6(1) = xxxx_out
+        out6(2) = yyyy_out
+        out6(3) = zzzz_out
+        out6(4) = yyzz_out
+        out6(5) = xxzz_out
+        out6(6) = xxyy_out
+        out6 = out6*9_dp/2_dp
+        call printer(out6,'out6',1)
+        
+        txt15(1)  = 'xxxx_out'
+        txt15(2)  = 'xxxz_out'
+        txt15(3)  = 'zzzy_out'
+        txt15(4)  = 'xxyz_out'
+        txt15(5)  = 'yyyy_out'
+        txt15(6)  = 'yyyx_out'
+        txt15(7)  = 'xxyy_out'
+        txt15(8)  = 'yyxz_out'
+        txt15(9)  = 'zzzz_out'
+        txt15(10) = 'yyyz_out'
+        txt15(11) = 'xxzz_out'
+        txt15(12) = 'zzxy_out'
+        txt15(13) = 'xxxy_out'
+        txt15(14) = 'zzzx_out'
+        txt15(15) = 'yyzz_out'
+        
+        do i = 1,15
+          print'(f20.15,a,a)',output15(i),'   ',txt15(i)
+        enddo
+        
+        trace3(1) = yyyy_out+xxyy_out+yyzz_out 
+        trace3(2) = zzzz_out+xxzz_out+yyzz_out 
+        trace3(3) = xxzz_out+xxxx_out+xxyy_out 
+        trace3(4) = xxxy_out+yyyx_out+zzxy_out
+        trace3(5) = xxxz_out+yyxz_out+zzzx_out
+        trace3(6) = xxyz_out+yyyz_out+zzzy_out
+        
+        do i = 1,6
+          print'(a,e15.5)', 'trace:',trace3(i)
+        enddo
+        
+        do i = 1,3
+           print*, str(out6(i) - out6(i+3)), ' gauss diff'
+        enddo
+        
+    endif
+    
+    !! HHmmmm seems like there are only three unique components in reality!?
+end subroutine
+
+subroutine bat_hexa()
+    implicit real(dp) (x,y,z)
+    real(dp) bat6(6)
+    zzzz_bat = -1.3637_dp
+    xxzz_bat =  1.6324_dp
+    yyzz_bat = -0.2687_dp
+    xxxx_bat = -0.3575_dp
+    xxyy_bat = -1.2749_dp
+    yyyy_bat =  1.5436_dp
+    
+    bat6(1) = xxxx_bat
+    bat6(2) = yyyy_bat
+    bat6(3) = zzzz_bat
+    bat6(4) = yyzz_bat
+    bat6(5) = xxzz_bat
+    bat6(6) = xxyy_bat
+    
+    call printer(bat6,'bat6',1)
+    
+    print*, str(zzzz_bat - xxyy_bat), ' batista diff'
+    print*, str(yyyy_bat - xxzz_bat), ' batista diff'
+    print*, str(xxxx_bat - yyzz_bat), ' batista diff'
+    
+end subroutine
+
 subroutine hexad_moments(entries)
-    implicit real(dp) (x-z)
+    implicit real(dp) (r-z)
     real(dp) entries(6)
     xxxx = -6.5402
     yyyy = -7.7054
@@ -359,12 +645,25 @@ subroutine hexad_moments(entries)
     entries(5) = xxzz
     entries(6) = yyzz
     
-    entries = entries*7/2
-    
-    call printer(entries,'entries',1)
     print*, 'xxxx+xxyy+xxzz',xxxx+xxyy+xxzz
     print*, 'yyyy+xxyy+yyzz',yyyy+xxyy+yyzz
     print*, 'zzzz+yyzz+xxzz',zzzz+yyzz+xxzz
+    
+    !rescaling while printing
+    call printer(entries*7/2,'gaussian hede tracefull ',1)
+    
+    trace = (xxxx+xxyy+xxzz)/3d0 
+    !traceless rescaled
+    entries = (entries - trace)*7/2
+    
+    call printer(entries,'gaussian hede detraced',1)
+    
+    print*, 'xxxx+xxyy+xxzz',entries(1)+entries(4)+entries(5)
+    print*, 'yyyy+xxyy+yyzz',entries(2)+entries(4)+entries(6)
+    print*, 'zzzz+yyzz+xxzz',entries(3)+entries(5)+entries(6)
+    
+    
+    
 end subroutine
 
 
