@@ -3,6 +3,11 @@ use printer_mod, only: printer,printo, str
 use data_types, only:dp
 implicit none
 
+!interface detrace
+!    module procedure detrace_mono, detrace_dip, detrace_quad, detrace_octa, detrace_hexadeca
+!end interface
+
+
 CONTAINS
 
 subroutine test()
@@ -40,7 +45,7 @@ subroutine test()
     
     
     print*, "octa:"
-    call detrace_octap(entries,.true.)                                                                      !          < !!!!!!!!!!!!!!!!!!!!!!!!!!
+    call detrace_octa(entries,.true.)                                                                      !          < !!!!!!!!!!!!!!!!!!!!!!!!!!
     !=  3.0000_dp
     != -2.8900_dp
     != -1.1002_dp
@@ -63,7 +68,7 @@ subroutine test()
     close(56)
     
     
-    call detrace_hexadep(entries15,.true.)
+    call detrace_hexadeca(entries15,.true.)
     
     call bat_hexa()
     
@@ -97,8 +102,62 @@ subroutine bat_hexa()
     
 end subroutine
 
+subroutine detrace(entries)
+    real(dp), intent(inout) :: entries(:)
+    integer le
+    le = size(entries)
+    if(le==15)then
+      call detrace_hexadeca(entries,.false.)
+    elseif(le==10)then
+      call detrace_octa(entries,.false.)
+    elseif(le==6)then
+      call detrace_quad(entries)
+    elseif(le==3)then
+      print*, "dipole unchanged"
+    elseif(le==1)then
+    else
+      stop"only 15,10,6,3,1 entries"
+    endif
+    
+end subroutine
 
-subroutine detrace_octap(entries,do_print)
+!subroutine detrace_dip(entries)
+!    real(dp), intent(inout) :: entries(3)
+!end subroutine
+!
+!subroutine detrace_mono(entries)
+!    real(dp), intent(inout) :: entries
+!end subroutine
+
+subroutine detrace_quad(entries)
+    implicit real(dp) (x,y,z)
+!    logical, intent(in) :: do_print
+    real(dp), intent(inout) :: entries(6)
+    real(dp) aa
+    
+    xx = entries(1) 
+    !xy = entries(2) 
+    !xz = entries(3) 
+    yy = entries(4) 
+    !yz = entries(5) 
+    zz = entries(6) 
+    
+    aa = (xx+yy+zz)/3
+    
+    xx_det = xx - aa
+    yy_det = yy - aa
+    zz_det = zz - aa
+    
+    entries(1) = xx_det
+    entries(4) = yy_det
+    entries(6) = zz_det
+    
+end subroutine
+
+
+    
+    
+subroutine detrace_octa(entries,do_print)
     implicit real(dp) (x,y,z)
     logical, intent(in) :: do_print
     real(dp), intent(inout) :: entries(10)
@@ -147,7 +206,7 @@ subroutine detrace_octap(entries,do_print)
     entries(9)  = yzz_det
     entries(10) = zzz_det
     
-    entries = entries*5d0/2d0 !5/2 in Stone definition, not in Gaussian Program
+    !entries = entries*5d0/2d0 !5/2 in Stone definition, not in Gaussian Program
     
     if(do_print)then
         
@@ -179,7 +238,7 @@ subroutine detrace_octap(entries,do_print)
 end subroutine    
 
 
-subroutine detrace_hexadep(entries, do_print)
+subroutine detrace_hexadeca(entries, do_print)
     implicit real(dp) (x,y,z,t)
     real(dp) :: aa,bb,cc,aa_xy,aa_xz,aa_yz
     real(dp) :: trace6(6), out6(6)
@@ -257,11 +316,11 @@ subroutine detrace_hexadep(entries, do_print)
     entries(13) = yyzz_det
     entries(14) = yzzz_det
     entries(15) = zzzz_det
-    entries = entries*9_dp/2_dp !definition in stone and gaussian differ. 
+    !entries = entries*9_dp/2_dp !definition in stone and gaussian differ. This is also wrong, the fraction (2n-1)!!/n! = 7*5*3/(4*3*2) = 35/8
     
     
     if(do_print)then
-        print*, "Hexadecapole routine printing:"
+        print*, "Hexadecapole routine printing: (*9_dp/2_dp)"
         
         
         txt15(1)  = 'xxxx_det'
@@ -281,7 +340,7 @@ subroutine detrace_hexadep(entries, do_print)
         txt15(15) = 'yyzz_det'
         
         do i = 1,15
-          print'(f20.15,a,a)',entries(i),'   ',txt15(i)
+          print'(f20.15,a,a)',entries(i)*9_dp/2_dp,'   ',txt15(i)
         enddo
         
         trace6(1) = yyyy_det+xxyy_det+yyzz_det 
@@ -292,7 +351,7 @@ subroutine detrace_hexadep(entries, do_print)
         trace6(6) = xxyz_det+yyyz_det+yzzz_det
         
         do i = 1,6
-          print'(a,e15.5)', 'trace:',trace6(i)
+          print'(a,e15.5)', 'trace:',trace6(i)*9_dp/2_dp
         enddo
         
         print*, "batista comparison:"
@@ -304,10 +363,10 @@ subroutine detrace_hexadep(entries, do_print)
         out6(6) = xxyy_det
         out6 = out6*9_dp/2_dp
         
-        call printer(out6,'out6',1)        
+        call printer(out6*9_dp/2_dp,'out6',1)        
        
         do i = 1,3
-           print*, str(out6(i) - out6(i+3)), ' gauss diff'
+           print*, str((out6(i) - out6(i+3))*9_dp/2_dp), ' gauss diff'
         enddo
         
     endif
