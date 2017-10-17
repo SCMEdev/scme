@@ -24,8 +24,19 @@ module multipole_parameters
 !  real(dp), parameter :: d0_1 = -0.72981_dp
 !  real(dp), parameter :: q0_1 = 1.95532_dp, q0_2 = -1.85867_dp, q0_3 = -0.09665_dp
   real(dp), parameter :: d0_1 = -0.76219201_dp 
-  real(dp), parameter :: q0_1 = 1.950317739166_dp, q0_2 = -1.840618450315_dp, q0_3 = -0.109699288851_dp 
+   real(dp), parameter :: q0_1 = 1.950317739166_dp, q0_2 = -1.840618450315_dp, q0_3 = -0.109699288851_dp 
+  ! jo from gaussian:
+  !jö traceless:
+  !real(dp), parameter :: q0_1 = 1.941232948358537_dp ,&
+  !                       q0_2 = -1.840976227504731_dp,& 
+  !                       q0_3 = -0.100256704235994_dp 
+  !tracefull
+  !real(dp), parameter :: q0_1 = -4.964547074614011_dp/1.5_dp ,&
+  !                       q0_2 = -8.746756250477278_dp/1.5_dp,& 
+  !                       q0_3 = -7.006148149636545_dp/1.5_dp 
+                         
   real(dp), parameter :: o0_1 = -3.27190_dp, o0_2 = 1.36606_dp, o0_3 = 1.90585_dp
+  
   real(dp), parameter :: h0_1 = -0.94903_dp, h0_2 = -3.38490_dp, h0_3 = 4.33393_dp, &
                          h0_4 = 4.09835_dp,  h0_5 = -0.71345_dp, h0_6 = -3.62048_dp
 
