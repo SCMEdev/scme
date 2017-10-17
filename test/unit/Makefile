@@ -16,7 +16,7 @@ FFLAGS = -O0 -cpp -I$(scme_build) -J$b $(comline)
 #-fopenmp 
 
 #default
-all:
+all: $b
 	make scme 
 	make run.x
 	make 2run.x
@@ -52,7 +52,7 @@ run.x: $b/run_tests.o $(common_obj) $(scme_build)/libscme.a
 %.x:
 	$(FC) $(FFLAGS) -o $@ $^ 
 
-$b/%.o:$s/%.f90 $b
+$b/%.o:$s/%.f90 
 	$(FC) $(FFLAGS) -c $< -o $@
 
 $b:
