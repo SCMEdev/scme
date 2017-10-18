@@ -1,7 +1,7 @@
 #Definitions
-scme_root := ../../
-scme_build := ../../build
-scme_src := ../../src
+scme_root := ..
+scme_build := $(scme_root)/build
+scme_src := $(scme_root)/src
 
 s := src
 b := build

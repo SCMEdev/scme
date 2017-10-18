@@ -1,15 +1,15 @@
-PROGRAM qpole
+Module qpole_dev
 use printer_mod, only:printer
 use localAxes_mod,only: norm, norm_square
 use data_types, only: dp, pi
 use multipole_parameters, only: q0
 implicit none
-call main()
+!call main()
 contains !///
 
 SUBROUTINE main()
     integer,parameter :: xyz=3,dxyz=3,hho=3, rra=3
-    real(dp) wg(xyz,hho), wi(rra)
+    real(dp) wg(xyz,hho)!, wi(rra)
     real(dp) dp1(xyz,hho),dp2(xyz,hho),dp3(xyz,hho),p(hho)
     real(dp) quadrupole(xyz,xyz)
     !real(dp) dQ_h1(xyz,xyz,xyz),dQ_h2(xyz,xyz,xyz),dQ_o(xyz,xyz,xyz)
@@ -81,7 +81,7 @@ SUBROUTINE quad_charges(cec,cer2, p, dp1, dp2,dp3)
     integer,parameter    :: xyz=3,hho=3, rra=3
     real(dp),intent(in)  :: cec(xyz,hho),cer2(hho)
     real(dp),intent(out) :: p(hho), dp1(xyz,hho),dp2(xyz,hho),dp3(xyz,hho)
-    real(dp) hx2
+    !real(dp) hx2
     
     !hx2=cec(1,1)**2
     !p(1) = ( q0(1,1) - q0(2,2) ) / (3*hx2)
@@ -104,8 +104,8 @@ SUBROUTINE quad_tensor(cec,cer2,p,q)  !wg = global coordinates
     real(dp),intent(in)  :: cec(xyz,hho),cer2(hho)
     real(dp),intent(in)  :: p(hho)
     real(dp),intent(out) :: q(xyz,xyz)
-    integer a,c
-    real(dp)  hx2
+    integer a!,c
+    !real(dp)  hx2
     
     
     q(:,:) = 0
@@ -146,10 +146,10 @@ SUBROUTINE dQ_atomic(cec,cer2,p,q,m,dQ,a)
     real(dp),intent(out) ::dQ(xyz,xyz,dxyz)
     !real(dp) dQ_h1(xyz,xyz,dxyz), dQ_h2(xyz,xyz,dxyz), dQ_o(xyz,xyz,dxyz)
     integer, intent(in) :: a
-    integer c,d,od
-    real(dp) mM(hho), mM1(hho)
+    integer c,d!,od
+    !real(dp) mM(hho), mM1(hho)
     
-    integer k, c1,c2 !,cs(xyz,dxyz)
+    !integer k, c1,c2 !,cs(xyz,dxyz)
         real(dp) ceca(xyz), pa,prea
         
         
@@ -235,7 +235,7 @@ END FUNCTION !///
 
 
 
-END PROGRAM
+END Module qpole_dev
 
     !cec(:,1) = wg(:,1) - rMEC(:) !h1
     !cec(:,2) = wg(:,2) - rMEC(:) !h2

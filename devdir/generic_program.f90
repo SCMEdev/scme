@@ -1,9 +1,8 @@
 !!!!#define call test(A)
 
 program slkdjf
-use detrace_mod !, only:test
+
 !integer, parameter :: dp = kind(0d0)
-integer i
 
 
 #ifdef RUN_TEST
@@ -12,6 +11,8 @@ call test()
 
 
 #ifdef HEXAD 
+use detrace_mod !, only:test
+integer i
 integer, parameter :: le=15
 real(dp) tricorn(le)
 do i = 1,le
@@ -24,6 +25,8 @@ enddo
 #endif
 
 #ifdef OCTA 
+use detrace_mod !, only:test
+integer i
 integer, parameter :: le=10
 real(dp) tricorn(le)
 do i = 1,le
@@ -36,6 +39,8 @@ enddo
 #endif
 
 #ifdef GENERAL
+use detrace_mod !, only:test
+integer i
 integer, parameter :: maxl=16
 real(dp) tricorn(maxl)
 integer le, vari
@@ -55,4 +60,33 @@ enddo
 #ifdef STUPID
 print*, size([1.0,2.0]), size([1.0]) !, size(5.0)
 #endif
+
+#ifdef OPOLE
+use opole_dev,only:opole_main => main
+call opole_main()
+#endif
+
+#ifdef QPOLE
+use qpole_dev,only:qpole_main => main
+call qpole_main()
+#endif
+
+#ifdef APPLE
+use detrace_apple, only:xtrace !,only:qpole_main => main
+integer, parameter :: dp = kind(0d0)
+integer i
+!character(4) dum
+integer, parameter :: le=15
+real(dp) inten(le),outen(le) 
+!print*, "hej"
+do i = 1,le
+  read(*,*) inten(i)
+enddo
+call xtrace(inten,outen,4)
+do i = 1,le
+  print*, outen(i) /7d0/5d0/3d0
+enddo
+#endif
+
+
 end program

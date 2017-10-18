@@ -1,4 +1,4 @@
-program jkdls
+module opole_dev
 use localAxes_mod,only: norm, norm_square
 use data_types, only: dp, pi
 use printer_mod, only:printer
@@ -41,7 +41,8 @@ implicit none
 !  
 !
 
-call main()
+!opole_dev
+!call main()
 
 contains !/////////////////
 
@@ -83,7 +84,7 @@ subroutine main()
     
 call printer(molecule,'molecule',2)    
     
-    call expansion_coordinates(molecule,exp_cent,cec,cer2,1)
+    call expansion_coordinates(molecule,exp_cent,cec,cer2,1,3)
     
 
 call printer(exp_cent,'exp_cent',2)    
@@ -131,4 +132,4 @@ call printer(cer2,'cer2',2)
     
     call printer(octupole-o0,'diff',2)    
 end subroutine
-end program
+end module
