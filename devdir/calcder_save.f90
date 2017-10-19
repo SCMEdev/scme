@@ -35,115 +35,32 @@ contains
     real(dp), intent(out) ::  ed1(:,:), ed2(:,:,:), ed3(:,:,:,:)
     real(dp), intent(out) ::  ed4(:,:,:,:,:), ed5(:,:,:,:,:,:) 
 
-                  
-
-
 !JÖ internal: (trying the save option)     
-    real(dp), save :: d1d(3), d2d(3,3), d3d(3,3,3)
-    real(dp), save :: d4d(3,3,3,3), d5d(3,3,3,3,3)
-    real(dp), save :: d1a(3), d2a(3,3), d3a(3,3,3)
-    real(dp), save :: d4a(3,3,3,3), d5a(3,3,3,3,3)
-    real(dp), save :: re(3), dr(3), r1, r2, swFunc, dSdr
-    integer , save :: i, j, k, l, s, n, m, ii, nx, ny, nz
-    integer , save :: in2(2), in3(3), in4(4), in5(5)
+    real(dp) :: d1d(3), d2d(3,3), d3d(3,3,3)
+    real(dp) :: d4d(3,3,3,3), d5d(3,3,3,3,3)
+    real(dp) :: d1a(3), d2a(3,3), d3a(3,3,3)
+    real(dp) :: d4a(3,3,3,3), d5a(3,3,3,3,3)
+    real(dp) :: re(3), dr(3), r1, r2, swFunc, dSdr
+    integer  :: i, j, k, l, s, n, m, ii, nx, ny, nz
+    integer  :: in2(2), in3(3), in4(4), in5(5)
     
 
-!JÖ    real(dp) :: d(3), q(3,3), o(3,3,3), h(3,3,3,3)
-!JÖ    real(dp), pointer :: d(:), q(:,:), o(:,:,:), h(:,:,:,:)
-
-!, save
-!, save
-!
-!, save
-!, save
-!
-!, save
-!, save
-!
-!, save
-!, save
-! Save is no improvement, probably because this routine is to high up  
-! and the save only consumes cache for the lower level/faster routines.
-!
-!
-
-!--------------------------------------------    
-!    implicit none
-!    integer nM, NC, NCz
-!    real(dp) rCM(3,maxCoo/3), a(3), a2(3)
-!    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
-!    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
-!    
-!    real(dp) ed1(3,maxCoo/3), ed2(3,3,maxCoo/3), ed3(3,3,3,maxCoo/3)
-!    real(dp) ed4(3,3,3,3,maxCoo/3), ed5(3,3,3,3,3,maxCoo/3), rMax2
-!    
-!    real(dp) d1d(3), d2d(3,3), d3d(3,3,3)
-!    real(dp) d4d(3,3,3,3), d5d(3,3,3,3,3)
-!    
-!    real(dp) d1a(3), d2a(3,3), d3a(3,3,3)
-!    real(dp) d4a(3,3,3,3), d5a(3,3,3,3,3)
-!    
-!    real(dp) d(3), q(3,3), o(3,3,3), h(3,3,3,3), fsf(3,maxCoo/3)
-!    
-!    integer i, j, k, l, s, n, m, ii, nx, ny, nz
-!    integer in2(2), in3(3), in4(4), in5(5)
-!    real(dp) re(3), dr(3), r1, r2, swFunc, dSdr
-!    logical*1 iSlab
-!--------------------------
-
-
     
-    !timming
-    integer*8 ti, tf, irtc
-    real(dp) t1, t2, t3, t4, t5, t6, t7
+    !integer*8 ti, tf, irtc
+    !real(dp) t1, t2, t3, t4, t5, t6, t7
     !timming
     
-    !do n = 1, nM
-    !   do i = 1, 3
-    !      ed1(i,n) = 0.0_dp
-    !      fsf(i,n) = 0.0_dp
-    !      do j = i, 3
-    !         ed2(i,j,n) = 0.0_dp
-    !         do k = j, 3
-    !            ed3(i,j,k,n) = 0.0_dp
-    !            do l = k, 3
-    !               ed4(i,j,k,l,n) = 0.0_dp
-    !               do s = l, 3
-    !                  ed5(i,j,k,l,s,n) = 0.0_dp
-    !               end do
-    !            end do
-    !         end do
-    !      end do
-    !   end do
-    !end do
     ed1 = 0
     fsf = 0
     ed2 = 0
     ed3 = 0
     ed4 = 0
     ed5 = 0
-!  print*, "some tensor in calcDv"
-!  print*, 0,ed1(:,2)
     
-    !$$$      t1 = 0.0_dp
-    !$$$      t2 = 0.0_dp
-    !$$$      t3 = 0.0_dp
-    !$$$      t4 = 0.0_dp
-    !$$$      ti = irtc()
     
     NCz = NC
     if (iSlab) NCz = 0
     
-    !!$omp parallel &
-    !!$omp default(none) &
-    !!$omp private(d1d,d2d,d3d,d4d,d5d,  d1a,d2a,d3a,d4a,d5a, ed1,ed2,ed3,ed4,ed5,  re, dr, r1, r2, &
-    !!$omp         swFunc, dSdr, i, j, k, l, s, m, n, ii, nx, ny, nz, in2,in3,in4,in5  ) &   !,d,q,o,h
-    !!$omp shared(nM, NC, a, NCz, rCM, a2, rMax2,dpole,qpole,opole,hpole,iSlab,fsf)
-! d,q,o,h
-!    !$omp default(private) &
-
-    
-    !!$omp do
     !JÖ loop over all water pairs:
     do n = 1, nM
        do m = 1, nM
@@ -168,39 +85,14 @@ contains
                    
                    r2 = sum(dr**2) !JÖ dr(1)**2 + dr(2)**2 + dr(3)**2
                    
-                   !JÖ Also if the distance is larger than the cutoff, skip calculation:
                    if (r2 .gt. rMax2) cycle crescent!JÖ goto 11
                    
                    r1 = dsqrt(r2)
                    call SFdsf(r1, swFunc, dSdr)
                    
                    
-                   !do i = 1, 3
-                   !   d(i) = dpole(i,m)
-                   !end do
-                   !                     call dDpole(d, dr, d1d, d2d, d3d, d4d, d5d)
-                   !d = dpole(:,m)
-                   !call dDpole(d, dr, d1a, d2a, d3a, d4a, d5a)
                    call dDpole(dpole(:,m), dr, d1a, d2a, d3a, d4a, d5a)
                    
-                   !d5a = 0
-                   
-                   !$$$                     print *, n, m
-                   !$$$                     print *, rCM(2,n), rCM(2,m), a(2)
-                   !$$$
-                   !$$$                     print *, d(1), d(2), d(3)
-                   !$$$                     print *, dr(1), dr(2), dr(3)
-                   !$$$                     print *, d1a(1), d1a(2), d1a(3)
-                   !$$$                     stop
-                   
-                   !do j = 1, 3
-                   !   do i = 1, 3
-                   !      q(i,j) = qpole(i,j,m)
-                   !   end do
-                   !end do
-                   
-                   !q = qpole(:,:,m)
-                   !call dQpole(q, dr, d1d, d2d, d3d, d4d, d5d)
                    call dQpole(qpole(:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
                    
                    d1a = d1a + d1d
@@ -213,22 +105,7 @@ contains
                    
                    
                    
-                   !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
-                   
-                   !$$$                     print *, d1a(1), d1a(2), d1a(3)
-                   !$$$                     print *, d1d(1), d1d(2), d1d(3)
-                   
-                   !do k = 1, 3
-                   !   do j = 1, 3
-                   !      do i = 1, 3
-                   !         o(i,j,k) = opole(i,j,k,m)
-                   !      end do
-                   !   end do
-                   !end do
-                   !o = opole(:,:,:,m)
-                   !call dOpole(o, dr, d1d, d2d, d3d, d4d, d5d)
                    call dOpole(opole(:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
-                   !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
                    d1a = d1a + d1d
                    d2a = d2a + d2d
                    if(full)then
@@ -237,22 +114,7 @@ contains
                      d5a = d5a + d5d
                    endif
                    
-                   !$$$                     print *, d1a(1), d1a(2), d1a(3)
-                   !$$$                     print *, d1d(1), d1d(2), d1d(3)
-                   
-                   !do l = 1, 3
-                   !   do k = 1, 3
-                   !      do j = 1, 3
-                   !         do i = 1, 3
-                   !            h(i,j,k,l) = hpole(i,j,k,l,m)
-                   !         end do
-                   !      end do
-                   !   end do
-                   !end do
-                   !h = hpole(:,:,:,:,m)
-                   !call dHpole(h, dr, d1d, d2d, d3d, d4d, d5d)
                    call dHpole(hpole(:,:,:,:,m), dr, d1d, d2d, d3d, d4d, d5d)
-                   !call addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
                    d1a = d1a + d1d
                    if(full)then
                      d2a = d2a + d2d
@@ -263,100 +125,42 @@ contains
                    
                    call addDeriv(ed1, ed2, ed3, ed4, ed5, d1a, d2a, d3a, d4a, d5a, n, swFunc)
                    
-                   !$$$                     print *, d1a(1), d1a(2), d1a(3)
-                   !$$$                     print *, ed1(1,1), ed1(2,1), ed1(3,1)
-                   !$$$                     stop
-                   
                    
                    call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,opole, hpole, fsf)
                    
-!11              end do
                 end do crescent
              end do
           end do
        end do
     end do
-    !!$omp end do 
-    !!$omp end parallel
     
-    !$$$      tf = irtc()
-    !$$$      t4 = (tf-ti) * 1e-9
-    !$$$
-    !$$$      print '(A,f15.6)', 'Calculation: ', t4
-    
-    !$$$      print '(A,f15.6)', '      Dipoles: ', t1
-    !$$$      print '(A,f15.6)', '  Quadrupoles: ', t2
-    !$$$      print '(A,f15.6)', '    Octopoles: ', t3
-    !$$$      print '(A,f15.6)', 'hexadecapoles: ', t4
-    
-    
-    !     Copy all the permutations. (Is this really necessary??)
-    !$$$      ti = irtc()
-!  print*, 1,ed1(:,2)
-    
-    !!$omp parallel do &
-    !!$omp private
-    
-    
-    !!!!&
-    !!!!!$omp default(private) &
-    !!!!!$omp shared(ed2, ed3, ed4, ed5)
-    
-    
-    !!$omp do
     do i = 1, 3
        do j = 1, 3
-          !in2(1) = i
-          !in2(2) = j
           in2 = [i,j]
           call insertIN(in2, 2)
           
-          !do n = 1, nM
-          !   ed2(i,j,n) = ed2(in2(1), in2(2), n)
-          !end do
           ed2(i,j,:) = ed2(in2(1), in2(2), :)
           
           do k = 1, 3
-             !do ii = 1, 2
-             !   in3(ii) = in2(ii)
-             !end do
-             !in3(1:2) = in2
-             !in3(3) = k
+             
              in3 = [in2, k]
              call insertIN(in3, 3)
              
-             !do n = 1, nM
-             !   ed3(i,j,k,n) = ed3(in3(1),in3(2),in3(3),n)
-             !end do
              ed3(i,j,k,:) = ed3(in3(1),in3(2),in3(3),:)
              
              do l = 1, 3
-                !do ii = 1, 3
-                !   in4(ii) = in3(ii)
-                !end do
-                !in4(1:3) = in3
-                !in4(4) = l
+                
                 in4 = [in3, l]
                 call insertIN(in4, 4)
                 
-                !do n = 1, nM
-                !   ed4(i,j,k,l,n) = ed4(in4(1),in4(2),in4(3),in4(4),n)
-                !end do
                 ed4(i,j,k,l,:) = ed4(in4(1),in4(2),in4(3),in4(4),:)
                 
                 do m = 1, 3
-                   !do ii = 1, 4
-                   !   in5(ii) = in4(ii)
-                   !end do
-                   !in5(1:4) = in4
-                   !in5(5) = m
+                   
                    in5 = [in4, m]
                    
                    call insertIN(in5, 5)
                    
-                   !do n = 1, nM
-                   !   ed5(i,j,k,l,m,n) = ed5(in5(1),in5(2),in5(3) ,in5(4),in5(5),n)
-                   !end do
                    ed5(i,j,k,l,m,:) = ed5(in5(1),in5(2),in5(3) ,in5(4),in5(5),:)
                    
                 end do
@@ -364,14 +168,6 @@ contains
           end do
        end do
     end do
-    !!$omp end do
-    !!$omp end parallel 
-!  print*, 2,ed1(:,2)
-    
-    !$$$      tf = irtc()
-    !$$$      t4 = (tf-ti) * 1e-9
-    !$$$      print '(A,f15.6)', 'Permutations: ', t4
-    !$$$      stop
     
     return
     
@@ -402,21 +198,6 @@ contains
     
   end subroutine insertIN
   
-  !-----------------------------------------------------------------------
-  pure integer function delta(i, j) !result(delta)
-    implicit none
-    integer, intent(in) :: i, j
-    !integer delta !, intent(out) :: 
-    
-    if (i.eq.j) then
-       delta = 0
-    else
-       delta = 0
-    end if
-    
-    return
-    
-  end function delta
   
   !-----------------------------------------------------------------------
   pure subroutine addDeriv(ed1, ed2, ed3, ed4, ed5, d1d, d2d, d3d, d4d, d5d, n, swFunc)
@@ -435,115 +216,31 @@ contains
 !JÖ internal:     
     integer :: i, j, k, l, s !JÖ , save
 
-!    real(dp) ed1(3,maxCoo/3), ed2(3,3,maxCoo/3), ed3(3,3,3,maxCoo/3)
-!    real(dp) ed4(3,3,3,3,maxCoo/3), ed5(3,3,3,3,3,maxCoo/3)
-!    
-!    real(dp) d1d(3), d2d(3,3), d3d(3,3,3)
-!    real(dp) d4d(3,3,3,3), d5d(3,3,3,3,3)
-!    real(dp) swFunc
-!    
-!    integer n, i, j, k, l, s
-
-    
-    do i = 1, 3
-       ed1(i,n) = ed1(i,n) + d1d(i) * swFunc
-       do j = i, 3
-          ed2(i,j,n) = ed2(i,j,n) + d2d(i,j) * swFunc
-          do k = j, 3
-             ed3(i,j,k,n) = ed3(i,j,k,n) + d3d(i,j,k) * swFunc
-             do l = k, 3
-                ed4(i,j,k,l,n) = ed4(i,j,k,l,n) + d4d(i,j,k,l) * swFunc
-                do s = l, 3
-                   ed5(i,j,k,l,s,n) = ed5(i,j,k,l,s,n) + d5d(i,j,k,l,s ) * swFunc
-                end do
-             end do
-          end do
-       end do
-    end do
-    
-    !ed1(:,n)          = ed1(:,n)         + d1d * swFunc
-    !ed2(:,:,n)        = ed2(:,:,n)       + d2d * swFunc
-    !ed3(:,:,:,n)      = ed3(:,:,:,n)     + d3d * swFunc
-    !ed4(:,:,:,:,n)    = ed4(:,:,:,:,n)   + d4d * swFunc
-    !ed5(:,:,:,:,:,n)  = ed5(:,:,:,:,:,n) + d5d * swFunc
+    ed1(:,n)          = ed1(:,n)         + d1d * swFunc
+    ed2(:,:,n)        = ed2(:,:,n)       + d2d * swFunc
+    ed3(:,:,:,n)      = ed3(:,:,:,n)     + d3d * swFunc
+    ed4(:,:,:,:,n)    = ed4(:,:,:,:,n)   + d4d * swFunc
+    ed5(:,:,:,:,:,n)  = ed5(:,:,:,:,:,n) + d5d * swFunc
     
     return
     
   end subroutine addDeriv
   
-  !-----------------------------------------------------------------------
-  pure subroutine addDerivA(d1a, d2a, d3a, d4a, d5a, d1d, d2d, d3d, d4d, d5d)
-    
-    implicit none
-!JÖ in/Out    
-    real(dp), intent(inout) :: d1a(:), d2a(:,:), d3a(:,:,:)
-    real(dp), intent(inout) :: d4a(:,:,:,:), d5a(:,:,:,:,:)
-    
-    real(dp), intent(in) :: d1d(:), d2d(:,:), d3d(:,:,:)
-    real(dp), intent(in) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
-!JÖ internal    
-    integer :: n, i, j, k, l, s !JÖ , save
-
-!    real(dp) d1a(3), d2a(3,3), d3a(3,3,3)
-!    real(dp) d4a(3,3,3,3), d5a(3,3,3,3,3)
-!    
-!    real(dp) d1d(3), d2d(3,3), d3d(3,3,3)
-!    real(dp) d4d(3,3,3,3), d5d(3,3,3,3,3)
-!    
-!    integer n, i, j, k, l, s
-
-    
-    do i = 1, 3
-       d1a(i) = d1a(i) + d1d(i)
-       do j = i, 3
-          d2a(i,j) = d2a(i,j) + d2d(i,j)
-          do k = j, 3
-             d3a(i,j,k) = d3a(i,j,k) + d3d(i,j,k)
-             do l = k, 3
-                d4a(i,j,k,l) = d4a(i,j,k,l) + d4d(i,j,k,l)
-                do s = l, 3
-                   d5a(i,j,k,l,s) = d5a(i,j,k,l,s) + d5d(i,j,k,l,s)
-                end do
-             end do
-          end do
-       end do
-    end do
-
-    !d1a = d1a + d1d !* swFunc
-    !d2a = d2a + d2d !* swFunc
-    !d3a = d3a + d3d !* swFunc
-    !d4a = d4a + d4d !* swFunc
-    !d5a = d5a + d5d !* swFunc
-
-    
-    return
-    
-  end subroutine addDerivA
   
   !-----------------------------------------------------------------------
   pure subroutine addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole, opole, hpole, fsf)
     
     implicit none
     
-    real(dp), intent(inout) :: d1a(:), d2a(:,:), d3a(:,:,:), d4a(:,:,:,:)
-    real(dp), intent(in)    :: dSdr, dr(:), r1
+    real(dp), intent(inout) :: d1a(3), d2a(3,3), d3a(3,3,3), d4a(3,3,3,3)!d1a(:), d2a(:,:), d3a(:,:,:), d4a(:,:,:,:)
+    real(dp), intent(in)    :: dSdr, dr(3), r1!dSdr, dr(:), r1
     real(dp), intent(in)    :: dpole(:,:), qpole(:,:,:)
     real(dp), intent(in)    :: opole(:,:,:,:), hpole(:,:,:,:,:)
     real(dp), intent(out)   :: fsf(:,:)
     integer, intent(in) :: n
     
-!JÖ internal:    
     real(dp) :: u
-!JÖ , save
     integer :: i, ii, j, k, l, in2(2), in3(3), in4(4)
-!JÖ , save
-
-!    real(dp) d1a(3), d2a(3,3), d3a(3,3,3), d4a(3,3,3,3)
-!    real(dp) dSdr, dr(3), r1, fsf(3,maxCoo/3), u
-!    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
-!    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)
-!    
-!    integer i, ii, j, k, l, in2(2), in3(3), in4(4), n
     
     !     Copy all the permutations.
     do i = 1, 3
@@ -593,21 +290,6 @@ contains
           end do
        end do
     end do
-
-!JÖ my version, its baed, or not, we'll see    u = 0.0_dp !JÖ is this chit correct, check it!
-!JÖ my version, its baed, or not, we'll see    do i = 1, 3
-!JÖ my version, its baed, or not, we'll see       u = u + d1a(i) * dpole(i,n)
-!JÖ my version, its baed, or not, we'll see       do j = 1, 3
-!JÖ my version, its baed, or not, we'll see          u = u + d2a(j,i) * qpole(j,i,n) / 3.0_dp
-!JÖ my version, its baed, or not, we'll see          do k = 1, 3
-!JÖ my version, its baed, or not, we'll see             u = u + d3a(k,j,i) * opole(k,j,i,n) / 15.0_dp
-!JÖ my version, its baed, or not, we'll see             do l = 1, 3
-!JÖ my version, its baed, or not, we'll see                u = u + d4a(l,k,j,i) * hpole(l,k,j,i,n) / 105.0_dp
-!JÖ my version, its baed, or not, we'll see             end do
-!JÖ my version, its baed, or not, we'll see          end do
-!JÖ my version, its baed, or not, we'll see       end do
-!JÖ my version, its baed, or not, we'll see    end do
-
     
     u = -u * dSdr / r1
     do i = 1, 3
@@ -630,15 +312,9 @@ contains
     real(dp), intent(out) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
 
 !JÖ internal:    
-    !integer  :: dij, dik, dil, dis, djk, djl, djs, dkl, dks, dls
     integer  :: i, j, k, l, s
     real(dp) :: r2, r3, r5, r7, r9, r11, r13, rd
     real(dp) :: t1, t2, y1, y2, y3, z1, z2, z3, w1, w2, w3, w4
-
-    !real(dp) :: dt1k, dt2k, dt1l, ddt2kl, dy2l, dt2l, dy3l, dddt2kls
-    !real(dp) :: dt1s, ddy2ls, dz1s, ddt2ks, dy2s, ddt2ls, dt2s
-    !real(dp) :: ddy3ls, dz2s, dy3s, dz3s
-
     
     r2 = r(1)**2 + r(2)**2 + r(3)**2 !sum(r**2) !JÖ 
     r3 = dsqrt(r2) * r2
@@ -853,18 +529,17 @@ contains
              
              do l = k, 3
                 z1 = y1*r(l) + 6.0_dp * o(i,j,l)*r(k) + 6.0_dp * (o(i,k,l)*r(j) + o(j,k,l)*r(i)) 
-                
                 z2 = y2*r(l) + 6* (g(i,l)*r(j) + g(j,l)*r(i))*r(k) + 6* g(k,l)*r(i)*r(j)  
                 z3 = y3*r(l) + 3* v(l)*r(i)*r(j) *r(k)
-                
                 z4 = y4*r(l)
+                
                 d4o(i,j,k,l) =  z1*r9 + z2*r11 + z3*r13 + z4*r15
                 
                 
                 do s = l, 3
                           
                    w2 = z1*r(s) + 6*r(l)*( o(i,j,s)*r(k) + o(i,k,s)*r(j) + o(j,k,s)*r(i)) &
-                        + 6*r(k)*(o(i,l,s)*r(j) + o(j,l,s)*r(i)) + 6*o(k,l,s)*r(i)*r(j) 
+                                + 6*r(k)*(o(i,l,s)*r(j) + o(j,l,s)*r(i)) + 6*o(k,l,s)*r(i)*r(j) 
                    
                    w3 = z2*r(s) + 6*(r(k)*(g(i,s)*r(j) + g(j,s)*r(i)) + g(k,s)*r(i)*r(j) )*r(l) &
                                 + 6.0_dp * g(l,s)*r(i)*r(j) *r(k) 
