@@ -2,7 +2,7 @@ module detrace_apple
 ! All routines herein are taken from Jon Applequist public repository. 
 ! I could see no license so I assume they are in the public domain. 
 ! the filenames coincide with the name of the routines. 
-!   xtrace() removes the trace of a compressed tensor up to rank 10. 
+!   xtrace() removes the trace of a compressed tensor up to rank 10, and relies on the remaining routines. 
 !   Jonatan Öström
 private 
 public xtrace
