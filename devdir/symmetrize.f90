@@ -3,96 +3,144 @@ module symmetrize
 use data_types, only: dp
 use printer_mod, only: str, printer, printo
 implicit none
-contains
+
+contains !///////////////////////////////////////////////
 
 subroutine main
-integer, allocatable :: key(:)!, key2(:)
-integer rank
-real(dp) :: tricorn(10), full(3,3,3)
+    call testing
+end subroutine
 
-key = [4,5,2,1,3,1,7,1,3,2,6,1]
-rank = size(key)
+! Testing /////////////////////////////////////////////////////
+subroutine testing
+    
+    call test_sorted
+    
+    call test_next_key2n(3)
+    
+    !call test_tric_prod()
+    
+    call test__expand_compress
+    
+end subroutine
 
-print '('//str(rank)//'I2)', sorted(key)
+subroutine test__expand_compress()
+    integer rank
+    real(dp) :: tricorn(10), full(3,3,3)!, linfu(3**3)
+    
+    rank = 3
+    tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
+    full = reshape(expand(tricorn,rank),shape(full))
+    call printo(full,[2,1,3])
+    
+    
+    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full,[27]),rank)
+end subroutine
 
-!key2 = next(key)
 
-print '('//str(rank)//'I2)', next([1,1,3,3],0)
-print '('//str(rank)//'I2)', next([1,1,3,3],1)
+subroutine test_sorted()
+    integer, allocatable :: key(:)!, key2(:)
+    integer rank
+    key = [4,5,2,1,3,1,7,1,3,2,6,1]
+    rank = size(key)
+    print '('//str(rank)//'I2)', sorted(key)
+end subroutine
 
-!rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-!print*, ''
-!rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-!rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
 
-rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
-
-!call testing(22)
-tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
-full = reshape(expand(tricorn,3),shape(full))
-call printo(full,[2,1,3])
+subroutine test_tric_prod()
+    integer rank
+    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    print*, ''
+    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
 
 end subroutine
 
-!subroutine symmetrize6(tricorn)
-!real(dp) :: tricorn(6)
-!end subroutine
-
-
-
-
-subroutine testing(rank) !result(ns)
-   integer rank, trilen, key(rank), nn(3)
-   !integer :: ns(3, ((rank+1)*(rank+2))/2)
-   integer i
-   
-   trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
-   
-   key = 1
-      
-   print*, 'n(1:3) array:'
-   nn = key2n(key)
-   print*, nn, "row:"//str(1), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
-   do i = 2,trilen
-      key = next(key,1)
-      
-      nn = key2n(key)
-      print*, nn, "row:"//str(i), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
-   enddo
+subroutine test_next_key2n(rank) !result(ns)
+    integer, intent(in) :: rank
+    integer trilen, key(rank), nn(3)
+    !integer :: ns(3, ((rank+1)*(rank+2))/2)
+    integer i
+    print '('//str(4)//'I2)', next([1,1,3,3],0)
+    print '('//str(4)//'I2)', next([1,1,3,3],1)
+    
+    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
+    
+    trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
+    
+    key = 1
+       
+    print*, 'n(1:3) array:'
+    nn = key2n(key)
+    print*, nn, "row:"//str(1), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
+    do i = 2,trilen
+       key = next(key,1)
+       
+       nn = key2n(key)
+       print*, nn, "row:"//str(i), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
+    enddo
 end
 
+! END TESTING //////////////////////////////////////////////////////////////
+
+
+
+
+!///////////////////////////////////////////////////////////////////////////////////////
+pure function triclen(rank)
+    integer, intent(in) :: rank
+    integer triclen
+    triclen = ((rank+1)*(rank+2))/2
+end
+
+function compress(linfull,rank) result(tricorn)
+    integer rank, key(rank)
+    real(dp) :: linfull(3**rank), tricorn( ((rank+1)*(rank+2))/2 ) 
+    integer i, j, ifull, trilen
+    trilen = ((rank+1)*(rank+2))/2
+    key = 1
+    tricorn(1) = linfull(1)
+    do i = 2,trilen
+      key = next(key,1)
+      
+      ifull = 1
+      do j = 1,rank
+        ifull = ifull + (key(j)-1)*3**(j-1) 
+      enddo
+      tricorn(i) = linfull(ifull)
+    enddo
+end 
 
 function expand(tricorn, rank) result(linfull)
-integer rank, key(rank)
-real(dp) tricorn( (rank+1)*(rank+2)/2 ) , linfull(3**rank)
-integer i, tri_ind, nn(3)
-
-key = 1
-linfull = 0
-linfull(1) = tricorn(1)
-
-do i = 2,3**rank 
-  key = next(key,0)
-  nn = key2n(key)
-  tri_ind = finder(nn)
-  linfull(i) = tricorn(tri_ind)
-enddo
-
+    integer rank, key(rank)
+    real(dp) tricorn( (rank+1)*(rank+2)/2 ) , linfull(3**rank)
+    integer i, tri_ind, nn(3)
+    
+    key = 1
+    linfull = 0
+    linfull(1) = tricorn(1)
+    
+    do i = 2,3**rank 
+      key = next(key,0)
+      nn = key2n(key)
+      tri_ind = finder(nn)
+      linfull(i) = tricorn(tri_ind)
+    enddo
+    
 end 
 
 function apple_g(n) result(g)
@@ -204,7 +252,6 @@ pure function sorted(key)
    enddo
 end function
 
-end module
 
 
 
@@ -239,31 +286,6 @@ end module
 
 !/////////////////////////////////////////////////
 
-#ifdef OUT
-subroutine expand(tricorn,fullt,rank)
-integer rank, trilen, key(rank)
-real(dp) :: tricorn( ((rank+1)*(rank+2))/2 ), linfull(3**rank)
-integer :: prods( ((rank+1)*(rank+2))/2 ), prod
-integer i, j, posit, key(rank)
-
-trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
-
-key = 1
-prods(1) = 1
-
-do i = 2,trilen
-   
-   key = next(key)
-   
-   prod=1
-   do j = 1,rank
-     prod = prod*key(j)
-   enddo
-   
-   prods(i) =  prod
-enddo
-
-end subroutine
 
 function tric_prods(rank) result(prods)
    integer rank, trilen, key(rank)
@@ -287,4 +309,5 @@ function tric_prods(rank) result(prods)
       prods(i) =  prod
    enddo
 end function
-#endif
+
+end module
