@@ -1,13 +1,14 @@
 module symmetrize
 
 use data_types, only: dp
-use printer_mod, only: str
+use printer_mod, only: str, printer, printo
 implicit none
 contains
 
 subroutine main
 integer, allocatable :: key(:)!, key2(:)
 integer rank
+real(dp) :: tricorn(10), full(3,3,3)
 
 key = [4,5,2,1,3,1,7,1,3,2,6,1]
 rank = size(key)
@@ -41,7 +42,11 @@ print '('//str(rank)//'I2)', next([1,1,3,3],1)
 
 rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
 
-call tricorn_ns(3)
+!call testing(22)
+tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
+full = reshape(expand(tricorn,3),shape(full))
+call printo(full,[2,1,3])
+
 end subroutine
 
 !subroutine symmetrize6(tricorn)
@@ -51,7 +56,7 @@ end subroutine
 
 
 
-subroutine tricorn_ns(rank) !result(ns)
+subroutine testing(rank) !result(ns)
    integer rank, trilen, key(rank), nn(3)
    !integer :: ns(3, ((rank+1)*(rank+2))/2)
    integer i
@@ -62,43 +67,63 @@ subroutine tricorn_ns(rank) !result(ns)
       
    print*, 'n(1:3) array:'
    nn = key2n(key)
-   print*, nn, "row:",1, "found row:",finder(nn), "g:", apple_g(nn)
+   print*, nn, "row:"//str(1), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
    do i = 2,trilen
       key = next(key,1)
       
       nn = key2n(key)
-      print*, nn, "row:",i, "found row:",finder(nn), "g:", apple_g(nn)
+      print*, nn, "row:"//str(i), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
    enddo
 end
 
+
+function expand(tricorn, rank) result(linfull)
+integer rank, key(rank)
+real(dp) tricorn( (rank+1)*(rank+2)/2 ) , linfull(3**rank)
+integer i, tri_ind, nn(3)
+
+key = 1
+linfull = 0
+linfull(1) = tricorn(1)
+
+do i = 2,3**rank 
+  key = next(key,0)
+  nn = key2n(key)
+  tri_ind = finder(nn)
+  linfull(i) = tricorn(tri_ind)
+enddo
+
+end 
+
 function apple_g(n) result(g)
-   ! Apple quist g()-function. 
-   ! Is the number of times unique element occurs in a full symmetric tensor
-   integer g, n(3), rank, f,f1,f2,f3,ns(3), i
-   
-   rank = sum(n)
+   ! Applequist g()-function. 
+   ! Is the number of times unique element occurs in a full symmetric tensor = numer of intex permutations giving the same value
+   ! this routine will fail at rank 23
+   integer g, n(3), rank, ns(3)
+   integer*8 j, nfac, fac1, fac2, gl!using long ints for the factorials to be safe
    ns = sorted(n)
-   f=1
-   f1=1
-   f2=1
-   f3=1
-   do i = 1,ns(1)
-     f1 = f1*i
+   rank = sum(ns)
+   nfac = 1
+   fac1 = 1
+   fac2 = 1
+   
+   do j = ns(3)+1, rank
+     nfac = nfac*j
      enddo
    
-   do i = 1,ns(2)
-     f2 = f2*i
+   do j = 1, ns(1)
+     fac1 = fac1*j
      enddo
    
-   do i = 1,ns(3)
-     f3 = f3*i
+   do j = 1, ns(2)
+     fac2 = fac2*j
      enddo
    
-   do i = 1,rank
-     f = f*i
-     enddo
+   gl = nfac/(fac1*fac2)
    
-   g=f/(f1*f2*f3)
+   if(gl>huge(g))stop"Wow, too big value in g()"
+   
+   g=int(gl,kind(g))
 end
    
 function key2n(key) result(n)

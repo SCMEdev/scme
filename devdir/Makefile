@@ -31,20 +31,23 @@ detraceg.x: $(obj) $(genericp) $(lib)
 stupid.x:$(obj) $(genericp) $(lib)
 	$(compiler) $^ -o $@ -cpp -D'STUPID'
 
+apple.x: detrace_apple.o $(genericp) 
+	$(compiler) $^ -o $@ -cpp -DAPPLE
 
-opole.x: opole_dev.o $(genericp) $(lib)
-	$(compiler) $^ -o $@ -cpp -D'OPOLE'
 
 qpole.x: qpole_dev.o $(genericp) $(lib)
-	$(compiler) $^ -o $@ -cpp -D'QPOLE'
+	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
 
-apple.x: detrace_apple.o $(genericp) 
-	$(compiler) $^ -o $@ -cpp -D'APPLE'
+opole.x: opole_dev.o $(genericp) $(lib)
+	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
+
+symmetrize.x: symmetrize.o $(genericp) $(lib)
+	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
 
 #-cpp -D'STUPID'
 
 %.o:%.f90
-	$(compiler) -c $^ -o $@
+	$(compiler) -c $^ -o $@ -cpp
 
 $(lib):$(wildcard ../src/*.f90)
 	(cd .. && make)
