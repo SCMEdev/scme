@@ -4,12 +4,6 @@ program slkdjf
 
 !integer, parameter :: dp = kind(0d0)
 
-
-#ifdef RUN_TEST
-call test()
-#endif
-
-
 #ifdef HEXAD 
 use detrace_mod !, only:test
 integer i
@@ -57,20 +51,6 @@ do i = 1,le
 enddo
 #endif
 
-#ifdef STUPID
-print*, size([1.0,2.0]), size([1.0]) !, size(5.0)
-#endif
-
-#ifdef OPOLE
-use opole_dev,only:opole_main => main
-call opole_main()
-#endif
-
-#ifdef QPOLE
-use qpole_dev,only:qpole_main => main
-call qpole_main()
-#endif
-
 #ifdef APPLE
 use detrace_apple, only:xtrace !,only:qpole_main => main
 integer, parameter :: dp = kind(0d0)
@@ -87,6 +67,19 @@ do i = 1,le
   print*, outen(i) /7d0/5d0/3d0
 enddo
 #endif
+
+
+
+#ifdef YO
+use YO
+call main
+#endif
+
+
+#ifdef STUPID
+print*, size([1.0,2.0]), size([1.0]) !, size(5.0)
+#endif
+
 
 
 end program
