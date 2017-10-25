@@ -1,13 +1,13 @@
-scme_build:=../build
-modflags := -I$(scme_build) -J$(scme_build)
+b:=../build
+modflags := -I$(b) -J$(b)
 flags := -Wall
 compiler := gfortran $(modflags) $(flags)
-lib := $(scme_build)/libscme.a
+lib = $(b)/libscme.a
 #$(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o polariz_parameters.o)
 
 genericp := generic_program.f90
 
-obj := detrace_mod.o
+obj := $(b)/detrace_mod.o
 
 
 prog.x: poldip.f90 $(lib)
@@ -31,22 +31,22 @@ detraceg.x: $(obj) $(genericp) $(lib)
 stupid.x:$(obj) $(genericp) $(lib)
 	$(compiler) $^ -o $@ -cpp -D'STUPID'
 
-apple.x: detrace_apple.o $(genericp) 
+apple.x: $(b)/detrace_apple.o $(genericp) 
 	$(compiler) $^ -o $@ -cpp -DAPPLE
 
 
-qpole.x: qpole_dev.o $(genericp) $(lib)
-	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
+qpole.x: $(b)/qpole_dev.o $(genericp) $(lib)
+	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-opole.x: opole_dev.o $(genericp) $(lib)
-	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
+opole.x: $(b)/opole_dev.o $(genericp) $(lib)
+	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-convert.x: compressed_tensors.o $(genericp) $(lib)
-	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
+convert.x: $(b)/compressed_tensors.o $(genericp) $(lib)
+	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
 #-cpp -D'STUPID'
 
-%.o:%.f90
+$(b)/%.o:%.f90
 	$(compiler) -c $^ -o $@ -cpp
 
 $(lib):$(wildcard ../src/*.f90)

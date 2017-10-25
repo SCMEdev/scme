@@ -26,7 +26,7 @@ end subroutine
 subroutine test__expand_compress()
     integer rank
     real(dp) :: tricorn(10), full(3,3,3)!, linfu(3**3)
-    real(dp) :: tricorn4(15), full4(3,3,3,3), linfull4(3**4)!, linfu(3**3)
+    real(dp) :: tricorn4(15), full4(3,3,3,3)!, linfull4(3**4)!, linfu(3**3)
     
     rank = 3
     tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]

@@ -70,8 +70,8 @@ enddo
 
 
 
-#ifdef YO
-use YO
+#ifdef MODU
+use MODU
 call main
 #endif
 
