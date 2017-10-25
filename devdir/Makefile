@@ -41,7 +41,7 @@ qpole.x: qpole_dev.o $(genericp) $(lib)
 opole.x: opole_dev.o $(genericp) $(lib)
 	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
 
-symmetrize.x: symmetrize.o $(genericp) $(lib)
+convert.x: compressed_tensors.o $(genericp) $(lib)
 	$(compiler) $^ -o $@ -cpp -DYO=$(<:.o=)
 
 #-cpp -D'STUPID'

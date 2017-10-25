@@ -1,4 +1,4 @@
-module symmetrize
+module compressed_tensors
 
 use data_types, only: dp
 use printer_mod, only: str, printer, printo
@@ -26,14 +26,25 @@ end subroutine
 subroutine test__expand_compress()
     integer rank
     real(dp) :: tricorn(10), full(3,3,3)!, linfu(3**3)
+    real(dp) :: tricorn4(15), full4(3,3,3,3), linfull4(3**4)!, linfu(3**3)
     
     rank = 3
     tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
-    full = reshape(expand(tricorn,rank),shape(full))
+    full = reshape(expand(tricorn,rank),shape(full),order=[3,1,2])
     call printo(full,[2,1,3])
     
     
-    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full,[27]),rank)
+    
+    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full,[3**rank]),rank)
+    
+    rank=4
+    tricorn4 = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0,11d0,12d0,13d0,14d0,15d0]
+    full4 = reshape(expand(tricorn4,rank),shape(full4),order=[3,1,2,4])
+    call printo(full4,[1,2,3,4])
+    !linfull4 = reshape(full,[3**3])
+    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full4,[3**4]),rank)
+    
+    
 end subroutine
 
 
@@ -109,9 +120,12 @@ end
 
 function compress(linfull,rank) result(tricorn)
     integer rank, key(rank)
-    real(dp) :: linfull(3**rank), tricorn( ((rank+1)*(rank+2))/2 ) 
+    real(dp) :: linfull(:), tricorn( ((rank+1)*(rank+2))/2 )! 3**rank
     integer i, j, ifull, trilen
     trilen = ((rank+1)*(rank+2))/2
+    !if(size(tricorn) /= trilen)stop"Wrong tricorn tensor has wrong length in compress()"
+    if(size(linfull) /= 3**rank)stop":: length(linear full tensor) /= 3**rank ::"
+    
     key = 1
     tricorn(1) = linfull(1)
     do i = 2,trilen
@@ -127,9 +141,10 @@ end
 
 function expand(tricorn, rank) result(linfull)
     integer rank, key(rank)
-    real(dp) tricorn( (rank+1)*(rank+2)/2 ) , linfull(3**rank)
-    integer i, tri_ind, nn(3)
-    
+    real(dp) tricorn( : ) , linfull(3**rank)
+    integer i, tri_ind, nn(3), trilen
+    trilen = (rank+1)*(rank+2)/2
+    if(size(tricorn) /= trilen)stop"length(tricorn tensor) /= (rank+1)*(rank+2)/2"
     key = 1
     linfull = 0
     linfull(1) = tricorn(1)
