@@ -1,6 +1,5 @@
 build/*
-devel/*
-gap/*
+src/nogit/*
 
 *.mod
 *.o
