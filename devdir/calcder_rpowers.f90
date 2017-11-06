@@ -1,6 +1,9 @@
 module calc_derivs
   
   use data_types
+  use compressed_tensors,only: compress, expand
+  use detrace_apple, only: detrace_a, ff
+  
 !  use max_parameters
   !use molecProperties, only: SFdsf
   use sf_disp_tangtoe, only: SFdsf
@@ -214,7 +217,7 @@ contains
     integer, intent(in) :: n
     
 !JÖ internal:     
-    integer :: i, j, k, l, s !JÖ , save
+    !integer :: i, j, k, l, s !JÖ , save
 
     ed1(:,n)          = ed1(:,n)         + d1d * swFunc
     ed2(:,:,n)        = ed2(:,:,n)       + d2d * swFunc
@@ -304,7 +307,7 @@ contains
   !----------------------------------------------------------------------+
   !     Derivatives of the dipole field                                  |
   !----------------------------------------------------------------------+
-  pure subroutine dDpole(d, r, d1d, d2d, d3d, d4d, d5d)
+  subroutine dDpole(d, r, d1d, d2d, d3d, d4d, d5d)
     
     implicit none
     real(dp), intent(in)  :: d(:), r(:) !3
@@ -312,9 +315,12 @@ contains
     real(dp), intent(out) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
 
 !JÖ internal:    
-    integer  :: i, j, k, l, s
+    integer  :: i, j, k, l, s, rank
     real(dp) :: r2, r3, r5, r7, r9, r11, r13, rd
-    real(dp) :: t1, t2, y1, y2, y3, z1, z2, z3, w1, w2, w3, w4
+    !real(dp) :: t1, t2, y1, y2, y3, z1, z2, z3, w1, w2, w3, w4
+    real(dp) :: t2, y3, z3, w4
+    
+    integer minusone
     
     r2 = r(1)**2 + r(2)**2 + r(3)**2 !sum(r**2) !JÖ 
     r3 = dsqrt(r2) * r2
@@ -368,7 +374,48 @@ contains
        end do
     end do
     
+    !print *, 'w/ trace', d2d(1,1)+d2d(2,2)+d2d(3,3)
+    !print *, 'w/o trace', d2d(1,1)+d2d(2,2)+d2d(3,3)
     
+    minusone = 1
+    
+    rank=1
+    d1d = minusone**rank/ff(2*rank-1)*d1d
+    
+    rank=2
+    d2d = &
+      reshape(&
+             expand(minusone**rank/ff(2*rank-1)*detrace_a(compress(&
+                reshape(d2d,[3**rank]),&
+             rank),rank),rank) ,&
+      shape(d2d) ) 
+    
+    rank=3
+    d3d = &
+      reshape(&
+             expand(minusone**rank/ff(2*rank-1)*detrace_a(compress(&
+                reshape(d3d,[3**rank]),&
+             rank),rank),rank) ,&
+      shape(d3d) ) 
+    
+    rank=4
+    d4d= &
+      reshape(&
+             expand(minusone**rank/ff(2*rank-1)*detrace_a(compress(&
+                reshape(d4d,[3**rank]),&
+             rank),rank),rank) ,&
+      shape(d4d) ) 
+    
+    
+    rank=5
+    d5d = &
+      reshape(&
+             expand(minusone**rank/ff(2*rank-1)*detrace_a(compress(&
+                reshape(d5d,[3**rank]),&
+             rank),rank),rank) ,&
+      shape(d5d) ) 
+    !print*, ff(2*rank+1)
+    !ff(2*rank + 2*1 -1)/ff(2*rank-1)/ff(2*rank+1) = ff(2*rank + 1)/ff(2*rank-1)/ff(2*rank+1) = 1/ff(2*rank-1)
     return
     
   end subroutine dDpole
@@ -437,7 +484,7 @@ contains
                 z2 = y1*r(l) + 2* (q(i,l)*r(j) + q(j,l)*r(i))*r(k) + 2* q(k,l)*r(i)*r(j) 
                 z3 = y2*r(l) + 2* v(l)*r(i)*r(j)*r(k)
                 z4 = y3*r(l)
-                d4q(i,j,k,l) =  z1*r7 + z2*r9 + z3*r11 + z4*r13
+                d4q(i,j,k,l) =  z2*r9 + z3*r11 + z4*r13!z1*r7 + 
                 
                 do s = l, 3
                    w2 = z2*r(s) + 2*r(l)*( (q(i,s)*r(j) + q(j,s)*r(i))*r(k) + q(k,s)*r(i)*r(j) ) &
@@ -546,7 +593,7 @@ contains
                    w4 = z3*r(s) + 3.0_dp * v(s)*r(i)*r(j)*r(k)*r(l)
                    w5 = z4*r(s)
                    
-                   d5o(i,j,k,l,s) = w1*r9 + w2*r11 + w3*r13 + w4*r15 + w5*r17
+                   d5o(i,j,k,l,s) = w2*r11 + w3*r13 + w4*r15 + w5*r17!w1*r9 + 
                    
                 end do
              end do
@@ -651,7 +698,7 @@ contains
                    
                    w1 = z1*r(s) + 24*( h(i,j,k,s)*r(l) + h(i,j,l,s)*r(k) + h(i,k,l,s)*r(j) + h(j,k,l,s)*r(i) )
                    w2 = z2*r(s) + 24*r(l)*( d(i,j,s)*r(k) + d(i,k,s)*r(j) + d(j,k,s)*r(i)) &
-					            + 24*(r(k)*( d(i,l,s)*r(j) + d(j,l,s)*r(i)) + d(k,l,s)*r(i)*r(j) )
+                                + 24*(r(k)*( d(i,l,s)*r(j) + d(j,l,s)*r(i)) + d(k,l,s)*r(i)*r(j) )
                    w3 = z3*r(s) + 12 * r(l)*( r(k)*(g(i,s)*r(j) + g(j,s)*r(i))  + g(k,s)*r(i)*r(j)) &
                                 + 12 * g(l,s)*r(i)*r(j)*r(k)
                    w4 = z4*r(s) + 4 * v(s)*r(i)*r(j)*r(k)*r(l)

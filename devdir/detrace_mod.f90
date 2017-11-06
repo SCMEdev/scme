@@ -10,6 +10,57 @@ implicit none
 
 CONTAINS
 
+subroutine io_general
+    integer i
+    integer, parameter :: maxl=16
+    real(dp) tricorn(maxl)
+    integer le, vari
+    
+    do i = 1,maxl
+      read(*,*,iostat=vari) tricorn(i)
+      if(vari<0)then
+        le = i-1
+        exit
+      endif
+    enddo
+    
+    call detrace(tricorn(1:le))
+    do i = 1,le
+      print*, tricorn(i)
+    enddo
+end subroutine
+
+subroutine io_hexa
+    integer i
+    integer, parameter :: le=15
+    real(dp) tricorn(le)
+    do i = 1,le
+      read(*,*) tricorn(i)
+    enddo
+    call detrace_hexadeca(tricorn,.false.)
+    do i = 1,le
+      print*, tricorn(i)
+    enddo
+end subroutine
+
+subroutine io_octa
+    integer i
+    integer, parameter :: le=10
+    real(dp) tricorn(le)
+    do i = 1,le
+      read(*,*) tricorn(i)
+    enddo
+    call detrace_octa(tricorn,.false.)
+    do i = 1,le
+      print*, tricorn(i)
+    enddo
+end subroutine
+
+subroutine io_quad
+end subroutine
+
+
+
 subroutine test()
     real(dp) gauss_quad(3), entries(10), entries15(15)
     character(3) char3

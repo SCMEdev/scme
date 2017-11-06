@@ -5,8 +5,53 @@ module detrace_apple
 !   xtrace() removes the trace of a compressed tensor up to rank 10, and relies on the remaining routines. 
 !   Jonatan Öström
 private 
-public xtrace
+public detrace_a, ff, main
 contains !//
+
+subroutine main
+    implicit none
+!    call io4
+    print*, ff(0)
+    
+end subroutine
+
+pure function ff(base)
+    implicit none
+    integer, intent(in) :: base
+    integer i, iff
+    real*8 ff
+    iff = 1
+    do i = base, 1, -2
+      iff = iff*i
+    enddo
+    !(iff = iff*i, i = base, 1, -2) 
+    ff = dble(iff)
+endfunction
+
+subroutine io4
+    implicit none
+    integer i
+    integer, parameter :: rank = 4
+    integer, parameter :: le=(rank+1)*(rank+2)/2
+    real*8 inten(le),outen(le) 
+    
+    read(*,'(2f24.16)') (inten(i), i = 1,le)
+    
+    outen = detrace_a(inten,4)
+    
+    print'(2(f24.16))', (outen(i) / ff(2*rank-1), inten(i),i = 1,le)
+    
+end subroutine
+
+function detrace_a(a,k) result(b) !wrapper function
+    implicit none
+    integer k
+    real*8, dimension( ( k+1)*(k+2)/2 ) :: a, b
+    call xtrace(a,b,k)
+end function
+
+
+! Original Jon Applequist Routines /////////////////////////////////////////////////
 
       SUBROUTINE XTRACE(A,B,K)
 !

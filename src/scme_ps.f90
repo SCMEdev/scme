@@ -65,6 +65,9 @@ module scme
   
   use opole, only: get_octupoles
   
+  use compressed_tensors,only: compress, expand
+  use detrace_apple, only: detrace_a, ff
+  
   implicit none
   private
   public scme_calculate
@@ -182,6 +185,7 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) rr_oo(xyz), rr_oh(xyz,4), rr_hh(xyz,4), r_oo, r_oh, r_hh, aa_hh, aa_oh, aa_oo, A_oh, A_hh
     
     integer :: s !transposing
+    integer :: rank
     
     real(dp) :: cec(xyz,hho,n_atoms/3),cer2(hho,n_atoms/3), rCE(xyz,n_atoms/3)
     
@@ -332,7 +336,57 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
     
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
-
+    
+    if(.true.)then
+      do m = 1,nM
+        rank=2
+        !print *, d2v(1,1,m)+d2v(2,2,m)+d2v(3,3,m)
+        !m=1
+        d2v(:,:,m) = &
+          reshape(&
+             expand(1_dp/ff(2*rank-1)&
+             *detrace_a(compress(&
+                 reshape(d2v(:,:,m),[3**rank]),&
+             rank),rank),rank),&
+          [3,3] ) 
+        !print *, d2v(1,1,m)+d2v(2,2,m)+d2v(3,3,m)
+        enddo
+        
+        do m = 1,nM
+        rank=3
+        d3v(:,:,:,m) = &
+          reshape(&
+             expand(1_dp/ff(2*rank-1)&
+             *detrace_a(compress(&
+                reshape(d3v(:,:,:,m),[3**rank]),&
+             rank),rank),rank) ,&
+          [3,3,3] ) 
+        enddo
+        
+        do m = 1,nM
+        rank=4
+        d4v(:,:,:,:,m) = &
+          reshape(&
+             expand(1_dp/ff(2*rank-1)&
+             *detrace_a(compress(&
+                reshape(d4v(:,:,:,:,m),[3**rank]),&
+             rank),rank),rank) ,&
+          [3,3,3,3] ) 
+        enddo
+        
+        do m = 1,nM
+        rank=5
+        d5v(:,:,:,:,:,m) = &
+          reshape(&
+             expand(1_dp/ff(2*rank-1)&
+             *detrace_a(compress(&
+                reshape(d5v(:,:,:,:,:,m),[3**rank]),&
+             rank),rank),rank) ,&
+          [3,3,3,3,3] ) 
+      enddo
+    endif
+    
+    !stop"hej"
 !tprint(d1v, 'd1v',s)
 !tprint(d2v, 'd2v',s)
 !tprint(d3v, 'd3v',s)
@@ -344,6 +398,8 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
     !/ Compute the torques on centers of mass
     call torqueCM(dpole, qpole, opole, hpole, d1v, d2v, d3v, d4v, nM, tau)
     
+tprint(fCM, 'fCM',s)
+tprint(tau, 'tauu',s)
     
     !/ Multipole forces on atoms 
     !/ Compute force on atoms from CM force/torque as "temp. rigid body"
@@ -535,8 +591,8 @@ tprint(u_tot,'u_tot',s)
     !call printer(fa_test,'aforces linear')
     
     !call printer(fa,'xa_forces linear')
-tprint(xa_forces,'xa_forces',s) 
-tprint(hho_fa,'hho_fa',s) 
+!tprint(xa_forces,'xa_forces',s) 
+!tprint(hho_fa,'hho_fa',s) 
 
     !s=0
 !call printer(1,'1',s)    
