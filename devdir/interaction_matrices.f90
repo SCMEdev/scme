@@ -156,3 +156,20 @@ yz_zz
  zz_yy
  zz_yz
 zz_zz
+
+
+1  xxxx 1
+2  yxxx 2
+3  zxxx 2
+4  yyxx 3
+5  zyxx 4
+6  zzxx 3
+7  yyyx 2
+8  zyyx 4
+9  zzyx 4
+10 zzzx 2
+11 yyyy 1
+12 zyyy 2
+13 zzyy 3
+14 zzzy 2
+15 zzzz 1
