@@ -25,7 +25,7 @@ sf_names:=\
 	calc_lower_order molecProperties
 
 print_names :=\
-	compressed_tensors
+	compressed_tensors compressed_utils
 
 # Depends on all/none (ENDpoints of dep.-tree)
 end_names:=\
@@ -52,6 +52,9 @@ $(lib): $(all_obj)
 $b/compressed_tensors.o:devdir/compressed_tensors.f90
 	$(FC) $(FFLAGS) -o $@ -c $<
 
+$b/compressed_utils.o:devdir/compressed_utils.f90
+	$(FC) $(FFLAGS) -o $@ -c $<
+
 $b/detrace_apple.o:devdir/detrace_apple.f90
 	$(FC) $(FFLAGS) -o $@ -c $<
 
@@ -72,6 +75,7 @@ $(sf_obj): $b/sf_disp_tangtoe.o
 
 $(print_obj): $b/printer_mod.o
 
+$b/compressed_tensors.o:$b/compressed_utils.o
 
 $/scme_ps.o $b/calc_derivs.o: $b/detrace_apple.o $b/compressed_tensors.o
 # scme depends on all:

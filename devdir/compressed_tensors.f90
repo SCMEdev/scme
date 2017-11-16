@@ -1,13 +1,54 @@
 module compressed_tensors
 
-use data_types, only: dp
 use printer_mod, only: str, printer, printo
+use compressed_utils, bad=>main!,only: test_apple_g
 implicit none
 
-integer j11,j22
-integer, parameter :: k = 7
-integer, parameter :: vv((k+1)*(k+2)/2) = [((j11, j22=1,j11),j11 = 1,k+1)]
-integer, parameter :: vv1((k+1)*(k+2)/2) = vv-1
+integer, parameter :: dp = kind(0d0)
+
+integer j11,j22, i00, matcol, matrow
+integer, parameter :: matk = 7, matsize = (matk+1)*(matk+2)/2
+integer, parameter :: sumfacv(matk+1) = [(i00*(i00+1)/2, i00 = 1,matk+1)]
+integer, parameter :: vv(matsize) = [((j11, j22=1,j11),j11 = 1,matk+1)]
+integer, parameter :: vv1(matsize) = vv-1
+
+integer, parameter :: gg(285) = &
+[  1,   1,   1, &
+   1,   2,   2,   1,   2,   1, &
+   1,   3,   3,   3,   6,   3,   1,   3,   3,   1, &
+   1,   4,   4,   6,  12,   6,   4,  12,  12,   4,   1,   4,   6,   4,   1, &
+   1,   5,   5,  10,  20,  10,  10,  30,  30,  10,   5,  20,  30,  20,   5,   1,   5,  10,  10,   5,   1, &
+   1,   6,   6,  15,  30,  15,  20,  60,  60,  20,  15,  60,  90,  &
+       60,  15,   6,  30,  60,  60,  30,   6,   1,   6,  15,  20,  15,   6,   1, &
+   1,   7,   7,  21,  42,  21,  35, 105, 105,  35,  35, 140, 210, 140,  35,  21, 105, 210, 210, 105,  21, &
+        7,  42, 105, 140, 105,  42,   7,   1,   7,  21,  35,  35,  21,   7,   1, &
+   1,   8,   8,  28,  56,  28,  56, 168, 168,  56,  70, 280, 420, 280,  70,  56, 280, 560, 560, 280,  56,  &
+       28, 168, 420, 560, 420, 168,  28,   8,  56, 168, 280, 280, 168,  56,   8,   1,   8,  28,  56,  70,  &
+       56,  28,   8,   1, &
+   1,    9,    9,   36,   72,   36,   84,  252,  252,   84,  126,  504,  756,  504,  126,  126,  630, 1260, &
+      1260,  630,  126,   84,  504, 1260, 1680, 1260,  504,   84,   36,  252,  756, 1260, 1260,  756,  252, &
+        36,    9,   72,  252,  504,  630,  504,  252,   72,    9,    1,    9,   36,   84,  126,  126,   84,   36,    9,    1, &
+   1,   10,   10,   45,   90,   45,  120,  360,  360,  120,  210,  840, 1260,  840,  210,  252, 1260, 2520, 2520, 1260,  252, &
+       210, 1260, 3150, 4200, 3150, 1260,  210,  120,  840, 2520, 4200, 4200, 2520,  840,  120,   45,  360, 1260, 2520, 3150, &
+      2520, 1260,  360,   45,   10,   90,  360,  840, 1260, 1260,  840,  360,   90,   10,    1,   10,   45,  120,  210,  252, & 
+       210,  120,   45,   10,    1 &
+]
+
+integer, parameter :: matchoo(10,10) = reshape( [&
+     1,      2,      3,      4,      5,      6,      7,      8,      9,     10,  &
+     2,      1,      3,      6,     10,     15,     21,     28,     36,     45,  &
+     3,      3,      1,      4,     10,     20,     35,     56,     84,    120,  &
+     4,      6,      4,      1,      5,     15,     35,     70,    126,    210,  &
+     5,     10,     10,      5,      1,      6,     21,     56,    126,    252,  &
+     6,     15,     20,     15,      6,      1,      7,     28,     84,    210,  &
+     7,     21,     35,     35,     21,      7,      1,      8,     36,    120,  &
+     8,     28,     56,     70,     56,     28,      8,      1,      9,     45,  &
+     9,     36,     84,    126,    126,     84,     36,      9,      1,     10,  &
+    10,     45,    120,    210,    252,    210,    120,     45,     10,      1   &
+ ], shape(matchoo) )
+integer, parameter :: gposarr(10) = [1, 4, 10, 20, 35, 56, 84, 120, 165, 220]
+integer, parameter :: gpos(10) = gposarr(1:10)-1
+
 integer, parameter :: matr(28,28) = reshape( [&
  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,&
  2,  4,  5,  7,  8,  9, 11, 12, 13, 14, 16, 17, 18, 19, 20, 22, 23, 24, 25, 26, 27, 29, 30, 31, 32, 33, 34, 35,&
@@ -39,8 +80,13 @@ integer, parameter :: matr(28,28) = reshape( [&
 28, 35, 36, 43, 44, 45, 52, 53, 54, 55, 62, 63, 64, 65, 66, 73, 74, 75, 76, 77, 78, 85, 86, 87, 88, 89, 90, 91&
  ], shape(matr) )
 
+integer, parameter :: matri(matsize,matsize) = reshape( [ &
+                      ((matrow + matcol -1 + vv1(matcol)*vv1(matrow), matcol = 1,matsize), matrow = 1, matsize) &
+                      ], shape(matri) )
+
 
 contains !///////////////////////////////////////////////
+
 
 
 
@@ -51,10 +97,19 @@ subroutine main
     !call test_rpow
     !call test_nextpow(7)
     !call compow2(7)
-    call subdiv_pow(3,2)
-    print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
+    !call subdiv_pow(5,5)
+    !call test_contract
+    call test_produce
+    
+    !print*, ""
+    !call subdiv_pow(4,3)
+    !print*, ""
+    !call subdiv_pow(3,4)
+    !print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
     !call test_factorial(5)
     
+    !call test_choose
+    !call test_matri(7)
     
     !print*, ""
     !call test_contind(6)
@@ -64,9 +119,262 @@ subroutine main
     !call test_apple_g
     !call test_rrpow
     !call test_next_rev_key2n(4)
+    !integer i, j
+    !do i = 1,10
+    !  do j = 1,10
+    !    write(*,'(I6,a)', advance="no") choose(i,j),", "
+    !    enddo
+    !  print*, ""
+    !  enddo
+    
+    
 end subroutine
 
 ! Testing /////////////////////////////////////////////////////
+
+subroutine subdiv_pow(ii,kii)
+integer ii, kii
+integer i, j, it
+integer a1,b1,c1, a2,b2,c2, aa,bb,cc
+integer sfii, sfkii
+a1 = ii
+aa = ii + kii
+
+b1 = 0
+c1 = 0
+bb = 0
+cc = 0
+
+sfii = sumfac(ii+1)
+sfkii = sumfac(kii+1)
+
+it = 0
+do i = 1, sfii
+   if (i>1)call nextpow(a1,b1,c1)
+   b2 = 0
+   c2 = 0
+   a2 = kii
+   do j = 1, sfkii
+      if (j>1)call nextpow(a2,b2,c2)
+      it = it+1
+      aa = a1+a2
+      bb = b1+b2
+      cc = c1+c2
+      !print '(3(I3,2I2),7I4)', a1,b1,c1, a2,b2,c2, aa,bb,cc, &
+      !      finder([aa,bb,cc]),&
+      !      matr(i,j), &
+      !      i + j + (vv(i)-1)*(vv(j)-1) - 1, &
+      !      i + j + vv1(i)*vv1(j) - 1, &
+      !      hh(a1,b1,c1, a2,b2,c2), &
+      !      i, j !, it
+      
+      !write(*,'(I3)', advance="no") hh(a1,b1,c1, a2,b2,c2)
+      !write(*,'(*(I3))') hh(a1,b1,c1, a2,b2,c2), &
+      !                 ( apple_g([a1,b1,c1])*apple_g([a2,b2,c2])*choose(ii+kii,ii) )/apple_g([aa,bb,cc]), &
+      !                 ( gg(gpos(ii)+i)*gg(gpos(kii)+j)*choose(ii+kii,ii) ) / gg(gpos(ii+kii) + matr(i,j)), & 
+      !                 00,&
+      !                 apple_g([a1,b1,c1]), apple_g([a2,b2,c2]), choose(ii+kii,ii), apple_g([aa,bb,cc]), &
+      !                 00, &
+      !                 gg(gpos(ii)+i), gg(gpos(kii)+j), choose(ii+kii,ii), gg(gpos(ii+kii) + matr(i,j)), & 
+      !                 00
+      
+      !write(*,'(I6)', advance="no") ( apple_g([a1,b1,c1])*apple_g([a2,b2,c2])*choose(ii+kii,ii) )/apple_g([aa,bb,cc])
+      !write(*,'(I6)', advance="no") ( gg(gpos(ii)+i)*gg(gpos(kii)+j)*choose(ii+kii,ii) ) / gg(gpos(ii+kii) + matr(i,j))
+      
+      
+      !write(*,'(I6)', advance="no") ( gg(gpos(ii)+i)*gg(gpos(kii)+j)*choose(ii+kii,ii) ) / gg(gpos(ii+kii) + matr(i,j)) &
+      !                              - ( apple_g([a1,b1,c1])*apple_g([a2,b2,c2])*choose(ii+kii,ii) )/apple_g([aa,bb,cc])
+      
+      write(*,'(I6)', advance="no") hh(a1,b1,c1, a2,b2,c2) - hhh(i,j,ii,kii)
+      enddo
+   print*,""
+   enddo
+    
+   !do here!
+!print'(*(I3))', vv(1:sumfac(ii+kii+1))
+!print'(*(I3))', vv1(1:sumfac(ii+kii+1))
+!print*, sumfac(ii+kii+1)
+end
+
+function hh(a1,b1,c1, a2,b2,c2) !Make a matrix of this sheeeet
+    integer a1,b1,c1, a2,b2,c2
+    integer aa,bb,cc, hh
+    aa = a1+a2
+    bb = b1+b2
+    cc = c1+c2
+    
+    hh = fac(aa)*fac(bb)*fac(cc) / ( fac(a1)*fac(a2)*fac(b1)*fac(b2)*fac(c1)*fac(c2) )
+
+end
+
+pure function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
+    integer, intent(in) :: i,j, ki,kj
+    integer kij, hhh, cc, gi,gj,gij
+    kij = ki+kj
+    cc = matchoo(kij,ki)
+    gi = gg(gpos(ki)+i)
+    gj = gg(gpos(kj)+j) 
+    gij = gg(gpos(kij) + matr(i,j))
+    hhh = (gi*gj*cc) / gij
+    
+end
+
+subroutine test_contract
+    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
+    real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3)
+    integer i,j,k, l, m
+    
+    v1 = [ 1d0, 2d0, 3d0]
+    v2 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0]
+    v3 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
+    v4 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0, 11d0, 12d0, 13d0, 14d0, 15d0]
+    v5 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0, 11d0, 12d0, 13d0, 14d0, 15d0, 16d0 ,17d0 ,18d0 ,19d0 ,20d0 ,21d0 ]
+    
+    
+    f1 = v1
+    f2 = reshape(expand(v2,2),shape(f2))
+    f3 = reshape(expand(v3,3),shape(f3))
+    f4 = reshape(expand(v4,4),shape(f4))
+    f5 = reshape(expand(v5,5),shape(f5))
+    
+    !call printer(f2,'f2',2)
+    !call printer(f3,'f3',2)
+    
+    of1=0
+    of2=0
+    do i = 1,3
+      do j = 1,3
+        do k = 1,3
+          
+          of1(i) = of1(i) + f2(k,j)*f3(k,j,i)
+          
+          do l = 1, 3
+            of2(j,i) = of2(j,i) + f2(l,k)*f4(l,k,j,i)
+            do m = 1, 3
+              of3(k,j,i) = of3(k,j,i) + f2(m,l)*f5(m,l,k,j,i)
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+    
+    
+    print'(*(f10.4))', of1
+    print'(*(f10.4))', contract(3,2,v3,v2)
+    print*,""
+    print'(*(f10.4))', compress(reshape(of2,[3**2]),2)
+    print'(*(f10.4))', contract(4,2,v4,v2)
+    print*,""
+    print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
+    print'(*(f10.4))', contract(5,2,v5,v2)
+    
+    !print'(*(f10.4))', contract(5,2,v5,v2)
+    
+    !print'(*(f10.4))', contract(3,2,v3,v2)-of1
+    
+    
+end
+
+function contract(kbig, ksmall, vbig, vsmall) result(vout) !assumes kbig > ksmall
+   integer, intent(in) :: kbig, ksmall
+   real(dp), intent(in) :: vbig(:), vsmall(:)
+   !real(dp), pointer :: p1, p2 !, target
+   real(dp) vout((kbig - ksmall+1)*(kbig - ksmall+2)/2)
+   integer kout, gposition, i, j, maxi, maxj
+   
+   kout = kbig - ksmall
+   maxi = (kout+1)*(kout+2)/2
+   maxj = (ksmall+1)*(ksmall+2)/2
+   
+   gposition = gpos(ksmall)
+   
+   vout(:) = 0
+   do i = 1, maxi
+     do j = 1,maxj
+       vout(i) = vout(i) + vbig(matri(i,j)) * vsmall(j) * gg(gposition+j)
+       enddo
+       enddo
+   
+end
+
+subroutine test_produce
+    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
+    real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
+    integer i,j,k, l, m
+    
+    v1 = [ 1d0, 2d0, 3d0]
+    v2 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0]
+    v3 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
+    v4 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0, 11d0, 12d0, 13d0, 14d0, 15d0]
+    v5 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0, 11d0, 12d0, 13d0, 14d0, 15d0, 16d0 ,17d0 ,18d0 ,19d0 ,20d0 ,21d0 ]
+    
+    
+    f1 = v1
+    f2 = reshape(expand(v2,2),shape(f2))
+    f3 = reshape(expand(v3,3),shape(f3))
+    f4 = reshape(expand(v4,4),shape(f4))
+    f5 = reshape(expand(v5,5),shape(f5))
+    
+    !call printer(f2,'f2',2)
+    !call printer(f3,'f3',2)
+    
+    of1=0
+    of2=0
+    do i = 1,3
+      do j = 1,3
+        do k = 1,3
+          
+          of3(i,j,k) = of3(i,j,k) + f1(i)*f2(k,j) + f1(j)*f2(k,i) + f1(k)*f2(i,j)
+          
+          do l = 1, 3
+            !of4(l,k,j,i) = of4(l,k,j,i) + f2(l,k)*f2(j,i)*6 !+ f2(l,j)*f2(k,i) + f2(l,i)*f2(k,j) 
+            of4(l,k,j,i) = of4(l,k,j,i) + f1(l)*f3(k,j,i) + f1(k)*f3(l,j,i) + f1(j)*f3(l,k,i) + f1(i)*f3(k,l,j) 
+          !  do m = 1, 3
+          !    of3(k,j,i) = of3(k,j,i) + f2(m,l)*f5(m,l,k,j,i)
+          !  enddo
+          enddo
+        enddo
+      enddo
+    enddo
+    
+    !call printer(of4,
+    
+    print*,""
+    print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
+    print'(*(f10.4))', produce(1,2,v1,v2)
+    print*,""
+    print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
+    print'(*(f10.4))', produce(1,3,v1,v3)
+    
+    
+    
+end
+
+function produce(k1,k2,v1,v2) result(vout)
+integer, intent(in) :: k1,k2
+real(dp), intent(in) :: v1(:), v2(:)
+real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
+integer i, j, k, kout, l1, l2, lout
+
+kout = k1+k2
+
+lout = (kout+1)*(kout+2)/2
+l1   = (k1  +1)*(k1  +2)/2
+l2   = (k2  +1)*(k2  +2)/2
+
+vout=0
+do i = 1, l1
+do j = 1, l2
+  
+  vout(matr(i,j)) = vout(matr(i,j)) + v1(i)*v2(j)*hhh(i,j,k1,k2)
+  enddo
+  enddo
+  
+
+end
+
+
+
 
 subroutine test_matr(nn)
     integer i, nn, maxi
@@ -74,6 +382,15 @@ subroutine test_matr(nn)
     maxi = sumfac(nn)
     do i = 1, maxi
       print'(28I3)', matr(i,1:maxi)
+    enddo
+end subroutine
+
+subroutine test_matri(nn)
+    integer i, nn, maxi
+    if(nn>7)stop"rank kant be larger than 7 in matr intdex matrix"
+    maxi = sumfac(nn)
+    do i = 1, maxi
+      print'(28I3)', matri(i,1:maxi) - matr(i,1:maxi)
     enddo
 end subroutine
 
@@ -94,85 +411,7 @@ subroutine compow2(k)
      enddo
 end
 
-subroutine test_nextpow(k)
-  integer a,b,c, k
-  integer ind
-  
-  a=k
-  b=0
-  c=0
-  
-  do ind = 1,sumfac(k+1)
-     if(ind>1)call nextpow(a,b,c)
-     print'(3I2,I5)',a,b,c,ind
-     enddo
-     
-end
 
-subroutine nextpow(a,b,c)
-  integer a,b,c
-
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-end
-
-subroutine subdiv_pow(ii,kii)
-integer ii, kii
-integer i, j, it
-integer a1,b1,c1, a2,b2,c2, aa,bb,cc
-
-a1 = ii
-aa = ii + kii
-
-b1 = 0
-c1 = 0
-bb = 0
-cc = 0
-
-it = 0
-do i = 1, sumfac(ii+1)
-   if (i>1)call nextpow(a1,b1,c1)
-   b2 = 0
-   c2 = 0
-   a2 = kii
-   do j = 1, sumfac(kii+1)
-      if (j>1)call nextpow(a2,b2,c2)
-      it = it+1
-      aa = a1+a2
-      bb = b1+b2
-      cc = c1+c2
-      print '(3(I3,2I2),7I4)', a1,b1,c1, a2,b2,c2, aa,bb,cc, &
-            finder([aa,bb,cc]),&
-            matr(i,j), &
-            i + j + (vv(i)-1)*(vv(j)-1) - 1, &
-            i + j + vv1(i)*vv1(j) - 1, &
-            hh(a1,b1,c1, a2,b2,c2), &
-            i, j !, it
-      
-      enddo;enddo
-    
-   !do here!
-print'(*(I3))', vv(1:sumfac(ii+kii+1))
-print'(*(I3))', vv1(1:sumfac(ii+kii+1))
-print*, sumfac(ii+kii+1)
-end
-
-function hh(a1,b1,c1, a2,b2,c2) !Make a matrix of this sheeeet
-    integer a1,b1,c1, a2,b2,c2
-    integer aa,bb,cc, hh
-    aa = a1+a2
-    bb = b1+b2
-    cc = c1+c2
-    
-    hh = fac(aa)*fac(bb)*fac(cc) / ( fac(a1)*fac(a2)*fac(b1)*fac(b2)*fac(c1)*fac(c2) )
-
-end
 
 subroutine test_factorial(k)
 integer k, i
@@ -278,25 +517,6 @@ subroutine test_rrpow
     !call test_next_rev_key2n(4)
 end subroutine
 
-subroutine test_apple_g
-print*, "xxyy", apple_g([2,2,0])
-print*, "xy", apple_g([1,1,0])
-
-print*, "xxyz", apple_g([2,1,1])
-print*, apple_g([1,1,0])
-print*, apple_g([1,0,1])
-print*, apple_g([0,1,1])
-
-print*, "xxxy", apple_g([3,1,0])
-end subroutine
-
-function next(key,tric) 
-  integer key(:), tric,next(size(key))
-  character(3) :: order
-  order="can"
-  if(order=="can") next = next_can(key,tric)
-  if(order=="lex") next = next_lex(key,tric)
-endfunction  
 
 subroutine test_rpow
     real(dp) :: r2(6),r3(10),r4(15),r5(21), r(3)
@@ -311,128 +531,12 @@ call printer(r5,'5',1)
 
 endsubroutine
 
-subroutine test_sumfac
-   integer i
-   
-   do i = 1,10
-     print*, sumfac(i) , i, 1
-   enddo
-endsubroutine
-
-subroutine testing_many
-    
-    !call test_sorted
-    
-    call test_next_key2n(5,1)
-    
-    !call test_tric_prod()
-    
-    !call test__expand_compress
-    
-end subroutine
-
-subroutine test__expand_compress()
-    integer rank
-    real(dp) :: tricorn(10), full(3,3,3)!, linfu(3**3)
-    real(dp) :: tricorn4(15), full4(3,3,3,3)!, linfull4(3**4)!, linfu(3**3)
-    
-    rank = 3
-    tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
-    full = reshape(expand(tricorn,rank),shape(full),order=[3,1,2])
-    call printo(full,[2,1,3])
-    
-    
-    
-    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full,[3**rank]),rank)
-    
-    rank=4
-    tricorn4 = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0,11d0,12d0,13d0,14d0,15d0]
-    full4 = reshape(expand(tricorn4,rank),shape(full4),order=[3,1,2,4])
-    call printo(full4,[1,2,3,4])
-    !linfull4 = reshape(full,[3**3])
-    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full4,[3**4]),rank)
-    
-    
-end subroutine
 
 
-subroutine test_sorted()
-    integer, allocatable :: key(:)!, key2(:)
-    integer rank
-    key = [4,5,2,1,3,1,7,1,3,2,6,1]
-    rank = size(key)
-    print '('//str(rank)//'I2)', sorted(key)
-end subroutine
 
 
-subroutine test_tric_prod()
-    integer rank
-    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    print*, ''
-    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
 
-end subroutine
 
-subroutine test_next_key2n(rank,tric) !result(ns)
-    integer, intent(in) :: rank, tric
-    integer trilen, key(rank), nn(3), upper
-    !integer :: ns(3, ((rank+1)*(rank+2))/2)
-    integer i, j
-    print '('//str(4)//'I2)', next_can([3,3,1,1],0)
-    print '('//str(4)//'I2)', next_can([3,3,1,1],1)
-    
-    print '('//str(4)//'I2)', next_can([1,1,3,3],0)
-    print '('//str(4)//'I2)', next_can([1,1,3,3],1)
-    
-    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
-    
-    trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
-    
-    key = 1
-       
-    print*, 'n(1:'//str(rank)//') array:'
-    nn = key2n(key)
-    i = 1
-    call pprint
-    
-    if(tric==1)upper=trilen
-    if(tric==0)upper=3**rank
-    
-    do i = 2,upper!3**rank!trilen
-       key = next(key,tric)
-       
-       nn = key2n(key)
-       call pprint
-    enddo
-    
-    
-    
-    contains !// ////////////////////////
-      
-      
-      
-      subroutine pprint
-         print*, "key=",(str(key(j))//" ",j=1,rank ),"  nn=",(str(nn(j))//" ",j=1,3 ),&
-                 "  row:"//str(i), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
-      end subroutine
-      
-end
 
 
 
@@ -442,121 +546,6 @@ end
 
 
 !///////////////////////////////////////////////////////////////////////////////////////
-pure function triclen(rank)
-    integer, intent(in) :: rank
-    integer triclen
-    triclen = ((rank+1)*(rank+2))/2
-end
-
-function compress(linfull,rank) result(tricorn)
-    integer rank, key(rank)
-    real(dp) :: linfull(:), tricorn( ((rank+1)*(rank+2))/2 )! 3**rank
-    integer i, j, ifull, trilen
-    trilen = ((rank+1)*(rank+2))/2
-    !if(size(tricorn) /= trilen)stop"Wrong tricorn tensor has wrong length in compress()"
-    if(size(linfull) /= 3**rank)stop":: length(linear full tensor) /= 3**rank ::"
-    
-    key = 1
-    tricorn(1) = linfull(1)
-    do i = 2,trilen
-      key = next(key,1)
-      
-      ifull = 1
-      do j = 1,rank
-        ifull = ifull + (key(j)-1)*3**(j-1) 
-      enddo
-      tricorn(i) = linfull(ifull)
-    enddo
-end 
-
-function expand(tricorn, rank) result(linfull)
-    integer rank, key(rank)
-    real(dp) tricorn( : ) , linfull(3**rank)
-    integer i, tri_ind, nn(3), trilen
-    trilen = (rank+1)*(rank+2)/2
-    if(size(tricorn) /= trilen)stop"length(tricorn tensor) /= (rank+1)*(rank+2)/2"
-    key = 1
-    linfull = 0
-    linfull(1) = tricorn(1)
-    
-    do i = 2,3**rank 
-      key = next(key,0)
-      nn = key2n(key)
-      tri_ind = finder(nn)
-      linfull(i) = tricorn(tri_ind)
-    enddo
-    
-end 
-
-function apple_g(n) result(g)
-   ! Applequist g()-function. 
-   ! Is the number of times unique element occurs in a full symmetric tensor = numer of intex permutations giving the same value
-   ! this routine will fail at rank 23
-   integer g, n(3), rank, ns(3)
-   integer*8 j, nfac, fac1, fac2, gl!using long ints for the factorials to be safe
-   ns = sorted(n)
-   rank = sum(ns)
-   nfac = 1
-   fac1 = 1
-   fac2 = 1
-   
-   do j = ns(3)+1, rank
-     nfac = nfac*j
-     enddo
-   
-   do j = 1, ns(1)
-     fac1 = fac1*j
-     enddo
-   
-   do j = 1, ns(2)
-     fac2 = fac2*j
-     enddo
-   
-   gl = nfac/(fac1*fac2)
-   
-   if(gl>huge(g))stop"Wow, too big value in g()"
-   
-   g=int(gl,kind(g))
-end
-   
-function key2n(key) result(n)
-   integer, intent(in) :: key(:)
-   integer i, n(3), rank, ind
-   rank = size(key)
-   n=0
-   ! get number of x,y,z indices (or rather 1,2,3 indices)
-   do i = 1,rank
-     ind = key(i)
-     n(ind) = n(ind) + 1
-   enddo
-end function
-
-function finder(n) result(row)
-   ! Given nx,ny,nz, returns corresponding row in tricorn vector. 
-   integer n(3), row, rank, i
-   
-   rank = sum(n)
-   row = 1 + n(3)
-   do i = 1,rank - n(1) !addition factorial
-     row = row + i
-   enddo
-end
-
-
-pure function sumfac(u)
-    !third row in pascal matrix (for tricorn lengths)
-    integer sumfac
-    integer, intent(in) :: u
-    sumfac = u*(u+1)/2 ! 2=2!
-endfunction
-
-pure function sumfacfac(u)
-    !fourth row in pascal matrix ( for tricorn positions in polytensor)
-    integer sumfacfac
-    integer, intent(in) :: u
-    sumfacfac = u*(u+1)*(u+2)/6 ! 6=3!
-endfunction
-
 
 
 subroutine rrpow(r,k,rr) 
@@ -647,81 +636,6 @@ end
 
 
 
-
-function next_lex(key,tric) result(next)
-   ! Function returning the next combination of indices (key) given the previous key, IN LEXICOGRAPHICAL ORDER. 
-   ! If tric=1 it gives the next tricorn key, if tric=0 it gives the next full-tensor key. 
-   integer, intent(in) :: key(:)
-   integer, intent(in), optional :: tric
-   integer :: next(size(key))
-   integer rank, i, j, vali
-   
-   rank = size(key)
-   next = key
-   
-   outer:do i = rank, 1, -1
-     vali=next(i)
-     if(vali < 3)then
-       next(i) = vali+1
-       do j = i+1,rank
-         next(j) = 1 + tric*vali !if doing tricorn increment then add this factor. tric is 0 or one
-       enddo
-       exit outer
-     endif
-   enddo outer
-end function
-
-
-function next_can(key,tric) result(next)
-   ! Function returning the next combination of indices (key) given the previous key. IN CANONCIAL = ANTI-LEXICOGRAPHICAL = FORTRAN-LIKE, ORDERING. 
-   ! If tric=1 it gives the next tricorn key, if tric=0 it gives the next full-tensor key. 
-   integer, intent(in) :: key(:)
-   integer, intent(in), optional :: tric
-   integer :: next(size(key))
-   integer rank, i, j, vali
-   
-   rank = size(key)
-   next = key
-   
-   outer:do i = 1,rank!, 1, -1
-     vali=next(i)
-     if(vali < 3)then
-       next(i) = vali+1
-       do j = i-1,1, -1
-         next(j) = 1 + tric*vali !if doing tricorn increment then add this factor. tric is 0 or one
-       enddo
-       exit outer
-     endif
-   enddo outer
-end function
-
-
-
-pure function sorted(key) 
-   ! given an unsorted key, returns surted key. 
-   integer, intent(in) :: key(:)
-   integer :: sorted(size(key))
-   integer :: saveit, minimum, i, j, rank, minposi
-   sorted = key
-   rank = size(sorted)
-   
-   do i = 1,rank-1
-      saveit = sorted(i)
-      minimum = saveit
-      minposi = i 
-      do j = i+1, rank
-        if(sorted(j).le.minimum)then
-          minimum = sorted(j)
-          minposi = j
-        endif
-      enddo
-      sorted(i)=minimum
-      sorted(minposi)=saveit
-   enddo
-end function
-
-
-
 !function contract(qq,qkk,rr,rkk,qr,qr_kk,sym)
 !integer qkk, rkk, qr_kk
 !real(dp) :: qq(sumfac(qkk+1)), rr(sumfac(rkk+1)), qr(sumfac(qr_kk+1))
@@ -781,27 +695,5 @@ end function
 !/////////////////////////////////////////////////
 
 
-function tric_prods(rank) result(prods)
-   integer rank, trilen, key(rank)
-   integer :: prods( ((rank+1)*(rank+2))/2 ), prod
-   integer i, j
-   
-   trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
-   key = 1
-   prods(1) = 1
-   
-   do i = 2,trilen
-   !print*, 2
-      
-      key = next(key,1)
-      
-      prod=1
-      do j = 1,rank
-        prod = prod*key(j)
-      enddo
-      
-      prods(i) =  prod
-   enddo
-end function
 
 end module

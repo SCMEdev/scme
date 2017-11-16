@@ -1,8 +1,10 @@
 ! This module print tensors of rank 1 to 5 with the generic interface "printer of all the s ranks. 
 module printer_mod
-    use data_types, only: dp!, h2o
+    !use data_types, only: dp!, h2o
     
     implicit none
+    
+    integer, parameter :: dp = kind(0d0)
     integer, parameter :: un=6
     character(*), parameter :: intf='(I7)'
     character(*), parameter :: dblf='f24.15' !double format
