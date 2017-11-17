@@ -90,8 +90,8 @@ subroutine nextpow(a,b,c)
   endif
 end
 
-subroutine nextpov(nn)
-  integer a,b,c, nn(3)
+function nextpov(nn)
+  integer a,b,c, nn(3), nextpov(3)
   a = nn(1)
   b = nn(2)
   c = nn(3)
@@ -105,9 +105,9 @@ subroutine nextpov(nn)
     c=0
   endif
   
-  nn(1) = a
-  nn(2) = b
-  nn(3) = c
+  nextpov(1) = a
+  nextpov(2) = b
+  nextpov(3) = c
 
   
 end

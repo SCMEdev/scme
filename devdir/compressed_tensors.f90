@@ -78,7 +78,7 @@ integer, parameter :: matr(28,28) = reshape( [&
 26, 33, 34, 41, 42, 43, 50, 51, 52, 53, 60, 61, 62, 63, 64, 71, 72, 73, 74, 75, 76, 83, 84, 85, 86, 87, 88, 89,&
 27, 34, 35, 42, 43, 44, 51, 52, 53, 54, 61, 62, 63, 64, 65, 72, 73, 74, 75, 76, 77, 84, 85, 86, 87, 88, 89, 90,&
 28, 35, 36, 43, 44, 45, 52, 53, 54, 55, 62, 63, 64, 65, 66, 73, 74, 75, 76, 77, 78, 85, 86, 87, 88, 89, 90, 91&
- ], shape(matr) )
+], shape(matr) )
 
 integer, parameter :: matri(matsize,matsize) = reshape( [ &
                       ((matrow + matcol -1 + vv1(matcol)*vv1(matrow), matcol = 1,matsize), matrow = 1, matsize) &
@@ -98,9 +98,13 @@ subroutine main
     !call test_nextpow(7)
     !call compow2(7)
     !call subdiv_pow(5,5)
-    !call test_contract
-    call test_produce
+    !call test_inner
     
+    !call test_outer
+    
+    call test_inner_outer
+    
+    !call test_hhh(3,3)
     !print*, ""
     !call subdiv_pow(4,3)
     !print*, ""
@@ -127,10 +131,40 @@ subroutine main
     !  print*, ""
     !  enddo
     
+    !call h_testing
+    
+    print*, rangfac(5,5)
+    print*, rangfac(5,4)
+    print*, rangfac(5,3)
+    print*, rangfac(7,3)
+    print*, rangfac(7,5)
+    
+    print*, rangff(5,5)
+    print*, rangff(6,4)
+    print*, rangff(5,3)
+    print*, rangff(7,3)
+    print*, rangff(7,5)
+    print*, rangff(7,6)
+    
     
 end subroutine
 
 ! Testing /////////////////////////////////////////////////////
+
+subroutine h_testing
+integer i, k , n(3)
+k=5
+n = 0
+n(1) = k
+do i = 1, sumfac(k+1)
+  if(i>1) n = nextpov(n)
+  print'(3I3,a,3I4,a,I4)',n,",  ", fac(n(1)), fac(n(2)), fac(n(3)),",  ", fac(n(1))*fac(n(2))*fac(n(3))
+  enddo
+
+
+end
+
+
 
 subroutine subdiv_pow(ii,kii)
 integer ii, kii
@@ -196,6 +230,7 @@ do i = 1, sfii
 !print*, sumfac(ii+kii+1)
 end
 
+
 function hh(a1,b1,c1, a2,b2,c2) !Make a matrix of this sheeeet
     integer a1,b1,c1, a2,b2,c2
     integer aa,bb,cc, hh
@@ -203,10 +238,26 @@ function hh(a1,b1,c1, a2,b2,c2) !Make a matrix of this sheeeet
     bb = b1+b2
     cc = c1+c2
     
-    hh = fac(aa)*fac(bb)*fac(cc) / ( fac(a1)*fac(a2)*fac(b1)*fac(b2)*fac(c1)*fac(c2) )
+    hh = ( fac(aa)*fac(bb)*fac(cc) ) / ( fac(a1)*fac(a2)*fac(b1)*fac(b2)*fac(c1)*fac(c2) )
 
 end
 
+subroutine test_hhh(k1, k2)
+    integer i1, i2, k1,k2
+    integer gp1, gp2, gp12, h, ch
+    gp1 = gpos(k1)
+    gp2 = gpos(k2)
+    gp12 = gpos(k1+k2)
+    ch = choose(k1+k2,k1)
+    do i1 = 1, sumfac(k1+1)
+      do i2 = 1, sumfac(k2+1)
+        h = ( gg(gp1+i1)*gg(gp2+i2)*ch ) / gg(gp12 + matr(i1,i2))
+        write(*,'((I4))', advance="no") h-hhh(i1,i2,k1,k2)
+        enddo
+      print*,""
+      enddo
+      
+end
 pure function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     integer, intent(in) :: i,j, ki,kj
     integer kij, hhh, cc, gi,gj,gij
@@ -219,7 +270,88 @@ pure function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     
 end
 
-subroutine test_contract
+subroutine test_inner_outer
+    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
+    real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
+    integer i,j,k, l, m
+    
+    !v1 = [ 1d0, 2d0, 3d0]
+    !v2 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0]
+    !v3 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
+    !v4 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0, 11d0, 12d0, 13d0, 14d0, 15d0]
+    !v5 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0, 11d0, 12d0, 13d0, 14d0, 15d0, 16d0 ,17d0 ,18d0 ,19d0 ,20d0 ,21d0 ]
+    call random_number(v1)
+    call random_number(v2)
+    call random_number(v3)
+    call random_number(v4)
+    call random_number(v5)
+    
+    
+    f1 = v1
+    f2 = reshape(expand(v2,2),shape(f2))
+    f3 = reshape(expand(v3,3),shape(f3))
+    f4 = reshape(expand(v4,4),shape(f4))
+    f5 = reshape(expand(v5,5),shape(f5))
+    
+    !call printer(f2,'f2',2)
+    !call printer(f3,'f3',2)
+    
+    of1=0
+    of2=0
+    of3=0
+    do i = 1,3
+      do j = 1,3
+        do k = 1,3
+          
+          of1(i) = of1(i) + f2(k,j)*f3(k,j,i)
+          
+          do l = 1, 3
+            of2(j,i) = of2(j,i) + f2(l,k)*f4(l,k,j,i)
+            do m = 1, 3
+              of3(k,j,i) = of3(k,j,i) + f2(m,l)*f5(m,l,k,j,i)
+            enddo
+          enddo
+        enddo
+      enddo
+    enddo
+    
+    
+    
+    !of1=0
+    of2=0
+    !of3=0
+    of4=0
+    do i = 1,3
+      do j = 1,3
+        do k = 1,3
+          
+          !of3(i,j,k) = of3(i,j,k) + f1(i)*f2(k,j) + f1(j)*f2(k,i) + f1(k)*f2(i,j)
+          
+          do l = 1, 3
+            !of4(l,k,j,i) = of4(l,k,j,i) + f2(l,k)*f2(j,i)*6 !+ f2(l,j)*f2(k,i) + f2(l,i)*f2(k,j) 
+            of4(l,k,j,i) = of4(l,k,j,i) + of1(l)*of3(k,j,i) + of1(k)*of3(l,j,i) + of1(j)*of3(l,k,i) + of1(i)*of3(k,l,j) 
+          !  do m = 1, 3
+          !    of3(k,j,i) = of3(k,j,i) + f2(m,l)*f5(m,l,k,j,i)
+          !  enddo
+          enddo
+        enddo
+      enddo
+    enddo
+    
+    !call printer(of4,
+    
+    print*,""
+    print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
+    print'(*(f10.4))', outer(1,3,inner(3,2,v3,v2),inner(5,2,v5,v2))
+    !print*,""
+    !print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
+    !print'(*(f10.4))', outer(1,3,v1,v3)
+    
+    
+    
+end
+
+subroutine test_inner
     real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3)
     integer i,j,k, l, m
@@ -242,6 +374,7 @@ subroutine test_contract
     
     of1=0
     of2=0
+    of3=0
     do i = 1,3
       do j = 1,3
         do k = 1,3
@@ -260,44 +393,95 @@ subroutine test_contract
     
     
     print'(*(f10.4))', of1
-    print'(*(f10.4))', contract(3,2,v3,v2)
+    print'(*(f10.4))', inner(3,2,v3,v2)
     print*,""
     print'(*(f10.4))', compress(reshape(of2,[3**2]),2)
-    print'(*(f10.4))', contract(4,2,v4,v2)
+    print'(*(f10.4))', inner(4,2,v4,v2)
     print*,""
     print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
-    print'(*(f10.4))', contract(5,2,v5,v2)
+    print'(*(f10.4))', inner(5,2,v5,v2)
     
-    !print'(*(f10.4))', contract(5,2,v5,v2)
+    !print'(*(f10.4))', inner(5,2,v5,v2)
     
-    !print'(*(f10.4))', contract(3,2,v3,v2)-of1
+    !print'(*(f10.4))', inner(3,2,v3,v2)-of1
     
     
 end
 
-function contract(kbig, ksmall, vbig, vsmall) result(vout) !assumes kbig > ksmall
-   integer, intent(in) :: kbig, ksmall
-   real(dp), intent(in) :: vbig(:), vsmall(:)
-   !real(dp), pointer :: p1, p2 !, target
-   real(dp) vout((kbig - ksmall+1)*(kbig - ksmall+2)/2)
-   integer kout, gposition, i, j, maxi, maxj
+function field(qq,nq,kk,rpows,rrr) 
+real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(:)
+integer, intent(in) :: nq, kk
+real(dp) field((kk+1)*(kk+2)/2)
+integer i,j,k
+integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
+
+field = 0
+do i = 0, min(nq,kk)
+  field(:) = field(:) &
+             + (-1)**(kk+nq-i) &
+             * rangfac(nq,nq-i) &
+             * rangff(2*(kk+nq-i)-1,2*nq-1) &
+             * rpows(2*(kk+nq-i)+1) &
+             * outer(k-i,i, &
+                     rrr( rpos(kk-i) : rpos(kk-i+1)-1 ),&
+                     inner(nq,nq-i,&
+                           qq,&
+                           rrr( rpos(nq-i) : rpos(nq-i+1)-1 )&
+                           ) &
+                     )
+  enddo
+ !must figure out if really the rrr vector is sibdivisible. It should be. But are there scakefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
+ ! But when creating the rrr vector we should consider these too. And those depend on the ranks of the outer-produced tensors. 
+ ! I thought first that I needed the outer-product degeneracy in rrr, and also in creating the inner and outer products. But I ended up with integer scale factors instead, but maybe also some reoccuring a,b,c triplets? 
+ !  Yes, since I exhaust the subduvuded index arrays in an n^2 sense, there are indices in the final array that are revisited. Awesome. 
+ !But the rrr array is an outer product of r-vectors. But then also outer(r^3,r) = outer(r^2,r^2) = r^4 and so on. And this is exactly what is required. But did I construct it correctly. no. 
+ ! Now it has redundancy that could be added up to the resulting outer-product tensor, if it is put in in a single-loop fashion. But that is not the case. 
+ !  The real rrr-array must be a polytensor, that is expanded from an r-vector with multiple applications of the outer-function. Gooood. This is next. Then it can use gpos()-array for positioning!
+ 
+
+end
+
+function rangfac(aa,bb) result(cc)
+    integer aa, bb
+    integer i, cc
+    cc = 1
+    do i = bb+1,aa
+      cc = cc*i
+    enddo
+end
+
+function rangff(aa,bb) result(cc)
+    integer aa, bb
+    integer i, cc
+    cc = 1
+    do i = bb+2,aa, 2
+      cc = cc*i
+    enddo
+end
+
+
+function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
+   integer, intent(in) :: kq, kr
+   real(dp), intent(in) :: vq(:), vr(:)
+   real(dp) vqr((kq-kr+1)*(kq-kr+2)/2)
+   integer kqr, gplace, i, j, maxi, maxj
    
-   kout = kbig - ksmall
-   maxi = (kout+1)*(kout+2)/2
-   maxj = (ksmall+1)*(ksmall+2)/2
+   kqr = kq - kr
+   maxi = (kqr+1)*(kqr+2)/2
+   maxj = (kr+1)*(kr+2)/2
    
-   gposition = gpos(ksmall)
+   gplace = gpos(kr)
    
-   vout(:) = 0
+   vqr(:) = 0
    do i = 1, maxi
      do j = 1,maxj
-       vout(i) = vout(i) + vbig(matri(i,j)) * vsmall(j) * gg(gposition+j)
+       vqr(i) = vqr(i) + vq(matri(i,j)) * vr(j) * gg(gplace+j)
        enddo
        enddo
    
 end
 
-subroutine test_produce
+subroutine test_outer
     real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
     integer i,j,k, l, m
@@ -341,16 +525,16 @@ subroutine test_produce
     
     print*,""
     print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
-    print'(*(f10.4))', produce(1,2,v1,v2)
+    print'(*(f10.4))', outer(1,2,v1,v2)
     print*,""
     print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
-    print'(*(f10.4))', produce(1,3,v1,v3)
+    print'(*(f10.4))', outer(1,3,v1,v3)
     
     
     
 end
 
-function produce(k1,k2,v1,v2) result(vout)
+function outer(k1,k2,v1,v2) result(vout)
 integer, intent(in) :: k1,k2
 real(dp), intent(in) :: v1(:), v2(:)
 real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
@@ -631,68 +815,6 @@ r5(16:20) = r4(11:15) *r(2)
 r5(21)    = r4(15)    *r(3)
 
 end
-
-
-
-
-
-!function contract(qq,qkk,rr,rkk,qr,qr_kk,sym)
-!integer qkk, rkk, qr_kk
-!real(dp) :: qq(sumfac(qkk+1)), rr(sumfac(rkk+1)), qr(sumfac(qr_kk+1))
-!integer k, dqkk, drkk, len3, i, j, lenh
-!k = qkk+rkk-qr_kk
-!dqkk = qkk-k
-!drkk = rkk-k
-!
-!len3 = sumfac(qr_kk)
-!lenh = sumfac(k)
-!
-!perms = choose(max(dqkk,drkk),min(dqkk,drkk))
-!
-!do ip = 1,perms
-!
-!do i = 1, len3
-!  
-!  qr(i) = 0
-!  do j = 1, lenh
-!    
-!    qr(i) = qr(i) + 
-!  
-!  
-!enddo
-!end subroutine
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-!/////////////////////////////////////////////////
 
 
 
