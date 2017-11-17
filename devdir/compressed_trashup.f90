@@ -185,3 +185,20 @@ subroutine test_contind(k)
    
 end subroutine
 
+subroutine compow2(k)
+  integer a,b,c, k
+  integer too,i, it
+  
+  it=0
+  do too = 0,k
+   do i = 0,too
+     a=k-too
+     b=too-i
+     c=i
+     it=it+1!((too+1)*too)/2+i+1
+     print'(3I2,I5)',a,b,c,it
+     enddo
+     enddo
+end
+
+

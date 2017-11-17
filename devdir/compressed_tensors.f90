@@ -412,57 +412,6 @@ subroutine test_inner
     
 end
 
-function field(qq,nq,kk,rpows,rrr) 
-real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(:)
-integer, intent(in) :: nq, kk
-real(dp) field((kk+1)*(kk+2)/2)
-integer i!,j
-integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
-
-field = 0
-do i = 0, min(nq,kk)
-  field(:) = field(:) &
-             + (-1)**(kk+nq-i) &
-             * rangefac(nq,nq-i) &
-             * rangeff(2*(kk+nq-i)-1,2*nq-1) &
-             * rpows(2*(kk+nq-i)+1) &
-             * outer(kk-i,i, &
-                     rrr( rpos(kk-i) : rpos(kk-i+1)-1 ),&
-                     inner(nq,nq-i,&
-                           qq,&
-                           rrr( rpos(nq-i) : rpos(nq-i+1)-1 )&
-                           ) &
-                     )
-  enddo
- !must figure out if really the rrr vector is sibdivisible. It should be. But are there scakefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
- ! But when creating the rrr vector we should consider these too. And those depend on the ranks of the outer-produced tensors. 
- ! I thought first that I needed the outer-product degeneracy in rrr, and also in creating the inner and outer products. But I ended up with integer scale factors instead, but maybe also some reoccuring a,b,c triplets? 
- !  Yes, since I exhaust the subduvuded index arrays in an n^2 sense, there are indices in the final array that are revisited. Awesome. 
- !But the rrr array is an outer product of r-vectors. But then also outer(r^3,r) = outer(r^2,r^2) = r^4 and so on. And this is exactly what is required. But did I construct it correctly. no. 
- ! Now it has redundancy that could be added up to the resulting outer-product tensor, if it is put in in a single-loop fashion. But that is not the case. 
- !  The real rrr-array must be a polytensor, that is expanded from an r-vector with multiple applications of the outer-function. Gooood. This is next. Then it can use gpos()-array for positioning!
- 
-
-end
-
-function rangefac(aa,bb) result(cc)
-    integer aa, bb
-    integer i, cc
-    cc = 1
-    do i = bb+1,aa
-      cc = cc*i
-    enddo
-end
-
-function rangeff(aa,bb) result(cc)
-    integer aa, bb
-    integer i, cc
-    cc = 1
-    do i = bb+2,aa, 2
-      cc = cc*i
-    enddo
-end
-
 
 function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
    integer, intent(in) :: kq, kr
@@ -538,17 +487,53 @@ subroutine test_outer
     
 end
 
+!pure function outer(k1,k2,v1,v2) result(vout)
+!    integer, intent(in) :: k1,k2
+!    real(dp), intent(in) :: v1(:), v2(:)
+!    real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
+!    integer i, j
+!    
+!    vout=0
+!    do i = 1, sumfac(k1+1)
+!    do j = 1, sumfac(k2+1)
+!        
+!        vout(matr(i,j)) = vout(matr(i,j)) + v1(i)*v2(j)*hhh(i,j,k1,k2)
+!        enddo
+!        enddo
+!    
+!end
+
+
+
 pure function outer(k1,k2,v1,v2) result(vout)
+    ! Symmetrizing outer product, correct scaling is applied with the built in h-function = (gi*gj*cho)/gij 
+    ! It requires the index-matrix "matr" and the Applequist g-vectors in "gg"
     integer, intent(in) :: k1,k2
     real(dp), intent(in) :: v1(:), v2(:)
     real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
     integer i, j
+    integer gi,gj,gij, k12, pi, pj, pij, mij, cho
+    
+    k12 = k1+k2
+    cho = matchoo(k12,k1)
+    
+    pi  = gpos(k1)
+    pj  = gpos(k2)
+    pij = gpos(k12)
     
     vout=0
+    
     do i = 1, sumfac(k1+1)
     do j = 1, sumfac(k2+1)
         
-        vout(matr(i,j)) = vout(matr(i,j)) + v1(i)*v2(j)*hhh(i,j,k1,k2)
+        mij = matr(i,j)
+        
+        gi  = gg(pi + i)
+        gj  = gg(pj + j)
+        gij = gg(pij + mij)
+        
+        vout(mij) = vout(mij) + v1(i)*v2(j) * (gi*gj*cho)/gij
+        
         enddo
         enddo
     
@@ -556,10 +541,65 @@ end
 
 
 
+function field(qq,nq,kk,rpows,rrr) 
+real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(:)
+integer, intent(in) :: nq, kk
+real(dp) field((kk+1)*(kk+2)/2)
+integer i!,j
+integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
+
+field = 0
+do i = 0, min(nq,kk)
+  field(:) = field(:) &
+             + (-1)**(kk+nq-i) &
+             * rangefac(nq,nq-i) &
+             * rangeff(2*(kk+nq-i)-1,2*nq-1) &
+             * rpows(2*(kk+nq-i)+1) &
+             * outer(kk-i,i, &
+                     rrr( rpos(kk-i) : rpos(kk-i+1)-1 ),&
+                     inner(nq,nq-i,&
+                           qq,&
+                           rrr( rpos(nq-i) : rpos(nq-i+1)-1 )&
+                           ) &
+                     )
+  enddo
+ !must figure out if really the rrr vector is sibdivisible. It should be. But are there scakefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
+ ! But when creating the rrr vector we should consider these too. And those depend on the ranks of the outer-produced tensors. 
+ ! I thought first that I needed the outer-product degeneracy in rrr, and also in creating the inner and outer products. But I ended up with integer scale factors instead, but maybe also some reoccuring a,b,c triplets? 
+ !  Yes, since I exhaust the subduvuded index arrays in an n^2 sense, there are indices in the final array that are revisited. Awesome. 
+ !But the rrr array is an outer product of r-vectors. But then also outer(r^3,r) = outer(r^2,r^2) = r^4 and so on. And this is exactly what is required. But did I construct it correctly. no. 
+ ! Now it has redundancy that could be added up to the resulting outer-product tensor, if it is put in in a single-loop fashion. But that is not the case. 
+ !  The real rrr-array must be a polytensor, that is expanded from an r-vector with multiple applications of the outer-function. Gooood. This is next. Then it can use gpos()-array for positioning!
+ 
+
+end
+
+function rangefac(aa,bb) result(cc)
+    ! Factorial in range: rangefac(A,B) = A!/B!
+    integer aa, bb
+    integer i, cc
+    cc = 1
+    do i = bb+1,aa
+      cc = cc*i
+    enddo
+end
+
+function rangeff(aa,bb) result(cc)
+    ! Double factorial in range: rangeff(A,B) = A!!/B!! if both A and B are odd (or even)
+    integer aa, bb
+    integer i, cc
+    cc = 1
+    do i = bb+2,aa, 2
+      cc = cc*i
+    enddo
+end
+
+
+
 
 subroutine test_matr(nn)
     integer i, nn, maxi
-    if(nn>7)stop"rank kant be larger than 7 in matr intdex matrix"
+    if(nn>7)stop"rank cant be larger than 7 in matr intdex matrix"
     maxi = sumfac(nn)
     do i = 1, maxi
       print'(28I3)', matr(i,1:maxi)
@@ -568,29 +608,13 @@ end subroutine
 
 subroutine test_matri(nn)
     integer i, nn, maxi
-    if(nn>7)stop"rank kant be larger than 7 in matr intdex matrix"
+    if(nn>7)stop"rank cant be larger than 7 in matr intdex matrix"
     maxi = sumfac(nn)
     do i = 1, maxi
       print'(28I3)', matri(i,1:maxi) - matr(i,1:maxi)
     enddo
 end subroutine
 
-
-subroutine compow2(k)
-  integer a,b,c, k
-  integer too,i, it
-  
-  it=0
-  do too = 0,k
-   do i = 0,too
-     a=k-too
-     b=too-i
-     c=i
-     it=it+1!((too+1)*too)/2+i+1
-     print'(3I2,I5)',a,b,c,it
-     enddo
-     enddo
-end
 
 
 
