@@ -51,7 +51,7 @@ utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90)
 
 
 $(lb)/%.o:%.f90
-	gfortran -I$(lb) -J$(lb) -c $< -o $@
+	gfortran -I$(lb) -J$(lb) -c $< -o $@ -Wall
 
 $(b)/%.o:%.f90
 	$(compiler) -c $^ -o $@
@@ -65,4 +65,7 @@ $(lb)/compressed_utils.o: $(print-o)
 
 clean:
 	rm *.x build/*
+
+comp-clean:
+	rm *.x build/comp*
 

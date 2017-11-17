@@ -100,9 +100,9 @@ subroutine main
     !call subdiv_pow(5,5)
     !call test_inner
     
-    !call test_outer
+    call test_outer
     
-    call test_inner_outer
+    !call test_inner_outer
     
     !call test_hhh(3,3)
     !print*, ""
@@ -116,12 +116,16 @@ subroutine main
     !call test_matri(7)
     
     !print*, ""
-    !call test_contind(6)
+    !call print_product_index_matrix (6)
     
     !call test_matr(7)
     !call printer(matr, 'matr',1)
     !call test_apple_g
+    
     !call test_rrpow
+    !print*,""
+    !call test_rrr
+    
     !call test_next_rev_key2n(4)
     !integer i, j
     !do i = 1,10
@@ -133,18 +137,18 @@ subroutine main
     
     !call h_testing
     
-    print*, rangfac(5,5)
-    print*, rangfac(5,4)
-    print*, rangfac(5,3)
-    print*, rangfac(7,3)
-    print*, rangfac(7,5)
-    
-    print*, rangff(5,5)
-    print*, rangff(6,4)
-    print*, rangff(5,3)
-    print*, rangff(7,3)
-    print*, rangff(7,5)
-    print*, rangff(7,6)
+    !print*, rangefac(5,5)
+    !print*, rangefac(5,4)
+    !print*, rangefac(5,3)
+    !print*, rangefac(7,3)
+    !print*, rangefac(7,5)
+    !
+    !print*, rangeff(5,5)
+    !print*, rangeff(6,4)
+    !print*, rangeff(5,3)
+    !print*, rangeff(7,3)
+    !print*, rangeff(7,5)
+    !print*, rangeff(17,7)
     
     
 end subroutine
@@ -271,7 +275,7 @@ pure function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
 end
 
 subroutine test_inner_outer
-    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
+    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
     integer i,j,k, l, m
     
@@ -352,7 +356,7 @@ subroutine test_inner_outer
 end
 
 subroutine test_inner
-    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
+    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3)
     integer i,j,k, l, m
     
@@ -412,17 +416,17 @@ function field(qq,nq,kk,rpows,rrr)
 real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(:)
 integer, intent(in) :: nq, kk
 real(dp) field((kk+1)*(kk+2)/2)
-integer i,j,k
+integer i!,j
 integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
 
 field = 0
 do i = 0, min(nq,kk)
   field(:) = field(:) &
              + (-1)**(kk+nq-i) &
-             * rangfac(nq,nq-i) &
-             * rangff(2*(kk+nq-i)-1,2*nq-1) &
+             * rangefac(nq,nq-i) &
+             * rangeff(2*(kk+nq-i)-1,2*nq-1) &
              * rpows(2*(kk+nq-i)+1) &
-             * outer(k-i,i, &
+             * outer(kk-i,i, &
                      rrr( rpos(kk-i) : rpos(kk-i+1)-1 ),&
                      inner(nq,nq-i,&
                            qq,&
@@ -441,7 +445,7 @@ do i = 0, min(nq,kk)
 
 end
 
-function rangfac(aa,bb) result(cc)
+function rangefac(aa,bb) result(cc)
     integer aa, bb
     integer i, cc
     cc = 1
@@ -450,7 +454,7 @@ function rangfac(aa,bb) result(cc)
     enddo
 end
 
-function rangff(aa,bb) result(cc)
+function rangeff(aa,bb) result(cc)
     integer aa, bb
     integer i, cc
     cc = 1
@@ -482,9 +486,9 @@ function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
 end
 
 subroutine test_outer
-    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21), ov1(3), ov2(6)
+    real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
-    integer i,j,k, l, m
+    integer i,j,k, l
     
     v1 = [ 1d0, 2d0, 3d0]
     v2 = [ 1d0, 2d0, 3d0, 4d0, 5d0, 6d0]
@@ -534,27 +538,20 @@ subroutine test_outer
     
 end
 
-function outer(k1,k2,v1,v2) result(vout)
-integer, intent(in) :: k1,k2
-real(dp), intent(in) :: v1(:), v2(:)
-real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
-integer i, j, k, kout, l1, l2, lout
-
-kout = k1+k2
-
-lout = (kout+1)*(kout+2)/2
-l1   = (k1  +1)*(k1  +2)/2
-l2   = (k2  +1)*(k2  +2)/2
-
-vout=0
-do i = 1, l1
-do j = 1, l2
-  
-  vout(matr(i,j)) = vout(matr(i,j)) + v1(i)*v2(j)*hhh(i,j,k1,k2)
-  enddo
-  enddo
-  
-
+pure function outer(k1,k2,v1,v2) result(vout)
+    integer, intent(in) :: k1,k2
+    real(dp), intent(in) :: v1(:), v2(:)
+    real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
+    integer i, j
+    
+    vout=0
+    do i = 1, sumfac(k1+1)
+    do j = 1, sumfac(k2+1)
+        
+        vout(matr(i,j)) = vout(matr(i,j)) + v1(i)*v2(j)*hhh(i,j,k1,k2)
+        enddo
+        enddo
+    
 end
 
 
@@ -597,7 +594,7 @@ end
 
 
 
-subroutine test_factorial(k)
+subroutine test_fac(k)
 integer k, i
 do i = 1, k
   print*, fac(i)
@@ -614,207 +611,93 @@ function fac(inn)
 
 end
 
-subroutine test_contind(k)
-   implicit integer (i)
-   integer j1,j2,j3,j4, j,k, ind(10), ii(2), jj(4), v1(sumfac(k+1)),v2(sumfac(k+1)),v3(sumfac(k+1)) !((k+1)*(k+2)/2),
-   real*8 rr(2,3)
-   
-   rr(1,:) = [1d0,2d0,3d0]
-   rr(2,:) = [4d0,5d0,6d0]
-   jj(:) = [1,2,3,1]
-   ii = [1,2]
-   print*, rr(ii,jj)
-   
-   ileng=sumfac(k+1)
-   
-   v1=0
-   v2=0
-   
-   v1 = [(i,i=1,ileng)]
-   v2 = [((j1, j2=1,j1),j1 = 1,k+1)]
-   
-   print*, ''
-   print'(*(I3))', v1
-   print'(*(I3))', v2
-   
-   print*, ""
-   do irow = 1, ileng
-       v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-     print'(*(I3))',v3
-     enddo
-   
-!   do iv = 1,ileng
-!       ijumps = v2(iv) - 1
-!       iones = iv - ijumps - 1
-!       
-!       print'(*(I3))', v1 + ijumps*v2 + iones
-!       
-!       enddo
-   
-!   print*, ""
-!   do irow = 1, ileng
-!     do icol = 1, ileng
-!       v3(icol) = irow + icol -1 + (v2(icol)-1)*(v2(irow)-1)
-!       enddo
-!     print'(*(I3))',v3
-!     enddo
-   
-!   print*, ""
-!   do irow = 1, ileng
-!     iset = v2(irow)
-!     do icol = 1, ileng
-!       ijumps = v2(icol)-1
-!       iones = icol - ijumps -1
-!       v3(icol) = irow + iones + ijumps*iset
-!       
-!       
-!       enddo
-!     print'(*(I3))',v3
-!     enddo
-     
-      
-   !print'(*(I3))', v1
-   !print'(*(I3))', v1+v2
-   !print'(*(I3))', v1+v2+1
-   !print'(*(I3))', v1+2*v2+1
-   !print'(*(I3))', v1+2*v2+2
-   
-   
-   !do i = 1,6
-   
-   
-   
-   
-   
-   
-end subroutine
-
-subroutine test_rrpow
-    !call testing
-    !call test_sumfac
-    !call test_rpow
-
-    real(dp) :: rr(7*8-1)
-    call rrpow([1d0,2d0,3d0],5,rr)
-    call printer(rr,'rr',1)
+subroutine print_product_index_matrix(k)
+    integer k, j1,j2, icol, irow, ileng, v1(sumfac(k+1)),v2(sumfac(k+1)),v3(sumfac(k+1)) !((k+1)*(k+2)/2),
     
-    !call test_next_rev_key2n(4)
+    ileng=sumfac(k+1)
+    
+    v1=0
+    v2=0
+    
+    v1 = [(j1,j1=1,ileng)]
+    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]
+    
+    print*, ''
+    print'(a,*(I3))',"v1: ", v1
+    print'(a,*(I3))',"v2: ", v2
+    
+    print*, ""
+    do irow = 1, ileng
+        v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+        print'(*(I3))',v3
+        enddo
+    
 end subroutine
 
 
-subroutine test_rpow
-    real(dp) :: r2(6),r3(10),r4(15),r5(21), r(3)
-    r(:) = [1d0,2d0,3d0]
-
-    call rpow(r,r2,r3,r4,r5)
-call printer(r,'',1)
-call printer(r2,'2',1)
-call printer(r3,'3',1)
-call printer(r4,'4',1)
-call printer(r5,'5',1)
-
-endsubroutine
-
-
-
-
-
-
-
-
-
-
-! END TESTING //////////////////////////////////////////////////////////////
-
-
-
-
-!///////////////////////////////////////////////////////////////////////////////////////
-
-
-subroutine rrpow(r,k,rr) 
-    ! Generates k powers of r(3) in tricorn polytensor
-    ! r(3)   position vector
-    ! k      highest rank/power
-    ! rr     output tricorn-ordered polytensor
-    integer, intent(in)   :: k
-    real(dp), intent(in)  :: r(3)
-    real(dp), intent(out) :: rr(sumfacfac(k+1)-1)
-    integer pl,cl,px,cx,i,pz,cz, py, cy
+subroutine test_rrr
+    integer, parameter :: k=5
+    real(dp) :: rrr(sumfacfac(k+1)-1), rr(3), rrr3(10), rrr2(6), rrr5(sumfac(6)), rrr32(sumfac(6))
+    integer i, p1, p2, p3, p4
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
+    call random_number(rr)
+    rr = [1d0,2d0,3d0]
+    rr = [0.3810985945,0.5295087287,0.852367145402366]
+    print*, size(rrr)
     
-    rr(1:3) = r(:)
+    call create_rrr(k,rr,rrr)
+    !call rrpow(rr,k,rrr)
+    !print'(*(f12.4))', rrr  
+    call printer(rrr,'rrr',1)
     
-    do i = 2,k
-       ! p=previous, c=current, l=length
-       ! x, y, z refer to the position of the x-only, y-only, z-only rows. 
-       px = sumfacfac(i-1)
-       pl = sumfac(i)
-       cl = sumfac(i+1)
-       
-       cx = px+pl
-       pz = cx-1
-       cz = pz+cl
-       cy = cx+pl
-       py = cx-i
-       
-       rr(cx:cy-1) = rr(px:pz) *r(1)
-       rr(cy:cz-1) = rr(py:pz) *r(2)
-       rr(cz)      = rr(pz)    *r(3)
-    enddo
-end subroutine
-
-subroutine rpow(r,r2,r3,r4,r5) 
-!subroutine rpow(r,r2,r3,r4,r5) 
-! Generates powers of r(3) in tricorn vecotrs
-real(dp) :: r(3), r2(6),r3(10),r4(15),r5(21)
-
-
-
-
-
-!i=2; pl = sumfac(i); cl = sumfac(i+1)
-! r2(1:pl)      = r(1:pl)     *r(1)
-! r2(pl+1:cl-1) = r(pl-i+1:pl)*r(2)
-! r2(cl)        = r(pl)       *r(3)
-!
-!i=3; pl = sumfac(i); cl = sumfac(i+1)
-! r3(1:pl)      = r2(1:pl)     *r(1)
-! r3(pl+1:cl-1) = r2(pl-i+1:pl)*r(2)
-! r3(cl)        = r2(pl)       *r(3)
-!
-!
-!i=4; pl = sumfac(i); cl = sumfac(i+1)
-! r4(1:pl)      = r3(1:pl)     *r(1)
-! r4(pl+1:cl-1) = r3(pl-i+1:pl)*r(2)
-! r4(cl)        = r3(pl)       *r(3)
-!
-!i=5; pl = sumfac(i); cl = sumfac(i+1)
-! r5(1:pl)      = r4(1:pl)     *r(1)
-! r5(pl+1:cl-1) = r4(pl-i+1:pl)*r(2)
-! r5(cl)        = r4(pl)       *r(3)
-
-! 2
-r2(1:3) = r(1:3)*r(1)
-r2(4:5) = r(2:3)*r(2)
-r2(6)   = r(3)  *r(3)
-
-
-! 3
-r3(1:6) = r2(1:6)*r(1)
-r3(7:9) = r2(4:6)*r(2)
-r3(10)  = r2(6)  *r(3)
-
-!4
-r4(1:10)  = r3(1:10)*r(1)
-r4(11:14) = r3(7:10)*r(2)
-r4(15)    = r3(10)  *r(3)
-
-!5
-r5(1:15)  = r4(1:15)  *r(1)
-r5(16:20) = r4(11:15) *r(2)
-r5(21)    = r4(15)    *r(3)
+    
+    i = 3
+    p1 = gpos(i-1)+1
+    p2 = gpos(i)
+    p3 = gpos(i)+1
+    p4 = gpos(i+1)
+    
+    rrr2=rrr(p1:p2)
+    rrr3=rrr(p3:p4)
+    
+    i=5
+    p3 = gpos(i)+1
+    p4 = gpos(i+1)
+    
+    rrr5=rrr(p3:p4)
+    
+    rrr32 = outer(3,2,rrr3,rrr2)
+    
+    
+    call printer(rrr5,"5th",1)
+    call printer(rrr32,"outer(3,2)",1)
+    call printer(rrr5-rrr32,"diff",1)
+    
+    
 
 end
+
+pure subroutine create_rrr(k,rr,rrr)
+    integer, intent(in) :: k
+    real(dp), intent(in) :: rr(3)
+    real(dp), intent(out) :: rrr(sumfacfac(k+1)-1)
+    integer i, p1, p2, p3, p4
+    rrr = 0
+    rrr(1:3) = rr
+    do i = 2,k
+      p1 = gpos(i-1)+1
+      p2 = gpos(i)
+      p3 = gpos(i)+1
+      p4 = gpos(i+1)
+      
+      !print'(*(I3))', i, p1, p2, p3, p4
+      
+      rrr(p3:p4) = outer(i-1,1,rrr(p1:p2),rr)
+      enddo
+
+end
+
+
 
 
 
