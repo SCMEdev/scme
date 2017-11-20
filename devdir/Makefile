@@ -42,7 +42,7 @@ opole.x: $(b)/opole_dev.o $(gen-f90) $(lib-a)
 
 
 
-convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(print-o) $(gen-f90)
+convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
 utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90)
@@ -60,7 +60,7 @@ $(b)/%.o:%.f90
 $(lib-a):$(wildcard ../src/*.f90)
 	(cd .. && make)
 
-$(lb)/compressed_tensors.o: $(lb)/compressed_utils.o $(print-o)
+$(lb)/compressed_tensors.o: $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o
 $(lb)/compressed_utils.o: $(print-o)
 
 clean:

@@ -2,6 +2,8 @@ module compressed_tensors
 
 use printer_mod, only: str, printer, printo
 use compressed_utils, bad=>main!,only: test_apple_g
+
+use detrace_apple, bad=>main
 implicit none
 
 integer, parameter :: dp = kind(0d0)
@@ -102,6 +104,7 @@ subroutine main
     
     call test_outer
     
+    call test_potgrad
     !call test_inner_outer
     
     !call test_hhh(3,3)
@@ -137,18 +140,18 @@ subroutine main
     
     !call h_testing
     
-    !print*, rangefac(5,5)
-    !print*, rangefac(5,4)
-    !print*, rangefac(5,3)
-    !print*, rangefac(7,3)
-    !print*, rangefac(7,5)
+    !print*, intfac(5,5)
+    !print*, intfac(5,4)
+    !print*, intfac(5,3)
+    !print*, intfac(7,3)
+    !print*, intfac(7,5)
     !
-    !print*, rangeff(5,5)
-    !print*, rangeff(6,4)
-    !print*, rangeff(5,3)
-    !print*, rangeff(7,3)
-    !print*, rangeff(7,5)
-    !print*, rangeff(17,7)
+    !print*, intff(5,5)
+    !print*, intff(6,4)
+    !print*, intff(5,3)
+    !print*, intff(7,3)
+    !print*, intff(7,5)
+    !print*, intff(17,7)
     
     
 end subroutine
@@ -540,33 +543,92 @@ pure function outer(k1,k2,v1,v2) result(vout)
 end
 
 
+subroutine test_potgrad
+    integer, parameter :: kmax=5, nmax = 3
+    integer i, k, p1, p2
+    real(dp) rr(3) 
+    real(dp) :: rrr(gpos(kmax+1)), quad(6), octa(10), rnorm, rinvv(2*(kmax+nmax)+1), rsqe
+    real(dp) :: grads(gpos(kmax+1))
+    
+    rr = [3.4231, 2.74389, 1.54739]
+    call  vector_powers(kmax,rr,rrr)
+    print*
+!    print'(*(f12.3))', rrr
+    print'(a,*(e10.3))',"rrr:",rrr
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
+    
+    call random_number(quad)
+    call random_number(octa)
+    
+    print*
+    print'(a,*(g10.3))','quad:',quad
+    print'(a,*(g10.3))','octa:',octa
+    
+!    rp2 = rr(1)**2 + rr(2)**2 + rr(3)**2
+    
+    rsqe  = sum(rr**2)!dsqrt(rsq)
+    rnorm = dsqrt(rsqe)
+    rinvv(1) = 1d0/rnorm
+    rinvv(2) = 1d0/rsqe
+    
+    !ri2 = 1d0/rp2
+    do i = 3, 2*(kmax+nmax)+1
+      rinvv(i) = rinvv(i-2)*rinvv(2)
+    enddo
+    
+    print*,"rinvv:"
+    print'(1(g10.3))',rinvv
+    
+    k = 4
+    
+    !print*, "pot-grad:"
+    !print'(1(g11.4))',potgrad(octa, 3, k, rinvv, rrr )
+    
+    
+    grads = 0
+    do k = 1,kmax
+        p1 = gpos(k)+1
+        p2 = gpos(k+1)
+        print'(a,2i3,a,i3)',"Indices:",p1,p2, " length:", p2-p1+1
+        grads(p1:p2) = opdetr( potgrad(octa, 3, k, rinvv, rrr ) , k)
+    enddo
+    
+    print*, "pot-grads:"
+    print'(1(f11.4))',grads
+    
+    
+    
+    
+    
+end
 
-function field(qq,nq,kk,rpows,rrr) 
+function potgrad(qq,nq,kk,rpows,rrr) 
 real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(:)
 integer, intent(in) :: nq, kk
-real(dp) field((kk+1)*(kk+2)/2)
+real(dp) potgrad((kk+1)*(kk+2)/2)
 integer i!,j
-integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
+!integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
 
-field = 0
+potgrad = 0
 do i = 0, min(nq,kk)
-  field(:) = field(:) &
+  potgrad(:) = potgrad(:) &
              + (-1)**(kk+nq-i) &
-             * rangefac(nq,nq-i) &
-             * rangeff(2*(kk+nq-i)-1,2*nq-1) &
+             * intfac(nq,nq-i) &
+             * intff(2*(kk+nq-i)-1,2*nq-1) &
              * rpows(2*(kk+nq-i)+1) &
              * outer(kk-i,i, &
-                     rrr( rpos(kk-i) : rpos(kk-i+1)-1 ),&
+                     rrr( gpos(kk-i)+1 : gpos(kk-i+1) ),&
                      inner(nq,nq-i,&
                            qq,&
-                           rrr( rpos(nq-i) : rpos(nq-i+1)-1 )&
+                           rrr( gpos(nq-i)+1 : gpos(nq-i+1) )&
                            ) &
                      )
   enddo
- !must figure out if really the rrr vector is sibdivisible. It should be. But are there scakefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
+ !must figure out if really the rrr vector is sibdivisible. It should be. But are there scalefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
  ! But when creating the rrr vector we should consider these too. And those depend on the ranks of the outer-produced tensors. 
  ! I thought first that I needed the outer-product degeneracy in rrr, and also in creating the inner and outer products. But I ended up with integer scale factors instead, but maybe also some reoccuring a,b,c triplets? 
- !  Yes, since I exhaust the subduvuded index arrays in an n^2 sense, there are indices in the final array that are revisited. Awesome. 
+ !  Yes, since I exhaust the subdivided index arrays in an n^2 sense, there are indices in the final array that are revisited. Awesome. 
  !But the rrr array is an outer product of r-vectors. But then also outer(r^3,r) = outer(r^2,r^2) = r^4 and so on. And this is exactly what is required. But did I construct it correctly. no. 
  ! Now it has redundancy that could be added up to the resulting outer-product tensor, if it is put in in a single-loop fashion. But that is not the case. 
  !  The real rrr-array must be a polytensor, that is expanded from an r-vector with multiple applications of the outer-function. Gooood. This is next. Then it can use gpos()-array for positioning!
@@ -574,8 +636,8 @@ do i = 0, min(nq,kk)
 
 end
 
-function rangefac(aa,bb) result(cc)
-    ! Factorial in range: rangefac(A,B) = A!/B!
+function intfac(aa,bb) result(cc)
+    ! Factorial in range: intfac(A,B) = A!/B!
     integer aa, bb
     integer i, cc
     cc = 1
@@ -584,8 +646,8 @@ function rangefac(aa,bb) result(cc)
     enddo
 end
 
-function rangeff(aa,bb) result(cc)
-    ! Double factorial in range: rangeff(A,B) = A!!/B!! if both A and B are odd (or even)
+function intff(aa,bb) result(cc)
+    ! Double factorial in range: intff(A,B) = A!!/B!! if both A and B are odd (or even)
     integer aa, bb
     integer i, cc
     cc = 1
@@ -669,7 +731,7 @@ subroutine test_rrr
     rr = [0.3810985945,0.5295087287,0.852367145402366]
     print*, size(rrr)
     
-    call create_rrr(k,rr,rrr)
+    call vector_powers(k,rr,rrr)
     !call rrpow(rr,k,rrr)
     !print'(*(f12.4))', rrr  
     call printer(rrr,'rrr',1)
@@ -701,7 +763,7 @@ subroutine test_rrr
 
 end
 
-pure subroutine create_rrr(k,rr,rrr)
+pure subroutine vector_powers(k,rr,rrr)
     integer, intent(in) :: k
     real(dp), intent(in) :: rr(3)
     real(dp), intent(out) :: rrr(sumfacfac(k+1)-1)
@@ -709,6 +771,8 @@ pure subroutine create_rrr(k,rr,rrr)
     rrr = 0
     rrr(1:3) = rr
     do i = 2,k
+      ! start/end positions of subvectors in the rrr vector. 
+      ! (Need +1 since they are 0-indexed, because usually i or j are added to them.) 
       p1 = gpos(i-1)+1
       p2 = gpos(i)
       p3 = gpos(i)+1
