@@ -4,6 +4,8 @@ use printer_mod, only: str, printer, printo
 use compressed_utils, bad=>main!,only: test_apple_g
 
 use detrace_apple, bad=>main
+
+use calc_derivs, only:calcDv
 implicit none
 
 integer, parameter :: dp = kind(0d0)
@@ -14,8 +16,9 @@ integer, parameter :: sumfacv(matk+1) = [(i00*(i00+1)/2, i00 = 1,matk+1)]
 integer, parameter :: vv(matsize) = [((j11, j22=1,j11),j11 = 1,matk+1)]
 integer, parameter :: vv1(matsize) = vv-1
 
-integer, parameter :: gg(285) = &
-[  1,   1,   1, &
+integer, parameter :: gg(0:285) = &
+[  1, & ! for the 0th index! Fucking shit should use 0-indexing!
+   1,   1,   1, &
    1,   2,   2,   1,   2,   1, &
    1,   3,   3,   3,   6,   3,   1,   3,   3,   1, &
    1,   4,   4,   6,  12,   6,   4,  12,  12,   4,   1,   4,   6,   4,   1, &
@@ -48,8 +51,8 @@ integer, parameter :: matchoo(10,10) = reshape( [&
      9,     36,     84,    126,    126,     84,     36,      9,      1,     10,  &
     10,     45,    120,    210,    252,    210,    120,     45,     10,      1   &
  ], shape(matchoo) )
-integer, parameter :: gposarr(10) = [1, 4, 10, 20, 35, 56, 84, 120, 165, 220]
-integer, parameter :: gpos(10) = gposarr(1:10)-1
+integer, parameter :: gposarr(0:10) = [0, 1, 4, 10, 20, 35, 56, 84, 120, 165, 220]
+integer, parameter :: gpos(0:10) = gposarr(0:10)-1
 
 integer, parameter :: matr(28,28) = reshape( [&
  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,&
@@ -102,9 +105,12 @@ subroutine main
     !call subdiv_pow(5,5)
     !call test_inner
     
-    call test_outer
+    !call test_outer
     
+    !print*, sumfac(0)
+    call test_old_field
     call test_potgrad
+
     !call test_inner_outer
     
     !call test_hhh(3,3)
@@ -265,7 +271,7 @@ subroutine test_hhh(k1, k2)
       enddo
       
 end
-pure function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
+function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     integer, intent(in) :: i,j, ki,kj
     integer kij, hhh, cc, gi,gj,gij
     kij = ki+kj
@@ -408,9 +414,13 @@ subroutine test_inner
     print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
     print'(*(f10.4))', inner(5,2,v5,v2)
     
-    !print'(*(f10.4))', inner(5,2,v5,v2)
     
-    !print'(*(f10.4))', inner(3,2,v3,v2)-of1
+    print*,""
+    print'(*(f10.4))', v5
+    print'(*(f10.4))', inner(5,0,v5,[3d0])
+    print'(*(f10.4))', v2
+    print'(*(f10.4))', inner(2,0,v2,[3d0])
+    
     
     
 end
@@ -486,6 +496,23 @@ subroutine test_outer
     print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
     print'(*(f10.4))', outer(1,3,v1,v3)
     
+    print*, "different order:"
+    print'(*(f10.4))', outer(1,3,v1,v3)
+    print'(*(f10.4))', outer(3,1,v3,v1)
+    
+    print*, "scalars in pos 2:"
+    print'(*(f10.4))', v3
+    print'(*(f10.4))', outer(3,0,v3,[3d0])
+    
+    print'(*(f10.4))', v1
+    print'(*(f10.4))', outer(1,0,v1,[3d0])
+    
+    print*, "scalar in pos1:"
+    print'(*(f10.4))', v3
+    print'(*(f10.4))', outer(0,3,[3d0],v3)
+    
+    print'(*(f10.4))', v1
+    print'(*(f10.4))', outer(0,1,[3d0],v1)
     
     
 end
@@ -508,7 +535,7 @@ end
 
 
 
-pure function outer(k1,k2,v1,v2) result(vout)
+function outer(k1,k2,v1,v2) result(vout)
     ! Symmetrizing outer product, correct scaling is applied with the built in h-function = (gi*gj*cho)/gij 
     ! It requires the index-matrix "matr" and the Applequist g-vectors in "gg"
     integer, intent(in) :: k1,k2
@@ -518,11 +545,12 @@ pure function outer(k1,k2,v1,v2) result(vout)
     integer gi,gj,gij, k12, pi, pj, pij, mij, cho
     
     k12 = k1+k2
-    cho = matchoo(k12,k1)
+    cho = choose(k12,k1)
     
     pi  = gpos(k1)
     pj  = gpos(k2)
     pij = gpos(k12)
+    !print*, pi, pj, pij
     
     vout=0
     
@@ -542,17 +570,98 @@ pure function outer(k1,k2,v1,v2) result(vout)
     
 end
 
+subroutine test_old_field
+    integer, parameter :: nm = 2
+    real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
+    real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
+    real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
+    integer NC
+    logical*1 iSlab
+    logical FULL
+    
+    real(dp) quad(6), octa(10), hexa(15)
+    
+    print*
+    print*
+    print*, '---------------------test old field --------------------------'
+    
+    rMax = 100.1d0
+    rMax2 = rMax**2
+    rCM(:,1) = [0d0,0d0,0d0]
+    rCM(:,2) = [3.4231, 2.74389, 1.54739]
+    
+    nc = 1
+    a=40d0
+    a2=a**2
+    Full = .true. 
+    iSlab = .false. 
+    
+    
+    
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
+    
+    !call random_number(hexa)
+    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
+    
+    
+    call random_number(quad)
+    print'(a,*(g10.3))', 'quad:',quad
+    !qpole(:,:,1) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
+!    call random_number(quad)
+!    qpole(:,:,2) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
+
+    call random_number(octa)
+    !opole(:,:,:,1) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
+!    call random_number(octa)
+!    opole(:,:,:,2) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
+    
+    print*,"compressed octa:"
+    print'(*(f10.3))',octa
+    print*,"full octa:"
+    call printer(opole,'opole',2)
+    print*,"h3"
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    dpole(:,1) = [2.345d0, -0.453245d0,0.6564256d0]
+    
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+!    print*,compress( reshape(d5v(:,:,:,:,:,1),shape=[3**5]),5)
+!    print*,compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5)
+!    print*,d2v !compress( reshape(d2v(:,:,1),shape=[3**2]),2)
+!    print*,d2v !compress( reshape(d2v(:,:,2),shape=[3**2]),2)
+    !print*,'d2v'
+    !print'(1(g15.3))',opdetr(compress( reshape(d2v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
+    !print*,'d2v'
+    !print'(1(g15.3))',opdetr(compress( reshape(d2v(:,:,2),shape=[3**2]),2),2) !d2v(:,:,2) !
+    print*,'d1v'
+    print'(1(g15.3))',d1v(:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
+    
+end
 
 subroutine test_potgrad
     integer, parameter :: kmax=5, nmax = 3
     integer i, k, p1, p2
     real(dp) rr(3) 
-    real(dp) :: rrr(gpos(kmax+1)), quad(6), octa(10), rnorm, rinvv(2*(kmax+nmax)+1), rsqe
+    real(dp) :: rrr(0:gpos(kmax+1)), quad(6), octa(10), rnorm, rinvv(2*(kmax+nmax)+1), rsqe
     real(dp) :: grads(gpos(kmax+1))
+    real(dp) :: dd(3), dr
     
     rr = [3.4231, 2.74389, 1.54739]
+    
+    dd = [2.345d0, -0.453245d0,0.6564256d0]
     call  vector_powers(kmax,rr,rrr)
-    print*
+    print*, rrr(0), rrr(1)
+    print*, 'test my pot-grad --------------------------'
 !    print'(*(f12.3))', rrr
     print'(a,*(e10.3))',"rrr:",rrr
     
@@ -561,9 +670,10 @@ subroutine test_potgrad
     call random_number(quad)
     call random_number(octa)
     
-    print*
-    print'(a,*(g10.3))','quad:',quad
-    print'(a,*(g10.3))','octa:',octa
+    print*,'quad:'
+    print'(*(g10.3))',quad
+    print*,'octa:'
+    print'(*(g10.3))',octa
     
 !    rp2 = rr(1)**2 + rr(2)**2 + rr(3)**2
     
@@ -578,52 +688,70 @@ subroutine test_potgrad
     enddo
     
     print*,"rinvv:"
-    print'(1(g10.3))',rinvv
+    print'(*(g10.3))',rinvv
     
-    k = 4
-    
+    !k = 2
+    !
     !print*, "pot-grad:"
-    !print'(1(g11.4))',potgrad(octa, 3, k, rinvv, rrr )
+    !print'(1(F11.4))',potgrad(octa, 3, k, rinvv, rrr )
     
     
-    grads = 0
-    do k = 1,kmax
-        p1 = gpos(k)+1
-        p2 = gpos(k+1)
-        print'(a,2i3,a,i3)',"Indices:",p1,p2, " length:", p2-p1+1
-        grads(p1:p2) = opdetr( potgrad(octa, 3, k, rinvv, rrr ) , k)
-    enddo
-    
-    print*, "pot-grads:"
-    print'(1(f11.4))',grads
-    
-    
+    !grads = 0
+    !do k = 1,kmax
+    !    p1 = gpos(k)+1
+    !    p2 = gpos(k+1)
+    !    print'(a,2i3,a,i3)',"Indices:",p1,p2, " length:", p2-p1+1
+    !    grads(p1:p2) = opdetr( potgrad(octa, 3, k, rinvv, rrr ) , k)
+    !enddo
+    !
+    !print*, "pot-grads:"
+    !print'(*(f11.4))',grads
     
     
+    dr = dsqrt(sum(rr**2))
     
+    print*, "hey?????"
+    
+    !print*, "potgrad i = 0",potgrad(dd,1,1,rinvv,rrr)
+    !print*, "dfield express part", (3*sum(rr*dd)/dr**5) * rr !dd/dr**3 - 
+    
+    print*, "potgrad i = all",potgrad(dd,1,1,rinvv,rrr)
+    print*, "dfield express", dd/dr**3 - (3*sum(rr*dd)/dr**5) * rr
+    
+    ! for the seond gradient etc, remember to detrace!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end
 
+
+
 function potgrad(qq,nq,kk,rpows,rrr) 
-real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(:)
+real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(0:)
 integer, intent(in) :: nq, kk
 real(dp) potgrad((kk+1)*(kk+2)/2)
 integer i!,j
+integer ki1, ki2, ni1, ni2, kni, kni2
 !integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
 
+print*, 'rrr(0) i potgrad',rrr(0)
+
 potgrad = 0
-do i = 0, min(nq,kk)
+
+do i = 0, min(nq,kk) !0!
+  
+  kni = kk+nq-i
+  kni2 = kni*2
+  
+  ki1 = gpos(kk-i)+1
+  ki2 = gpos(kk-i+1)
+  ni1 = gpos(nq-i)+1
+  ni2 = gpos(nq-i+1)
+  
+  print'((a,I3,a,2I3,a,2i3,a,2i3))', ' i:',i,',   kni:',kni,kni2, ',   ki:',ki1,ki2,',   ni:',ni1,ni2
+  
   potgrad(:) = potgrad(:) &
-             + (-1)**(kk+nq-i) &
-             * intfac(nq,nq-i) &
-             * intff(2*(kk+nq-i)-1,2*nq-1) &
-             * rpows(2*(kk+nq-i)+1) &
-             * outer(kk-i,i, &
-                     rrr( gpos(kk-i)+1 : gpos(kk-i+1) ),&
-                     inner(nq,nq-i,&
-                           qq,&
-                           rrr( gpos(nq-i)+1 : gpos(nq-i+1) )&
-                           ) &
-                     )
+             + (-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1) * rpows(kni2+1) &
+             * outer(kk-i, i, rrr(ki1:ki2),   inner(nq,nq-i, qq, rrr(ni1:ni2))   )
+  
+  !print'(*(f10.3))', potgrad
   enddo
  !must figure out if really the rrr vector is sibdivisible. It should be. But are there scalefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
  ! But when creating the rrr vector we should consider these too. And those depend on the ranks of the outer-produced tensors. 
@@ -632,9 +760,13 @@ do i = 0, min(nq,kk)
  !But the rrr array is an outer product of r-vectors. But then also outer(r^3,r) = outer(r^2,r^2) = r^4 and so on. And this is exactly what is required. But did I construct it correctly. no. 
  ! Now it has redundancy that could be added up to the resulting outer-product tensor, if it is put in in a single-loop fashion. But that is not the case. 
  !  The real rrr-array must be a polytensor, that is expanded from an r-vector with multiple applications of the outer-function. Gooood. This is next. Then it can use gpos()-array for positioning!
- 
+   
+   
+   
 
 end
+
+!subroutine
 
 function intfac(aa,bb) result(cc)
     ! Factorial in range: intfac(A,B) = A!/B!
@@ -763,12 +895,13 @@ subroutine test_rrr
 
 end
 
-pure subroutine vector_powers(k,rr,rrr)
+subroutine vector_powers(k,rr,rrr)
     integer, intent(in) :: k
     real(dp), intent(in) :: rr(3)
-    real(dp), intent(out) :: rrr(sumfacfac(k+1)-1)
+    real(dp), intent(out) :: rrr(0:sumfacfac(k+1)-1)
     integer i, p1, p2, p3, p4
     rrr = 0
+    rrr(0) = 1
     rrr(1:3) = rr
     do i = 2,k
       ! start/end positions of subvectors in the rrr vector. 

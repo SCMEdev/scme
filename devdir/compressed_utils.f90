@@ -23,7 +23,7 @@ integer i
     !print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
     !call test_factorial(5)
     
-    !call test_choose
+    call test_choose
     !call test_matri(7)
     
     !print*, ""
@@ -32,8 +32,8 @@ integer i
     !call test_matr(7)
     !call printer(matr, 'matr',1)
     !call test_apple_g
-    call make_gs
-    print'(*(a))', (str(sumfacfac(i))//", ", i = 1,10)
+    !call make_gs
+    !print'(*(a))', (str(sumfacfac(i))//", ", i = 1,10)
     !call test_rrpow
     !call test_next_rev_key2n(4)
 end subroutine
@@ -137,6 +137,9 @@ print*,'choose(6,2)', choose(6,2)
 print*,'choose(5,2)', choose(5,2)
 print*,'choose(6,3)', choose(6,3)
 print*,'choose(2,4)', choose(4,2)
+print*,'choose(4,0)', choose(4,0)
+print*,'choose(0,4)', choose(0,4)
+print*,'choose(0,2)', choose(0,2)
 
 end
 !function choose(M,k)
@@ -152,7 +155,7 @@ end
 !    
 !
 !end 
-function choose(m1,m2)
+pure function choose(m1,m2)
     implicit none
     integer, intent(in) :: m1, m2
     integer :: choose, MM, kk
