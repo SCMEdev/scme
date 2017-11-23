@@ -103,15 +103,14 @@ subroutine main
     !call test_nextpow(7)
     !call compow2(7)
     !call subdiv_pow(5,5)
-    !call test_inner
     
-    !call test_outer
     
-    !print*, sumfac(0)
     call test_old_field
     call test_potgrad
-
-    !call test_inner_outer
+    !call test_inner
+    
+    !call test_intfac_ff
+    
     
     !call test_hhh(3,3)
     !print*, ""
@@ -146,6 +145,22 @@ subroutine main
     
     !call h_testing
     
+    
+    
+end subroutine
+
+! Testing /////////////////////////////////////////////////////
+subroutine test_intfac_ff
+    integer a, b
+    character(3) ach, bch
+    call get_command_argument(1, ach)
+    call get_command_argument(2, bch)
+    
+    read(ach,*) a
+    read(bch,*) b
+    
+    print*, intfac(a,b)
+    print*, intff(a,b)
     !print*, intfac(5,5)
     !print*, intfac(5,4)
     !print*, intfac(5,3)
@@ -159,10 +174,9 @@ subroutine main
     !print*, intff(7,5)
     !print*, intff(17,7)
     
+    print*, "above, TEST_INTFAC_FF ------------------------------------------------------------------"
     
-end subroutine
-
-! Testing /////////////////////////////////////////////////////
+end
 
 subroutine h_testing
 integer i, k , n(3)
@@ -269,7 +283,7 @@ subroutine test_hhh(k1, k2)
         enddo
       print*,""
       enddo
-      
+    print*, "above, TEST_HHH ------------------------------------------------------------------"
 end
 function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     integer, intent(in) :: i,j, ki,kj
@@ -283,7 +297,7 @@ function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     
 end
 
-subroutine test_inner_outer
+subroutine test_inner_symouter
     real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
     integer i,j,k, l, m
@@ -355,12 +369,13 @@ subroutine test_inner_outer
     
     print*,""
     print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
-    print'(*(f10.4))', outer(1,3,inner(3,2,v3,v2),inner(5,2,v5,v2))
+    print'(*(f10.4))', symouter(1,3,inner(3,2,v3,v2),inner(5,2,v5,v2))
     !print*,""
     !print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
-    !print'(*(f10.4))', outer(1,3,v1,v3)
+    !print'(*(f10.4))', symouter(1,3,v1,v3)
     
-    
+    print*, "above, INNER+OUTER ------------------------------------------------------------------"
+
     
 end
 
@@ -405,24 +420,38 @@ subroutine test_inner
     enddo
     
     
+    
+    print*,"loop-comparison 3,2-rank"
     print'(*(f10.4))', of1
     print'(*(f10.4))', inner(3,2,v3,v2)
-    print*,""
+    
+    print*,"loop-comparison 4,2-rank"
     print'(*(f10.4))', compress(reshape(of2,[3**2]),2)
     print'(*(f10.4))', inner(4,2,v4,v2)
-    print*,""
+    
+    print*,"loop-comparison 5,2-rank"
     print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
     print'(*(f10.4))', inner(5,2,v5,v2)
     
     
-    print*,""
+    print*,"scalar=3 5,0-rank"
     print'(*(f10.4))', v5
-    print'(*(f10.4))', inner(5,0,v5,[3d0])
+    print'(*(f10.4))', inner(5,0,v5,[1d0])
+    
+    print*,"scalar=3 2,0-rank"
     print'(*(f10.4))', v2
-    print'(*(f10.4))', inner(2,0,v2,[3d0])
+    print'(*(f10.4))', inner(2,0,v2,[1d0])
     
+    print*," 2,2-rank"
+    print'(*(f10.4))', v2
+    print'(*(f10.4))', inner(2,2,v2,v2)
     
+    print*," 1,1-rank"
+    print'(*(f10.4))', v1
+    print'(*(f10.4))', inner(1,1,v1,v1)
     
+    print*, "above, INNER ------------------------------------------------------------------"
+
 end
 
 
@@ -431,6 +460,8 @@ function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
    real(dp), intent(in) :: vq(:), vr(:)
    real(dp) vqr((kq-kr+1)*(kq-kr+2)/2)
    integer kqr, gplace, i, j, maxi, maxj
+   
+   !if(kr
    
    kqr = kq - kr
    maxi = (kqr+1)*(kqr+2)/2
@@ -447,7 +478,7 @@ function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
    
 end
 
-subroutine test_outer
+subroutine test_symouter
     real(dp) :: v1(3), v2(6), v3(10), v4(15), v5(21)
     real(dp) :: f1(3), f2(3,3), f3(3,3,3), f4(3,3,3,3), f5(3,3,3,3,3), of1(3), of2(3,3), of3(3,3,3), of4(3,3,3,3)
     integer i,j,k, l
@@ -470,6 +501,9 @@ subroutine test_outer
     
     of1=0
     of2=0
+    of3=0
+    of4=0
+    
     do i = 1,3
       do j = 1,3
         do k = 1,3
@@ -489,35 +523,40 @@ subroutine test_outer
     
     !call printer(of4,
     
-    print*,""
+    
+    print*,"3-rank comparison with loops:"
     print'(*(f10.4))', compress(reshape(of3,[3**3]),3)
-    print'(*(f10.4))', outer(1,2,v1,v2)
-    print*,""
+    print'(*(f10.4))', symouter(1,2,v1,v2)
+    print*,"4-rank comparison with loops:"
     print'(*(f10.4))', compress(reshape(of4,[3**4]),4)
-    print'(*(f10.4))', outer(1,3,v1,v3)
+    print'(*(f10.4))', symouter(1,3,v1,v3)
     
     print*, "different order:"
-    print'(*(f10.4))', outer(1,3,v1,v3)
-    print'(*(f10.4))', outer(3,1,v3,v1)
+    print'(*(f10.4))', symouter(1,3,v1,v3)
+    print'(*(f10.4))', symouter(3,1,v3,v1)
     
-    print*, "scalars in pos 2:"
+    print*, "scalar=3 in pos 2:"
     print'(*(f10.4))', v3
-    print'(*(f10.4))', outer(3,0,v3,[3d0])
+    print'(*(f10.4))', symouter(3,0,v3,[3d0])
     
+    print*, "scalar=3 in pos 2:"
     print'(*(f10.4))', v1
-    print'(*(f10.4))', outer(1,0,v1,[3d0])
+    print'(*(f10.4))', symouter(1,0,v1,[3d0])
     
-    print*, "scalar in pos1:"
+    print*, "scalar=3 in pos1:"
     print'(*(f10.4))', v3
-    print'(*(f10.4))', outer(0,3,[3d0],v3)
+    print'(*(f10.4))', symouter(0,3,[3d0],v3)
     
+    print*, "scalar=3 in pos1:"
     print'(*(f10.4))', v1
-    print'(*(f10.4))', outer(0,1,[3d0],v1)
+    print'(*(f10.4))', symouter(0,1,[3d0],v1)
     
+    print*, "above, OUTER ------------------------------------------------------------------"
     
 end
 
-!pure function outer(k1,k2,v1,v2) result(vout)
+    
+!function symouter(k1,k2,v1,v2) result(vout)
 !    integer, intent(in) :: k1,k2
 !    real(dp), intent(in) :: v1(:), v2(:)
 !    real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
@@ -535,7 +574,7 @@ end
 
 
 
-function outer(k1,k2,v1,v2) result(vout)
+function symouter(k1,k2,v1,v2) result(vout)
     ! Symmetrizing outer product, correct scaling is applied with the built in h-function = (gi*gj*cho)/gij 
     ! It requires the index-matrix "matr" and the Applequist g-vectors in "gg"
     integer, intent(in) :: k1,k2
@@ -544,13 +583,18 @@ function outer(k1,k2,v1,v2) result(vout)
     integer i, j
     integer gi,gj,gij, k12, pi, pj, pij, mij, cho
     
+    logical pri
+    
     k12 = k1+k2
     cho = choose(k12,k1)
+    
+    pri=.false.!.true.
+    if(pri)print*, "choose", cho
     
     pi  = gpos(k1)
     pj  = gpos(k2)
     pij = gpos(k12)
-    !print*, pi, pj, pij
+    if(pri)print*, "pi, pj, pij", pi, pj, pij
     
     vout=0
     
@@ -563,11 +607,51 @@ function outer(k1,k2,v1,v2) result(vout)
         gj  = gg(pj + j)
         gij = gg(pij + mij)
         
+        !if(pri)print*,  pi + i, pj + j, pij + mij
+        !if(pri)print*,  'gi, gj, gij', gi, gj, gij
+        
         vout(mij) = vout(mij) + v1(i)*v2(j) * (gi*gj*cho)/gij
+        
+        if(pri)print*,  'i,j , v1(i), v2(j), h',i,j, v1(i), v2(j), (gi*gj*cho)/gij
         
         enddo
         enddo
     
+end
+
+function regouter(k1,k2,v1,v2) result(vout) 
+! make this into a regular outer product of outer products of the r-vector. 
+! on the other hand, this may not really be nessecary since we can allready produce the outer product array with the old routine. 
+! and the operation is only valid for operations on the same source vector, so having a general routine may not be very usefull. 
+! it can basically only be used for creating the rrr-array, which can be produced in a different way. 
+! successive outer product of different vectors are not symmetric and can not be espressed in compressed form. 
+    integer, intent(in) :: k1,k2
+    real(dp), intent(in) :: v1((k1+1)*(k1+2)/2), v2((k2+1)*(k2+2)/2)
+    real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
+    integer i, k12
+    
+    
+    k12 = k1+k2
+
+    
+    
+    
+    vout=0
+    
+    do i = 1, sumfac(k12+1)
+        
+        !mij = matr(i,j)
+        
+        
+        
+        !vout(mij) = vout(mij) + v1(i)*v2(j) 
+        
+        !if(pri)print*,  'i,j , v1(i), v2(j), h',i,j, v1(i), v2(j), (gi*gj*cho)/gij
+        
+        enddo
+    
+
+
 end
 
 subroutine test_old_field
@@ -583,7 +667,6 @@ subroutine test_old_field
     
     print*
     print*
-    print*, '---------------------test old field --------------------------'
     
     rMax = 100.1d0
     rMax2 = rMax**2
@@ -644,8 +727,10 @@ subroutine test_old_field
     !print*,'d2v'
     !print'(1(g15.3))',opdetr(compress( reshape(d2v(:,:,2),shape=[3**2]),2),2) !d2v(:,:,2) !
     print*,'d1v'
-    print'(1(g15.3))',d1v(:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
-    
+    print'(1(g15.3))',d2v(:,:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
+   
+   print*, 'ABOVE: ---------------------test old field --------------------------'
+     
 end
 
 subroutine test_potgrad
@@ -654,14 +739,15 @@ subroutine test_potgrad
     real(dp) rr(3) 
     real(dp) :: rrr(0:gpos(kmax+1)), quad(6), octa(10), rnorm, rinvv(2*(kmax+nmax)+1), rsqe
     real(dp) :: grads(gpos(kmax+1))
-    real(dp) :: dd(3), dr
+    real(dp) :: dd(3), dr, d2v(3,3)
+    integer be, ga
     
     rr = [3.4231, 2.74389, 1.54739]
     
     dd = [2.345d0, -0.453245d0,0.6564256d0]
     call  vector_powers(kmax,rr,rrr)
-    print*, rrr(0), rrr(1)
     print*, 'test my pot-grad --------------------------'
+    print*, rrr(0), rrr(1)
 !    print'(*(f12.3))', rrr
     print'(a,*(e10.3))',"rrr:",rrr
     
@@ -690,6 +776,12 @@ subroutine test_potgrad
     print*,"rinvv:"
     print'(*(g10.3))',rinvv
     
+    do i = 2, 2*(kmax+nmax)+1
+      rinvv(i) = rinvv(i-1)*rinvv(1)
+    enddo
+    print*,"rinvv:"
+    print'(*(g10.3))',rinvv
+    
     !k = 2
     !
     !print*, "pot-grad:"
@@ -715,10 +807,41 @@ subroutine test_potgrad
     !print*, "potgrad i = 0",potgrad(dd,1,1,rinvv,rrr)
     !print*, "dfield express part", (3*sum(rr*dd)/dr**5) * rr !dd/dr**3 - 
     
+    print*, "dfield1 express", dd/dr**3 - (3*sum(rr*dd)/dr**5) * rr
     print*, "potgrad i = all",potgrad(dd,1,1,rinvv,rrr)
-    print*, "dfield express", dd/dr**3 - (3*sum(rr*dd)/dr**5) * rr
     
-    ! for the seond gradient etc, remember to detrace!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    d2v=0
+    do be = 1, 3
+      do ga = 1, 3 
+        d2v(be,ga) =  - 3d0/dr**5 * ( dd(be)*rr(ga)  + dd(ga)*rr(be)  ) & !+ sum(dd*rr)*del(be,ga)
+                      + & 
+                      3d0*5d0*sum(dd*rr)*rr(be)*rr(ga) / dr**7
+        enddo
+        enddo
+    
+    call printer(d2v,'d2v',2)
+    !print*, "dfield express", opdetr(compress(reshape(d2v, shape=[3**2]),2),2)
+    print*, "dfield2 express", compress(reshape(d2v, shape=[3**2]),2)
+    !print*, "potgrad i = all", opdetr(potgrad(dd,1,2,rinvv,rrr),2)
+    print*, "potgrad i = all", potgrad(dd,1,2,rinvv,rrr)
+    
+    
+    print*, 'above, TEST POTGRAD-----------------------------------------------'
+    contains
+        
+        function del(a,b)
+            integer a, b, del
+            
+            if (a==b) then
+                del=1
+            else 
+                del=0
+            endif
+        end
+        
+        ! for the seond gradient etc, remember to detrace!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
 end
 
 
@@ -729,9 +852,11 @@ integer, intent(in) :: nq, kk
 real(dp) potgrad((kk+1)*(kk+2)/2)
 integer i!,j
 integer ki1, ki2, ni1, ni2, kni, kni2
+
+real(dp) temp(1)
 !integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
 
-print*, 'rrr(0) i potgrad',rrr(0)
+!print*, 'rrr(0) i potgrad',rrr(0)
 
 potgrad = 0
 
@@ -745,11 +870,27 @@ do i = 0, min(nq,kk) !0!
   ni1 = gpos(nq-i)+1
   ni2 = gpos(nq-i+1)
   
-  print'((a,I3,a,2I3,a,2i3,a,2i3))', ' i:',i,',   kni:',kni,kni2, ',   ki:',ki1,ki2,',   ni:',ni1,ni2
+  !print'((a,I3,a,2I3,a,2i3,a,2i3))', ' i:',i,',   kni:',kni,kni2, ',   ki:',ki1,ki2,',   ni:',ni1,ni2
   
+  
+  !print*, 'potgrad',potgrad
   potgrad(:) = potgrad(:) &
              + (-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1) * rpows(kni2+1) &
-             * outer(kk-i, i, rrr(ki1:ki2),   inner(nq,nq-i, qq, rrr(ni1:ni2))   )
+             * symouter(kk-i, i, rrr(ki1:ki2),   inner(nq,nq-i, qq, rrr(ni1:ni2))   )
+  !temp = inner(nq,nq-i, qq, rrr(ni1:ni2))
+  !print*, 'pref',(-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1)
+  !print*, 'rpow',kni2+1
+  !print*, 'inner', inner(nq,nq-i, qq, rrr(ni1:ni2)), sum(qq*rrr(ni1:ni2))
+  !print*, 'symouter 1 ',symouter(kk-i, i, rrr(ki1:ki2),  temp) 
+  !print*, 'symouter 2 ',temp(1)*rrr(ki1:ki2)
+  !print*, 'temp', temp
+  !print*, 'rrr 1 ',rrr(ni1:ni2)
+  !print*, 'rrr 2 ',rrr(ki1:ki2)
+  !print*, 'rrr 3 ',symouter (1,1,rrr(ni1:ni2),rrr(ni1:ni2))
+  !    
+  !
+  !print*, 'potgrad',potgrad
+  
   
   !print'(*(f10.3))', potgrad
   enddo
@@ -772,6 +913,7 @@ function intfac(aa,bb) result(cc)
     ! Factorial in range: intfac(A,B) = A!/B!
     integer aa, bb
     integer i, cc
+    if( aa<0 .or. bb<0 )stop"negative number in intfac"
     cc = 1
     do i = bb+1,aa
       cc = cc*i
@@ -782,6 +924,8 @@ function intff(aa,bb) result(cc)
     ! Double factorial in range: intff(A,B) = A!!/B!! if both A and B are odd (or even)
     integer aa, bb
     integer i, cc
+    if (mod(aa-bb,2) .ne. 0)stop"number interval not divisible by 2 in intff"
+    if( aa<0 .or. bb<0 )stop"negative number in intff"
     cc = 1
     do i = bb+2,aa, 2
       cc = cc*i
@@ -884,39 +1028,72 @@ subroutine test_rrr
     
     rrr5=rrr(p3:p4)
     
-    rrr32 = outer(3,2,rrr3,rrr2)
+    rrr32 = symouter(3,2,rrr3,rrr2)
     
     
     call printer(rrr5,"5th",1)
-    call printer(rrr32,"outer(3,2)",1)
+    call printer(rrr32,"symouter(3,2)",1)
     call printer(rrr5-rrr32,"diff",1)
     
+    print*, "above, TEST RRR ------------------------------------------------------------------"
+
+end
+
+!subroutine vector_powers(k,rr,rrr)
+!    integer, intent(in) :: k
+!    real(dp), intent(in) :: rr(3)
+!    real(dp), intent(out) :: rrr(0:sumfacfac(k+1)-1)
+!    integer i, p1, p2, p3, p4
+!    rrr = 0
+!    rrr(0) = 1
+!    rrr(1:3) = rr
+!    do i = 2,k
+!      ! start/end positions of subvectors in the rrr vector. 
+!      ! (Need +1 since they are 0-indexed, because usually i or j are added to them.) 
+!      p1 = gpos(i-1)+1
+!      p2 = gpos(i)
+!      p3 = gpos(i)+1
+!      p4 = gpos(i+1)
+!      
+!      !print'(*(I3))', i, p1, p2, p3, p4
+!      
+!      rrr(p3:p4) = symouter(i-1,1,rrr(p1:p2),rr)
+!      enddo
+!
+!end
+
+subroutine vector_powers(k,r,rr) 
+    ! Do not use this routine, it does not produce th outer products, since it lacks the scaling parameter hhh
+    ! Generates k powers of r(3) in tricorn polytensor
+    ! r(3)   position vector
+    ! k      highest rank/power
+    ! rr     output tricorn-ordered polytensor
+    integer, intent(in)   :: k
+    real(dp), intent(in)  :: r(3)
+    real(dp), intent(out) :: rr(0:sumfacfac(k+1)-1)
+    integer pl,cl,px,cx,i,pz,cz, py, cy
     
-
-end
-
-subroutine vector_powers(k,rr,rrr)
-    integer, intent(in) :: k
-    real(dp), intent(in) :: rr(3)
-    real(dp), intent(out) :: rrr(0:sumfacfac(k+1)-1)
-    integer i, p1, p2, p3, p4
-    rrr = 0
-    rrr(0) = 1
-    rrr(1:3) = rr
+    rr(0) = 1
+    rr(1:3) = r(:)
+    
     do i = 2,k
-      ! start/end positions of subvectors in the rrr vector. 
-      ! (Need +1 since they are 0-indexed, because usually i or j are added to them.) 
-      p1 = gpos(i-1)+1
-      p2 = gpos(i)
-      p3 = gpos(i)+1
-      p4 = gpos(i+1)
-      
-      !print'(*(I3))', i, p1, p2, p3, p4
-      
-      rrr(p3:p4) = outer(i-1,1,rrr(p1:p2),rr)
-      enddo
-
-end
+       ! p=previous, c=current, l=length
+       ! x, y, z refer to the position of the x-only, y-only, z-only rows. 
+       px = sumfacfac(i-1)
+       pl = sumfac(i)
+       cl = sumfac(i+1)
+       
+       cx = px+pl
+       pz = cx-1
+       cz = pz+cl
+       cy = cx+pl
+       py = cx-i
+       
+       rr(cx:cy-1) = rr(px:pz) *r(1)
+       rr(cy:cz-1) = rr(py:pz) *r(2)
+       rr(cz)      = rr(pz)    *r(3)
+    enddo
+end subroutine
 
 
 
