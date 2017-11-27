@@ -201,4 +201,61 @@ subroutine compow2(k)
      enddo
 end
 
+function regouter(k1,k2,v1,v2) result(vout) 
+! make this into a regular outer product of outer products of the r-vector. 
+! on the other hand, this may not really be nessecary since we can allready produce the outer product array with the old routine. 
+! and the operation is only valid for operations on the same source vector, so having a general routine may not be very usefull. 
+! it can basically only be used for creating the rrr-array, which can be produced in a different way. 
+! successive outer product of different vectors are not symmetric and can not be espressed in compressed form. 
+    integer, intent(in) :: k1,k2
+    real(dp), intent(in) :: v1((k1+1)*(k1+2)/2), v2((k2+1)*(k2+2)/2)
+    real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
+    integer i, k12
+    
+    
+    k12 = k1+k2
+
+    
+    
+    
+    vout=0
+    
+    do i = 1, sumfac(k12+1)
+        
+        !mij = matr(i,j)
+        
+        
+        
+        !vout(mij) = vout(mij) + v1(i)*v2(j) 
+        
+        !if(pri)print*,  'i,j , v1(i), v2(j), h',i,j, v1(i), v2(j), (gi*gj*cho)/gij
+        
+        enddo
+    
+
+
+end
+
+!subroutine vector_powers(k,rr,rrr)
+!    integer, intent(in) :: k
+!    real(dp), intent(in) :: rr(3)
+!    real(dp), intent(out) :: rrr(0:sumfacfac(k+1)-1)
+!    integer i, p1, p2, p3, p4
+!    rrr = 0
+!    rrr(0) = 1
+!    rrr(1:3) = rr
+!    do i = 2,k
+!      ! start/end positions of subvectors in the rrr vector. 
+!      ! (Need +1 since they are 0-indexed, because usually i or j are added to them.) 
+!      p1 = gpos(i-1)+1
+!      p2 = gpos(i)
+!      p3 = gpos(i)+1
+!      p4 = gpos(i+1)
+!      
+!      !print'(*(I3))', i, p1, p2, p3, p4
+!      
+!      rrr(p3:p4) = symouter(i-1,1,rrr(p1:p2),rr)
+!      enddo
+!
+!end
 

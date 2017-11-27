@@ -8,8 +8,41 @@ private dp
 !public test_apple_g
 
 contains !//////////////////////////////////////////////////
+
+function del(a,b)
+    integer a, b, del
+    del=0
+    if (a==b) del=1
+end
+
+
+
+subroutine print_product_index_matrix(k)
+    integer k, j1,j2, icol, irow, ileng, v1(sumfac(k+1)),v2(sumfac(k+1)),v3(sumfac(k+1)) !((k+1)*(k+2)/2),
+    
+    ileng=sumfac(k+1)
+    
+    v1=0
+    v2=0
+    
+    v1 = [(j1,j1=1,ileng)]
+    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]
+    
+    print*, ''
+    print'(a,*(I3))',"v1: ", v1
+    print'(a,*(I3))',"v2: ", v2
+    
+    print*, ""
+    do irow = 1, ileng
+        v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+        print'(*(I3))',v3
+        enddo
+    
+end subroutine
+
+
 subroutine main
-integer i
+!integer i
     !call testing
     !call test_sumfac
     !call test_rpow
@@ -498,6 +531,75 @@ pure function sumfacfac(u)
     sumfacfac = u*(u+1)*(u+2)/6 ! 6=3!
 endfunction
 
+
+subroutine test_intfac_ff
+    integer a, b
+    character(3) ach, bch
+    call get_command_argument(1, ach)
+    call get_command_argument(2, bch)
+    
+    read(ach,*) a
+    read(bch,*) b
+    
+    print*, intfac(a,b)
+    print*, intff(a,b)
+    !print*, intfac(5,5)
+    !print*, intfac(5,4)
+    !print*, intfac(5,3)
+    !print*, intfac(7,3)
+    !print*, intfac(7,5)
+    !
+    !print*, intff(5,5)
+    !print*, intff(6,4)
+    !print*, intff(5,3)
+    !print*, intff(7,3)
+    !print*, intff(7,5)
+    !print*, intff(17,7)
+    
+    print*, "above, TEST_INTFAC_FF ------------------------------------------------------------------"
+    
+end
+   
+
+function intfac(aa,bb) result(cc)
+    ! Factorial in range: intfac(A,B) = A!/B!
+    integer aa, bb
+    integer i, cc
+    if( aa<0 .or. bb<0 )stop"negative number in intfac"
+    cc = 1
+    do i = bb+1,aa
+      cc = cc*i
+    enddo
+end
+
+function intff(aa,bb) result(cc)
+    ! Double factorial in range: intff(A,B) = A!!/B!! if both A and B are odd (or even)
+    integer aa, bb
+    integer i, cc
+    if (mod(aa-bb,2) .ne. 0)stop"number interval not divisible by 2 in intff"
+    if( aa<0 .or. bb<0 )stop"negative number in intff"
+    cc = 1
+    do i = bb+2,aa, 2
+      cc = cc*i
+    enddo
+end
+
+subroutine test_fac(k)
+integer k, i
+do i = 1, k
+  print*, fac(i)
+  enddo
+
+end
+
+function fac(inn) 
+    integer inn, i, fac
+    fac=1
+    do i = 1, inn
+      fac = fac*i
+      enddo
+
+end
 
 
 

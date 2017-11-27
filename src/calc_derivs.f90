@@ -268,7 +268,7 @@ contains
                    !$$$                     stop
                    
                    
-                   call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,opole, hpole, fsf)
+                   !call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,opole, hpole, fsf)
                    
 !11              end do
                 end do crescent

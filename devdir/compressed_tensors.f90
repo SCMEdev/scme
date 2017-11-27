@@ -105,10 +105,11 @@ subroutine main
     !call subdiv_pow(5,5)
     
     
-    call test_old_field
+    !call test_old_field
     call test_potgrad
     !call test_inner
     
+    call test_dip_pot
     !call test_intfac_ff
     
     
@@ -150,33 +151,6 @@ subroutine main
 end subroutine
 
 ! Testing /////////////////////////////////////////////////////
-subroutine test_intfac_ff
-    integer a, b
-    character(3) ach, bch
-    call get_command_argument(1, ach)
-    call get_command_argument(2, bch)
-    
-    read(ach,*) a
-    read(bch,*) b
-    
-    print*, intfac(a,b)
-    print*, intff(a,b)
-    !print*, intfac(5,5)
-    !print*, intfac(5,4)
-    !print*, intfac(5,3)
-    !print*, intfac(7,3)
-    !print*, intfac(7,5)
-    !
-    !print*, intff(5,5)
-    !print*, intff(6,4)
-    !print*, intff(5,3)
-    !print*, intff(7,3)
-    !print*, intff(7,5)
-    !print*, intff(17,7)
-    
-    print*, "above, TEST_INTFAC_FF ------------------------------------------------------------------"
-    
-end
 
 subroutine h_testing
 integer i, k , n(3)
@@ -619,40 +593,6 @@ function symouter(k1,k2,v1,v2) result(vout)
     
 end
 
-function regouter(k1,k2,v1,v2) result(vout) 
-! make this into a regular outer product of outer products of the r-vector. 
-! on the other hand, this may not really be nessecary since we can allready produce the outer product array with the old routine. 
-! and the operation is only valid for operations on the same source vector, so having a general routine may not be very usefull. 
-! it can basically only be used for creating the rrr-array, which can be produced in a different way. 
-! successive outer product of different vectors are not symmetric and can not be espressed in compressed form. 
-    integer, intent(in) :: k1,k2
-    real(dp), intent(in) :: v1((k1+1)*(k1+2)/2), v2((k2+1)*(k2+2)/2)
-    real(dp) vout( (k1+k2+1)*(k1+k2+2)/2 )
-    integer i, k12
-    
-    
-    k12 = k1+k2
-
-    
-    
-    
-    vout=0
-    
-    do i = 1, sumfac(k12+1)
-        
-        !mij = matr(i,j)
-        
-        
-        
-        !vout(mij) = vout(mij) + v1(i)*v2(j) 
-        
-        !if(pri)print*,  'i,j , v1(i), v2(j), h',i,j, v1(i), v2(j), (gi*gj*cho)/gij
-        
-        enddo
-    
-
-
-end
 
 subroutine test_old_field
     integer, parameter :: nm = 2
@@ -663,16 +603,14 @@ subroutine test_old_field
     logical*1 iSlab
     logical FULL
     
-    real(dp) quad(6), octa(10), hexa(15)
+    real(dp) quad(6), octa(10)!, hexa(15)
     
-    print*
-    print*
     
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     rMax = 100.1d0
     rMax2 = rMax**2
     rCM(:,1) = [0d0,0d0,0d0]
     rCM(:,2) = [3.4231, 2.74389, 1.54739]
-    
     nc = 1
     a=40d0
     a2=a**2
@@ -680,35 +618,25 @@ subroutine test_old_field
     iSlab = .false. 
     
     
-    
-    
     dpole=0
     qpole=0
     opole=0
     hpole=0
-    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
-    
-    !call random_number(hexa)
-    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
-    
     
     call random_number(quad)
     print'(a,*(g10.3))', 'quad:',quad
     !qpole(:,:,1) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
-!    call random_number(quad)
-!    qpole(:,:,2) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
 
     call random_number(octa)
     !opole(:,:,:,1) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
-!    call random_number(octa)
-!    opole(:,:,:,2) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
     
-    print*,"compressed octa:"
-    print'(*(f10.3))',octa
-    print*,"full octa:"
-    call printer(opole,'opole',2)
-    print*,"h3"
+    !call random_number(hexa)
+    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
     
     dpole=0
     qpole=0
@@ -718,14 +646,15 @@ subroutine test_old_field
     
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
     
-!    print*,compress( reshape(d5v(:,:,:,:,:,1),shape=[3**5]),5)
-!    print*,compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5)
-!    print*,d2v !compress( reshape(d2v(:,:,1),shape=[3**2]),2)
-!    print*,d2v !compress( reshape(d2v(:,:,2),shape=[3**2]),2)
-    !print*,'d2v'
-    !print'(1(g15.3))',opdetr(compress( reshape(d2v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
-    !print*,'d2v'
-    !print'(1(g15.3))',opdetr(compress( reshape(d2v(:,:,2),shape=[3**2]),2),2) !d2v(:,:,2) !
+    print'(a,*(g30.15))','d-1',d1v(:,2)
+    print'(a,*(g30.15))','d-2',opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
+    print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    
+    
+    
+
     print*,'d1v'
     print'(1(g15.3))',d2v(:,:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
    
@@ -735,10 +664,10 @@ end
 
 subroutine test_potgrad
     integer, parameter :: kmax=5, nmax = 3
-    integer i, k, p1, p2
+    integer i
     real(dp) rr(3) 
-    real(dp) :: rrr(0:gpos(kmax+1)), quad(6), octa(10), rnorm, rinvv(2*(kmax+nmax)+1), rsqe
-    real(dp) :: grads(gpos(kmax+1))
+    real(dp) :: rrr(0:gpos(kmax+1)), quad(6), octa(10), rnorm, rsqe
+    real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
     real(dp) :: dd(3), dr, d2v(3,3)
     integer be, ga
     
@@ -746,137 +675,169 @@ subroutine test_potgrad
     
     dd = [2.345d0, -0.453245d0,0.6564256d0]
     call  vector_powers(kmax,rr,rrr)
-    print*, 'test my pot-grad --------------------------'
-    print*, rrr(0), rrr(1)
-!    print'(*(f12.3))', rrr
-    print'(a,*(e10.3))',"rrr:",rrr
+    !print*, rrr(0), rrr(1)
+    !print'(a,*(e10.3))',"rrr:",rrr
     
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
     
     call random_number(quad)
     call random_number(octa)
     
-    print*,'quad:'
-    print'(*(g10.3))',quad
-    print*,'octa:'
-    print'(*(g10.3))',octa
+    print'(a,*(g10.3))','quad:',quad
+    print'(a,*(g10.3))','octa:',octa
     
-!    rp2 = rr(1)**2 + rr(2)**2 + rr(3)**2
     
     rsqe  = sum(rr**2)!dsqrt(rsq)
     rnorm = dsqrt(rsqe)
     rinvv(1) = 1d0/rnorm
     rinvv(2) = 1d0/rsqe
     
-    !ri2 = 1d0/rp2
     do i = 3, 2*(kmax+nmax)+1
       rinvv(i) = rinvv(i-2)*rinvv(2)
     enddo
     
-    print*,"rinvv:"
-    print'(*(g10.3))',rinvv
+    dr = rnorm
     
-    do i = 2, 2*(kmax+nmax)+1
-      rinvv(i) = rinvv(i-1)*rinvv(1)
-    enddo
-    print*,"rinvv:"
-    print'(*(g10.3))',rinvv
-    
-    !k = 2
-    !
-    !print*, "pot-grad:"
-    !print'(1(F11.4))',potgrad(octa, 3, k, rinvv, rrr )
+    ! first dipole potential gradient
+    print'(a,*(g30.15))', "d-1 exp", dd/dr**3 - (3*sum(rr*dd)/dr**5) * rr
+    print'(a,*(g30.15))', 'd-1 new', potgrad(dd,1,1,rinvv,rrr)
     
     
-    !grads = 0
-    !do k = 1,kmax
-    !    p1 = gpos(k)+1
-    !    p2 = gpos(k+1)
-    !    print'(a,2i3,a,i3)',"Indices:",p1,p2, " length:", p2-p1+1
-    !    grads(p1:p2) = opdetr( potgrad(octa, 3, k, rinvv, rrr ) , k)
-    !enddo
-    !
-    !print*, "pot-grads:"
-    !print'(*(f11.4))',grads
-    
-    
-    dr = dsqrt(sum(rr**2))
-    
-    print*, "hey?????"
-    
-    !print*, "potgrad i = 0",potgrad(dd,1,1,rinvv,rrr)
-    !print*, "dfield express part", (3*sum(rr*dd)/dr**5) * rr !dd/dr**3 - 
-    
-    print*, "dfield1 express", dd/dr**3 - (3*sum(rr*dd)/dr**5) * rr
-    print*, "potgrad i = all",potgrad(dd,1,1,rinvv,rrr)
-    
-    
+    ! second dipole potential gradient
     d2v=0
     do be = 1, 3
       do ga = 1, 3 
-        d2v(be,ga) =  - 3d0/dr**5 * ( dd(be)*rr(ga)  + dd(ga)*rr(be)  ) & !+ sum(dd*rr)*del(be,ga)
+        d2v(be,ga) =  - 3d0/dr**5 * ( dd(be)*rr(ga)  + dd(ga)*rr(be) + sum(dd*rr)*del(be,ga) ) & ! 
                       + & 
                       3d0*5d0*sum(dd*rr)*rr(be)*rr(ga) / dr**7
         enddo
         enddo
     
-    call printer(d2v,'d2v',2)
-    !print*, "dfield express", opdetr(compress(reshape(d2v, shape=[3**2]),2),2)
-    print*, "dfield2 express", compress(reshape(d2v, shape=[3**2]),2)
-    !print*, "potgrad i = all", opdetr(potgrad(dd,1,2,rinvv,rrr),2)
-    print*, "potgrad i = all", potgrad(dd,1,2,rinvv,rrr)
+    print'(a,*(g30.15))', "d-2 exp", compress(reshape(d2v, shape=[3**2]),2)
+    print'(a,*(g30.15))', 'd-2 new', opdetr(potgrad(dd,1,2,rinvv,rrr),2)
+    
     
     
     print*, 'above, TEST POTGRAD-----------------------------------------------'
-    contains
-        
-        function del(a,b)
-            integer a, b, del
-            
-            if (a==b) then
-                del=1
-            else 
-                del=0
-            endif
-        end
-        
-        ! for the seond gradient etc, remember to detrace!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end
+
+subroutine test_dip_pot
+    integer, parameter :: nm = 2
+    real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
+    real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
+    real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
+    integer NC
+    logical*1 iSlab
+    logical FULL
     
+    integer, parameter :: kmax=5, nmax = 3
+    integer i
+    real(dp) rr(3) 
+    real(dp) :: rrr(0:gpos(kmax+1)), rnorm, rsqe
+    real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
+    real(dp) :: dd(3), dr
+    !real(dp) :: quad(6), octa(10),
+    
+    rr = [3.4231, 2.74389, 1.54739]
+    
+    dd = [2.345d0, -0.453245d0,0.6564256d0]
+    call  vector_powers(kmax,rr,rrr)
+    
+    rsqe  = sum(rr**2)!dsqrt(rsq)
+    rnorm = dsqrt(rsqe)
+    rinvv(1) = 1d0/rnorm
+    rinvv(2) = 1d0/rsqe
+    
+    do i = 3, 2*(kmax+nmax)+1
+      rinvv(i) = rinvv(i-2)*rinvv(2)
+    enddo
+    
+    dr = rnorm
+    
+    
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    rMax = 100.1d0
+    rMax2 = rMax**2
+    rCM(:,1) = [0d0,0d0,0d0]
+    rCM(:,2) = [3.4231, 2.74389, 1.54739]
+    nc = 1
+    a=40d0
+    a2=a**2
+    Full = .true. 
+    iSlab = .false. 
+    
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    dpole(:,1) = dd(:)
+    
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+    print'(a,*(g30.15))', 'd-1 old', d1v(:,2)
+    print'(a,*(g30.15))', 'd-1 new', potgrad(dd,1,1,rinvv,rrr)
+    
+    print'(a,*(g30.15))', 'd-2 old', opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
+    print'(a,*(g30.15))', 'd-2 new', opdetr(potgrad(dd,1,2,rinvv,rrr),2)
+    
+    print'(a,*(g30.15))', 'd-3 old', opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    print'(a,*(g30.15))', 'd-3 new', opdetr(potgrad(dd,1,3,rinvv,rrr),3)
+    
+    print'(a,*(g30.15))', 'd-4 old', opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    print'(a,*(g30.15))', 'd-4 new', opdetr(potgrad(dd,1,4,rinvv,rrr),4)
+    
+    print'(a,*(g30.15))', 'd-5 old', opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    print'(a,*(g30.15))', 'd-5 new', opdetr(potgrad(dd,1,5,rinvv,rrr),5)
+    
+    
+
+    
+   print*, 'ABOVE: dip: grad vs old --------------------------'
+     
 end
 
 
 
 function potgrad(qq,nq,kk,rpows,rrr) 
-real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(0:)
-integer, intent(in) :: nq, kk
-real(dp) potgrad((kk+1)*(kk+2)/2)
-integer i!,j
-integer ki1, ki2, ni1, ni2, kni, kni2
-
-real(dp) temp(1)
-!integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
-
-!print*, 'rrr(0) i potgrad',rrr(0)
-
-potgrad = 0
-
-do i = 0, min(nq,kk) !0!
-  
-  kni = kk+nq-i
-  kni2 = kni*2
-  
-  ki1 = gpos(kk-i)+1
-  ki2 = gpos(kk-i+1)
-  ni1 = gpos(nq-i)+1
-  ni2 = gpos(nq-i+1)
-  
+    real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(0:)
+    integer, intent(in) :: nq, kk
+    real(dp) potgrad((kk+1)*(kk+2)/2)
+    integer i!,j
+    integer ki1, ki2, ni1, ni2, kni, kni2
+    
+    potgrad = 0
+    do i = 0, min(nq,kk) !0!
+        
+        kni = kk+nq-i
+        kni2 = kni*2
+        
+        ki1 = gpos(kk-i)+1
+        ki2 = gpos(kk-i+1)
+        ni1 = gpos(nq-i)+1
+        ni2 = gpos(nq-i+1)
+        
+        potgrad(:) = potgrad(:) &
+                    + (-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1) * rpows(kni2+1) &
+                    * symouter(kk-i, i, rrr(ki1:ki2),   inner(nq,nq-i, qq, rrr(ni1:ni2))   )
+    enddo
+    
+end
+  !integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use gpos
+    
+  !print*, 'rrr(0) i potgrad',rrr(0)
+    
+  !real(dp) temp(1)
   !print'((a,I3,a,2I3,a,2i3,a,2i3))', ' i:',i,',   kni:',kni,kni2, ',   ki:',ki1,ki2,',   ni:',ni1,ni2
   
-  
-  !print*, 'potgrad',potgrad
-  potgrad(:) = potgrad(:) &
-             + (-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1) * rpows(kni2+1) &
-             * symouter(kk-i, i, rrr(ki1:ki2),   inner(nq,nq-i, qq, rrr(ni1:ni2))   )
   !temp = inner(nq,nq-i, qq, rrr(ni1:ni2))
   !print*, 'pref',(-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1)
   !print*, 'rpow',kni2+1
@@ -887,50 +848,9 @@ do i = 0, min(nq,kk) !0!
   !print*, 'rrr 1 ',rrr(ni1:ni2)
   !print*, 'rrr 2 ',rrr(ki1:ki2)
   !print*, 'rrr 3 ',symouter (1,1,rrr(ni1:ni2),rrr(ni1:ni2))
-  !    
-  !
-  !print*, 'potgrad',potgrad
-  
   
   !print'(*(f10.3))', potgrad
-  enddo
- !must figure out if really the rrr vector is sibdivisible. It should be. But are there scalefactors? making an outer product obviously means putting in some scale factors, that I have put in teh function hhh(). 
- ! But when creating the rrr vector we should consider these too. And those depend on the ranks of the outer-produced tensors. 
- ! I thought first that I needed the outer-product degeneracy in rrr, and also in creating the inner and outer products. But I ended up with integer scale factors instead, but maybe also some reoccuring a,b,c triplets? 
- !  Yes, since I exhaust the subdivided index arrays in an n^2 sense, there are indices in the final array that are revisited. Awesome. 
- !But the rrr array is an outer product of r-vectors. But then also outer(r^3,r) = outer(r^2,r^2) = r^4 and so on. And this is exactly what is required. But did I construct it correctly. no. 
- ! Now it has redundancy that could be added up to the resulting outer-product tensor, if it is put in in a single-loop fashion. But that is not the case. 
- !  The real rrr-array must be a polytensor, that is expanded from an r-vector with multiple applications of the outer-function. Gooood. This is next. Then it can use gpos()-array for positioning!
    
-   
-   
-
-end
-
-!subroutine
-
-function intfac(aa,bb) result(cc)
-    ! Factorial in range: intfac(A,B) = A!/B!
-    integer aa, bb
-    integer i, cc
-    if( aa<0 .or. bb<0 )stop"negative number in intfac"
-    cc = 1
-    do i = bb+1,aa
-      cc = cc*i
-    enddo
-end
-
-function intff(aa,bb) result(cc)
-    ! Double factorial in range: intff(A,B) = A!!/B!! if both A and B are odd (or even)
-    integer aa, bb
-    integer i, cc
-    if (mod(aa-bb,2) .ne. 0)stop"number interval not divisible by 2 in intff"
-    if( aa<0 .or. bb<0 )stop"negative number in intff"
-    cc = 1
-    do i = bb+2,aa, 2
-      cc = cc*i
-    enddo
-end
 
 
 
@@ -955,46 +875,6 @@ end subroutine
 
 
 
-
-subroutine test_fac(k)
-integer k, i
-do i = 1, k
-  print*, fac(i)
-  enddo
-
-end
-
-function fac(inn) 
-    integer inn, i, fac
-    fac=1
-    do i = 1, inn
-      fac = fac*i
-      enddo
-
-end
-
-subroutine print_product_index_matrix(k)
-    integer k, j1,j2, icol, irow, ileng, v1(sumfac(k+1)),v2(sumfac(k+1)),v3(sumfac(k+1)) !((k+1)*(k+2)/2),
-    
-    ileng=sumfac(k+1)
-    
-    v1=0
-    v2=0
-    
-    v1 = [(j1,j1=1,ileng)]
-    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]
-    
-    print*, ''
-    print'(a,*(I3))',"v1: ", v1
-    print'(a,*(I3))',"v2: ", v2
-    
-    print*, ""
-    do irow = 1, ileng
-        v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-        print'(*(I3))',v3
-        enddo
-    
-end subroutine
 
 
 subroutine test_rrr
@@ -1039,28 +919,6 @@ subroutine test_rrr
 
 end
 
-!subroutine vector_powers(k,rr,rrr)
-!    integer, intent(in) :: k
-!    real(dp), intent(in) :: rr(3)
-!    real(dp), intent(out) :: rrr(0:sumfacfac(k+1)-1)
-!    integer i, p1, p2, p3, p4
-!    rrr = 0
-!    rrr(0) = 1
-!    rrr(1:3) = rr
-!    do i = 2,k
-!      ! start/end positions of subvectors in the rrr vector. 
-!      ! (Need +1 since they are 0-indexed, because usually i or j are added to them.) 
-!      p1 = gpos(i-1)+1
-!      p2 = gpos(i)
-!      p3 = gpos(i)+1
-!      p4 = gpos(i+1)
-!      
-!      !print'(*(I3))', i, p1, p2, p3, p4
-!      
-!      rrr(p3:p4) = symouter(i-1,1,rrr(p1:p2),rr)
-!      enddo
-!
-!end
 
 subroutine vector_powers(k,r,rr) 
     ! Do not use this routine, it does not produce th outer products, since it lacks the scaling parameter hhh
