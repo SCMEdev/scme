@@ -1,3 +1,70 @@
+subroutine pascal_matrix(size)
+  integer :: size, row1(size), row2(size), i1,i2, i12, pmat(size,size), temp, choom(size,size)
+  
+  pmat(1,:)=1
+  pmat(:,1)=1
+  
+  do i1 = 2,size
+    
+    do i2 = 2,size
+      pmat(i1,i2) = pmat(i1,i2-1)+pmat(i1-1,i2)
+    enddo
+    
+    
+  enddo
+  !do i1 = 1, size
+  !  print'(*(I6))',pmat(i1,:)
+  !enddo
+  
+  print*
+  
+  do i1 = 1, size
+    print'(*(I6))', (pmat(i1,i2),i2 = 1, size)
+  enddo
+  
+  print*
+  
+  choom=0
+  print*
+  do i1 = 1, size
+    do i2 = 1, size
+      if(i2.ge.i1)then
+        temp = pmat(i1,i2-i1+1)
+      else
+        temp = 0
+      endif
+      write(*,'(1(I6))',advance="no") temp
+    enddo
+    print*
+  enddo
+  
+  !choom=0
+  print*, "hej"
+  do i1 = 1, size
+    do i2 = i1, size
+      !if(i2.ge.i1)then
+        temp = pmat(i1,i2-i1+1)
+        choom(i1,i2) = temp
+        choom(i2,i1) = temp
+    enddo
+  enddo
+  
+  do i1 = 1, size
+    print'(*(I6))', (choom(i1,i2),i2 = 1, size)
+  enddo
+
+  
+  print*
+  print'(*(I6))', temp_position(0:)
+  print'(*(I6))', pos00(0:)
+  
+  print*, sumfacfac(5), pos00(5)
+  
+  print*, "hej" , 0**0, 0**7, 7**0
+  
+end
+
+
 subroutine test_rrpow
     !call testing
     !call test_sumfac

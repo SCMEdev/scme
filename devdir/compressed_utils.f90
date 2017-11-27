@@ -33,9 +33,28 @@ subroutine print_product_index_matrix(k)
     print'(a,*(I3))',"v2: ", v2
     
     print*, ""
-    do irow = 1, ileng
-        v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-        print'(*(I3))',v3
+    !do irow = 1, min(22,sumfac(k+1))
+    !    !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+    !    !print'(*(I4))',v3
+    !    write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1),',', icol = 1,ileng)
+    !    !print'(*(I4))',v3
+    !    
+    !    enddo
+    !    
+    !do irow = 23, max(0,sumfac(k+1))
+    !    !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+    !    !print'(*(I4))',v3
+    !    write(*,'(*(a))'),(str(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1))//',', icol = 1,ileng),'&'
+    !    !print'(*(I4))',v3
+    !    
+    !    enddo
+    print*, sumfac(k+1), "entries"
+    do irow = 1, sumfac(k+1)
+        !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+        !print'(*(I4))',v3
+        write(*,'(*(a))',advance="no"),(str(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1))//',', icol = 1,ileng)
+        !print'(*(I4))',v3
+        
         enddo
     
 end subroutine
@@ -55,8 +74,8 @@ subroutine main
     !call subdiv_pow(3,4)
     !print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
     !call test_factorial(5)
-    
-    call test_choose
+    call print_product_index_matrix(10)
+    !call test_choose
     !call test_matri(7)
     
     !print*, ""
