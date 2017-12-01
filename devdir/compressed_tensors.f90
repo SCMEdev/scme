@@ -915,21 +915,64 @@ subroutine test_mp_pot
     logical*1 iSlab
     logical FULL
     
-    integer, parameter :: kmax=5, nmax = 3
+    integer, parameter :: kmax=6, nmax = 5
     integer i
     real(dp) rr(3) 
     real(dp) :: rrr(0:pos00(kmax+1)), rnorm, rsqe
     real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
-    real(dp) :: dd(3), dr, cq(6)
+    real(dp) :: dd(3), dr, cq(6), co(10), ch(15)
     !real(dp) :: quad(6), octa(10),
     
+    integer n,k
+    integer p1,p2,q1,q2
+    real(dp) :: phi_old(pos00(6)),phi(pos00(6)), qq(pos00(5))
+    
+    
+    print*, size(phi), sumfacfac(6), 3+6+10+21+15, size(qq), sumfacfac(5)
+    
     rr = [3.4231, 2.74389, 1.54739]
+    
+    
     
     dd = [2.345d0, -0.453245d0,0.6564256d0]
     
     cq = [0.32534, 0.4352345, 1.5324, 1.2543, 1.35435, -1.57964]
     
+    co = [0.4352345, 1.5324, 1.2543, 1.35435, -1.57964,0.32534, 0.4352345, 1.5324, 1.2543, 1.35435]
+    co = opdetr(co,3)
     
+    ch = [2.341,3.52345,3.2465,8.978,6.4356,7.77745,6.43563,7.73094589,3.421,3.4526,2.4564257,9.893543,3.464236,8.979,5.3452]
+    ch = opdetr(ch,4)
+    
+    !dd = 0
+    !cq = 0
+    !co = 0
+    !ch = 0
+    
+    
+    
+    qq = 0
+    qq = [dd,cq,co,ch]
+    
+    !print*,"q-thigs"
+    !n=1
+    !q1 = pos00(n)+1
+    !q2 = pos00(n+1)
+    !print'(*(I3))',n, q1,q2
+    !
+    !qq(q1:q2) = dd
+    !
+    !n=2
+    !q1 = pos00(n)+1
+    !q2 = pos00(n+1)
+    !print'(*(I3))',n, q1,q2
+    !
+    !qq(q1:q2) = cq
+    
+    
+    print*
+    print'(*(f10.4))', qq
+    print*, 'size(qq)',size(qq), 3+6+10+15
     
     call  vector_powers(kmax,rr,rrr)
     
@@ -943,6 +986,7 @@ subroutine test_mp_pot
     enddo
     
     dr = rnorm
+    
     
     
     
@@ -962,17 +1006,122 @@ subroutine test_mp_pot
     qpole=0
     opole=0
     hpole=0
+    
+    
+    hpole(:,:,:,:,1) = reshape(expand(ch,4),shape=[3,3,3,3])
+    opole(:,:,:,1) = reshape(expand(co,3),shape=[3,3,3])
+    qpole(:,:,1) = reshape(expand(cq,2),shape=[3,3])
+    dpole(:,1) = dd(:)
+    
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     
     
-    qpole(:,:,1) = reshape(expand(cq,2),shape=[3,3])
-    !opole=0
-    !hpole=0
-    !dpole(:,1) = dd(:)
+    k=1
+    p1 = pos00(k)+1
+    p2 = pos00(k+1)
+    print'(6(I3))',k, p1,p2
+    phi_old(p1:p2) = d1v(:,2)
     
-    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    k=2
+    p1 = pos00(k)+1
+    p2 = pos00(k+1)
+    print'(6(I3))',k, p1,p2
+    phi_old(p1:p2) = opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
     
+    k=3
+    p1 = pos00(k)+1
+    p2 = pos00(k+1)
+    print'(6(I3))',k, p1,p2
+    phi_old(p1:p2) = opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    
+    k=4
+    p1 = pos00(k)+1
+    p2 = pos00(k+1)
+    print'(6(I3))',k, p1,p2
+    phi_old(p1:p2) = opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    
+    k=5
+    p1 = pos00(k)+1
+    p2 = pos00(k+1)
+    print'(6(I3))',k, p1,p2
+    phi_old(p1:p2) = opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    
+    
+            
+    
+    phi=0
+    do n = 1, 4
+        q1 = pos00(n)+1
+        q2 = pos00(n+1)
+            do k = 1,5
+                p1 = pos00(k)+1
+                p2 = pos00(k+1)
+                print'(6I3)',n,k,q1,q2, p1,p2
+                phi(p1:p2) = phi(p1:p2) + opdetr(potgrad(qq(q1:q2),n,k,rinvv,rrr),k)
+            enddo
+    enddo
+    
+    
+    
+    
+    print'(a,*(g30.15))', 'phi    ',phi
+    print'(a,*(g30.15))', 'phi_old',phi_old
+    print'(a,*(g30.15))', 'phi+old',phi_old+phi
+    
+    
+    
+    
+    if(.false.)then
+    
+    !hexadeca
+    print'(a,*(g30.15))', 'd-1 old', d1v(:,2)
+    print'(a,*(g30.15))', 'd-1 new', potgrad(ch,4,1,rinvv,rrr)
+    
+    print'(a,*(g30.15))', 'd-2 old', opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
+    print'(a,*(g30.15))', 'd-2 new', opdetr(potgrad(ch,4,2,rinvv,rrr),2)
+    
+    print'(a,*(g30.15))', 'd-3 old', opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    print'(a,*(g30.15))', 'd-3 new', opdetr(potgrad(ch,4,3,rinvv,rrr),3)
+    
+    print'(a,*(g30.15))', 'd-4 old', opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    print'(a,*(g30.15))', 'd-4 new', opdetr(potgrad(ch,4,4,rinvv,rrr),4)
+    
+    print'(a,*(g30.15))', 'd-5 old', opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    print'(a,*(g30.15))', 'd-5 new', opdetr(potgrad(ch,4,5,rinvv,rrr),5)
+    
+    !octu
+    print'(a,*(g30.15))', 'd-1 old', d1v(:,2)
+    print'(a,*(g30.15))', 'd-1 new', potgrad(co,3,1,rinvv,rrr)
+    
+    print'(a,*(g30.15))', 'd-2 old', opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
+    print'(a,*(g30.15))', 'd-2 new', opdetr(potgrad(co,3,2,rinvv,rrr),2)
+    
+    print'(a,*(g30.15))', 'd-3 old', opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    print'(a,*(g30.15))', 'd-3 new', opdetr(potgrad(co,3,3,rinvv,rrr),3)
+    
+    print'(a,*(g30.15))', 'd-4 old', opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    print'(a,*(g30.15))', 'd-4 new', opdetr(potgrad(co,3,4,rinvv,rrr),4)
+    
+    print'(a,*(g30.15))', 'd-5 old', opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    print'(a,*(g30.15))', 'd-5 new', opdetr(potgrad(co,3,5,rinvv,rrr),5)
+    
+    !quadru
+    print'(a,*(g30.15))', 'd-2 old', opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
+    print'(a,*(g30.15))', 'd-2 new', opdetr(potgrad(dd,1,2,rinvv,rrr),2)
+    
+    print'(a,*(g30.15))', 'd-3 old', opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    print'(a,*(g30.15))', 'd-3 new', opdetr(potgrad(dd,1,3,rinvv,rrr),3)
+    
+    print'(a,*(g30.15))', 'd-4 old', opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    print'(a,*(g30.15))', 'd-4 new', opdetr(potgrad(dd,1,4,rinvv,rrr),4)
+    
+    print'(a,*(g30.15))', 'd-5 old', opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    print'(a,*(g30.15))', 'd-5 new', opdetr(potgrad(dd,1,5,rinvv,rrr),5)
+    
+    !dip
     print'(a,*(g30.15))', 'd-1 old', d1v(:,2)
     print'(a,*(g30.15))', 'd-1 new', potgrad(cq,2,1,rinvv,rrr)
     
@@ -988,19 +1137,7 @@ subroutine test_mp_pot
     print'(a,*(g30.15))', 'd-5 old', opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
     print'(a,*(g30.15))', 'd-5 new', opdetr(potgrad(cq,2,5,rinvv,rrr),5)
     
-    
-    !print'(a,*(g30.15))', 'd-2 old', opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
-    !print'(a,*(g30.15))', 'd-2 new', opdetr(potgrad(dd,1,2,rinvv,rrr),2)
-    !
-    !print'(a,*(g30.15))', 'd-3 old', opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
-    !print'(a,*(g30.15))', 'd-3 new', opdetr(potgrad(dd,1,3,rinvv,rrr),3)
-    !
-    !print'(a,*(g30.15))', 'd-4 old', opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
-    !print'(a,*(g30.15))', 'd-4 new', opdetr(potgrad(dd,1,4,rinvv,rrr),4)
-    !
-    !print'(a,*(g30.15))', 'd-5 old', opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
-    !print'(a,*(g30.15))', 'd-5 new', opdetr(potgrad(dd,1,5,rinvv,rrr),5)
-    
+    endif
     
 
     
@@ -1010,27 +1147,29 @@ end
 
 
 
-function potgrad(qq,nq,kk,rpows,rrr) 
-    real(dp), intent(in) :: qq((nq+1)*(nq+2)/2),rpows(:),rrr(0:)
-    integer, intent(in) :: nq, kk
+function potgrad(qq,nn,kk,rpows,rrr) 
+    real(dp), intent(in) :: qq((nn+1)*(nn+2)/2),rpows(:),rrr(0:)
+    integer, intent(in) :: nn, kk
     real(dp) potgrad((kk+1)*(kk+2)/2)
     integer i!,j
-    integer ki1, ki2, ni1, ni2, kni, kni2
+    integer k1, k2, n1, n2, kni2, sig, k_i, n_i
     
     potgrad = 0
-    do i = 0, min(nq,kk) !0!
+    do i = 0, min(nn,kk) !0!
         
-        kni = kk+nq-i
-        kni2 = kni*2
+        kni2 = (kk+nn-i)*2
+        sig = kk+i+1
+        k_i = kk-i
+        n_i = nn-i
         
-        ki1 = pos00(kk-i)+1
-        ki2 = pos00(kk-i+1)
-        ni1 = pos00(nq-i)+1
-        ni2 = pos00(nq-i+1)
+        k1 = pos00(k_i)+1
+        k2 = pos00(k_i+1)
+        n1 = pos00(n_i)+1
+        n2 = pos00(n_i+1)
         
         potgrad(:) = potgrad(:) &
-                    + (-1)**kni * intfac(nq,nq-i) * intff(kni2-1,2*nq-1) * rpows(kni2+1) &
-                    * symouter(kk-i, i, rrr(ki1:ki2),   inner(nq,nq-i, qq, rrr(ni1:ni2))   )
+                    + (-1)**sig * intfac(nn,n_i) * intff(kni2-1,2*nn-1) * rpows(kni2+1) & !why +nn in first term???
+                    * symouter(k_i, i, rrr(k1:k2),   inner(nn,n_i, qq, rrr(n1:n2))   )
     enddo
     
 end

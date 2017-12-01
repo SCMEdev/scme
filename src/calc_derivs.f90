@@ -430,7 +430,7 @@ contains
     
     real(dp), intent(in) :: d1d(:), d2d(:,:), d3d(:,:,:)
     real(dp), intent(in) :: d4d(:,:,:,:), d5d(:,:,:,:,:)
-    real(dp), intent(in) :: swFunc
+    real(dp), intent(inout) :: swFunc
     integer, intent(in) :: n
     
 !JÖ internal:     
@@ -445,7 +445,7 @@ contains
 !    
 !    integer n, i, j, k, l, s
 
-    
+    swFunc=1
     do i = 1, 3
        ed1(i,n) = ed1(i,n) + d1d(i) * swFunc
        do j = i, 3
