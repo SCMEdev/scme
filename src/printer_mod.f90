@@ -16,12 +16,12 @@ module printer_mod
     
     ! Interface for tensor printed in given order
     interface printo !cat_tens
-        module procedure print_order1, print_order2, print_order3, print_order4
+        module procedure print_order1, print_order2, print_order3, print_order4, print_integer_matrix
     end interface
     
     ! Interface for an str() funciton like in python
     interface str
-        module procedure i2s, f2s, l2s!, sp2s
+        module procedure i2s, i2s_align, f2s, l2s, iv2s!, sp2s
     end interface
     
     ! Private/Public
@@ -33,10 +33,33 @@ contains !/////////////////////////////////////////////
 
 
 function i2s(inte) result(ch)
-    integer inte!, length
+    integer, intent(in) ::  inte!, length
     character(:), allocatable :: ch
-    character(10) temp
-    write(temp,'(I10)') inte
+    character(50) temp
+    write(temp,'(I50)') inte
+    ch = trim(adjustl(temp))
+end function
+
+function i2s_align(inte, space) result(ch)
+    integer, intent(in) ::  inte!, length
+    integer, intent(in) :: space
+    character(:), allocatable :: ch
+    character(space) temp
+    write(temp,'(I'//i2s(space)//')') inte
+    ch = adjustr(temp)
+end function
+
+
+
+function iv2s(int_vec,space) result(ch)
+    integer, intent(in) ::  int_vec(:)
+    integer, intent(in), optional :: space!, length
+    integer xspace
+    character(:), allocatable :: ch
+    character(1000) temp
+    xspace = 5
+    if(present(space)) xspace = space
+    write(temp,'(*(I'//i2s(xspace)//'))') int_vec
     ch = trim(adjustl(temp))
 endfunction
 
@@ -93,7 +116,7 @@ subroutine print_order4(tensor,order)
     integer,intent(in),optional :: order(4)
     
     integer       :: ic(4),ordc(4) !corrected order&index
-    integer       :: i,j,k,l,ii,jj,kk,ll
+    integer       :: i,j,k,l
     character(12) :: ctemp(3)
     character(2)  :: b1,b2
     
@@ -134,7 +157,7 @@ subroutine print_order3(tensor,order)
     integer,intent(in),optional :: order(3)
     
     integer       :: ic(3),ordc(3) !corrected order&index
-    integer       :: i,j,k,ii,jj,kk
+    integer       :: i,j,k
     character(12) :: ctemp(3)
     character(2)  :: b1,b2
     
@@ -148,7 +171,7 @@ subroutine print_order3(tensor,order)
     
     do k = 1,3
         ic(ordc(3)) = k
-        print*, ""
+        print*
         do j = 1,3
             ic(ordc(2)) = j
             do i = 1,3
@@ -170,7 +193,7 @@ subroutine print_order2(tensor,order)
     
     !corrected order&index
     integer       :: ic(2),ordc(2) 
-    integer       :: i,j,ii,jj
+    integer       :: i,j
     
     character(12) :: ctemp(3)
     character(2)  :: b1, b2
@@ -182,7 +205,7 @@ subroutine print_order2(tensor,order)
        ordc = [2,1]
     endif
     
-    print*, ""
+    print*
     do j = 1,3
         ic(ordc(2)) = j
         do i = 1,3
@@ -203,7 +226,7 @@ subroutine print_order1(tensor)
     character(12) :: ctemp
     character(2)  :: b1,b2
     
-    print*, ""
+    print*
     do j = 1,3
         write (ctemp,'(f12.7)') tensor(j)
         call brackets(j,b1,b2)
@@ -215,13 +238,45 @@ subroutine brackets(j,b1,b2)
     integer,intent(in) :: j
     character(2), intent(out) :: b1,b2
     if (j==1)then !Matrix brackets
-      b1=" /"; b2=" \"
+      b1=" /"; b2=" \" !"
     elseif (j==2)then
-      b1=" |"; b2=" |"
+      b1=" |"; b2=" |" !"
     else
-      b1=" \"; b2=" /"
+      b1=" \"; b2=" /" !"
     endif
 end subroutine
+
+
+subroutine print_integer_matrix(matrix,space,nice)
+  integer, optional :: space, nice
+  integer :: matrix(:,:),imax, jmax, i, j, xspace , xnice
+  imax = size(matrix,1)
+  jmax = size(matrix,2)
+  
+  xspace = 5
+  if(present(space)) xspace = space
+  
+  xnice = 0
+  if(present(nice)) xnice = nice
+  
+  print*, "____"
+  print*, ">>>>   Integer Matrix: "//i2s(imax)//" x "//i2s(jmax)
+  
+  if(xnice==1)then
+    
+    do i = 1,imax 
+      print'('//i2s(jmax)//'(I'//i2s(xspace)//',a),a)',(matrix(i,j),',',j=1,jmax),' & ! '
+    enddo
+    
+  else
+    
+    do i = 1,imax
+      print'(*(I'//i2s(xspace)//'))', matrix(i,:)
+    enddo
+    
+  endif
+  
+end subroutine 
 
 
 
@@ -232,7 +287,7 @@ subroutine xyz_hho_to_linear(a,alin,nM)
   integer, intent(in) :: nM
   real(dp), intent(in) :: a(3,3,nM)!xyz,hho,nM
   real(dp), intent(out) :: alin(nM*9)
-  integer l, m, xyz
+  integer m, xyz
   alin=0
    do m = 1,nM
      do xyz = 1,3
@@ -369,7 +424,7 @@ end subroutine
 
 subroutine p_real_3d(a,text,s)!,production)
   character(*) :: text
-  character(3) :: ch_cols, ch_slices
+  character(3) :: ch_cols
   character(20):: forma
   integer rows,cols,slices,slice,i
   real(dp)     :: a(:,:,:)

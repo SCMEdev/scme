@@ -17,29 +17,35 @@ end
 
 
 
-subroutine print_product_index_matrix(k)
-    integer k, j1,j2, icol, irow, ileng, v1(sumfac(k+1)),v2(sumfac(k+1)),v3(sumfac(k+1)) !((k+1)*(k+2)/2),
+subroutine print_product_index_matrix
+    integer, parameter :: k = 7
+    integer j1,j2, icol, irow, ileng,v2(sumfac(k+1)), v4(sumfac(k+1)),v3(sumfac(k+1)), tleng !((k+1)*(k+2)/2),
     
     ileng=sumfac(k+1)
     
-    v1=0
-    v2=0
+    tleng = sumfac((k+2)/2)
+    print*, tleng
+    tleng = sumfac((k-1))
+    print*, tleng
+    tleng = sumfac((k/2+1))
+    print*, tleng
     
-    v1 = [(j1,j1=1,ileng)]
-    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]
+    
+    !v1 = [(j1,j1=1,ileng)]
+    !v4 = [((i*(i+1)-i+1, j=0,i),i = 0,k/2)]
+    print*
+    
+    
+    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]-1 !for index matrix
+    v3 = 2*v2![((j1, j2=1,j1,2),j1 = 1,k+1,2)] !for trace matrix
+    v4 = v2*v2 !for trace matrix
     
     print*, ''
-    print'(a,*(I3))',"v1: ", v1
+    !print'(a,*(I3))',"v4: ", v4
     print'(a,*(I3))',"v2: ", v2
+    print'(a,*(I3))',"v3: ", v3
+    print'(a,*(I3))',"v4: ", v4
     
-    print*, ""
-    !do irow = 1, min(22,sumfac(k+1))
-    !    !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-    !    !print'(*(I4))',v3
-    !    write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1),',', icol = 1,ileng)
-    !    !print'(*(I4))',v3
-    !    
-    !    enddo
     !    
     !do irow = 23, max(0,sumfac(k+1))
     !    !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
@@ -48,15 +54,98 @@ subroutine print_product_index_matrix(k)
     !    !print'(*(I4))',v3
     !    
     !    enddo
-    print*, sumfac(k+1), "entries"
-    do irow = 1, sumfac(k+1)
+    
+    ! Print traces
+    print*, ""
+    do irow = 1, min(22,ileng)
         !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
         !print'(*(I4))',v3
-        write(*,'(*(a))',advance="no"),(str(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1))//',', icol = 1,ileng)
+        write(*,'(*(I3,a),a)'),((icol-1)*2 + v4(icol) + irow + (v3(icol))*(v2(irow)),',', icol = 1,tleng)
         !print'(*(I4))',v3
         
         enddo
     
+    
+    
+    ! Print with alignment
+    print*, ""
+    do irow = 1, min(22,ileng)
+        !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+        !print'(*(I4))',v3
+        write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol))*(v2(irow)),',', icol = 1,ileng)
+        !print'(*(I4))',v3
+        
+        enddo
+    
+    !Print tight
+    !print*, sumfac(k+1), "cols/rows"
+    !do irow = 1, sumfac(k+1)
+    !    !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
+    !    !print'(*(I4))',v3
+    !    !write(*,'(*(a))',advance="no"),(str(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1))//',', icol = 1,ileng)
+    !    write(*,'(*(a))'),(str(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1))//',', icol = 1,ileng)
+    !    !print'(*(I4))',v3
+    !    
+    !    enddo
+    
+end subroutine
+
+subroutine print_choose_matrix
+    integer, parameter :: k = 7
+    integer i,j
+    !integer , parameter :: k = 10
+    !integer, parameter :: init(0:k,0:k) = 
+    integer mat(0:k,0:k), temp, arr(0:k)
+    
+    arr = 1
+    mat(0,:)=arr
+    do i = 1, k
+        do j = 1,k
+            arr(j) = arr(j)+arr(j-1)
+        enddo
+        mat(i,:) = arr
+    enddo
+    
+    call printo(mat)
+    
+    
+    mat = 0
+    mat(:,0)=1
+    mat(0,:)=1
+    
+    do i = 1, k
+        do j = 1,k
+            mat(i,j) = mat(i-1,j) + mat(i, j-1)
+        enddo
+    enddo
+    
+    
+    call printo(mat)
+    
+    mat = 0
+    mat(:,0)=1
+    mat(0,:)=1
+    
+    do i = 0,k
+        mat(i,i) = 1
+    enddo
+        
+    do i = 2, k
+        do j = 1,i-1
+            temp = mat(i-1,j-1) + mat(i-1, j)
+            mat(i,j) = temp
+            mat(j,i) = temp
+        enddo
+    enddo
+    
+    call printo(mat)
+    !print*
+    !do i = 0,k
+    !    !print'(*(I5))',mat(i,:)
+    !    print'('//str(k+1)//'(I5,a),a)',(mat(i,j),',',j=0,k),'&'
+    !enddo
+
+
 end subroutine
 
 
@@ -74,7 +163,6 @@ subroutine main
     !call subdiv_pow(3,4)
     !print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
     !call test_factorial(5)
-    call print_product_index_matrix(10)
     !call test_choose
     !call test_matri(7)
     
@@ -88,6 +176,12 @@ subroutine main
     !print'(*(a))', (str(sumfacfac(i))//", ", i = 1,10)
     !call test_rrpow
     !call test_next_rev_key2n(4)
+    
+    !call test_next_key2n(7,1)
+    
+    call print_product_index_matrix
+    call print_choose_matrix
+    !call print_traces(8)
 end subroutine
 
 
@@ -324,15 +418,65 @@ function key2n(key) result(n)
    enddo
 end function
 
+
+
+
+subroutine print_traces(rank)
+    integer :: mbar(3), kbar(3), sup(3), rank, i, j, k
+    
+    
+    do k = 1, rank/2
+        print*
+        print*, "<<"//str(k)//">>-fold trace:"
+        
+        
+        do i = 1,min(3000,sumfac(rank-2*k+1))
+            !print'(I2,a)',i,"th entry of trace array:"
+        
+        
+        
+            
+            
+            if(i==1)then
+                mbar = [rank-2*k,0,0]
+            else
+                mbar = nextpov(mbar)
+            endif
+                
+            print*," mbar =["//str(mbar,2)//"], finder(mbar)="//str(finder(mbar)) //", i="//str(i)
+            
+            
+            do j = 1, sumfac(k+1)
+                if(j==1)then
+                    kbar = [k, 0, 0]
+                else
+                    kbar = nextpov(kbar)
+                endif 
+                sup = kbar*2 + mbar
+                !print*, "new:"
+                !print'(*(a,3I4))','  kbar:',kbar, ' 2key:', 2*kbar, ' mbar+2key:', sup
+                !print'(*(a,I4))','  kbar:',finder(kbar), ' 2key:',finder(2*kbar), ' mbar+2key:',finder(sup)
+                print'(a)', "trace: finder(["//str(sup,2)//"])="//str(finder(sup),3)
+            enddo
+        enddo
+            
+            
+        
+    enddo
+end subroutine
+    
+
+
 function finder(n) result(row)
    ! Given nx,ny,nz, returns corresponding row in tricorn vector. 
-   integer n(3), row, rank, i
+   integer n(3), row, n23 !rank, i
    
-   rank = sum(n)
-   row = 1 + n(3)
-   do i = 1,rank - n(1) !addition factorial
-     row = row + i
-   enddo
+   n23 = n(2)+n(3)
+   row = 1 + n(3) + n23*(n23+1)/2
+   
+   !do i = 1,rank - n(1) !addition factorial
+   !  row = row + i
+   !enddo
 end
 
 
