@@ -247,34 +247,56 @@ subroutine brackets(j,b1,b2)
 end subroutine
 
 
-subroutine print_integer_matrix(matrix,space,nice)
-  integer, optional :: space, nice
-  integer :: matrix(:,:),imax, jmax, i, j, xspace , xnice
+subroutine print_integer_matrix(matrix,space,copy)
+  integer, optional :: space, copy
+  integer :: matrix(:,:),imax, jmax, i, j, xspace, maxx(size(matrix,2))
+  character(5) :: endsep 
+  character(1) :: sep
+  
   imax = size(matrix,1)
   jmax = size(matrix,2)
+  
   
   xspace = 5
   if(present(space)) xspace = space
   
-  xnice = 0
-  if(present(nice)) xnice = nice
+  if(xspace==0)then
+    do j = 1,jmax
+      maxx(j) = maxval(matrix(:,j))
+      
+    enddo
+    maxx = ceiling(log10(dble(maxx+1)))
+  else
+    maxx = xspace
+  endif  
   
+  
+  sep = " "
+  endsep = " "
+  if(present(copy)) then 
+    if (copy>0)then
+      sep = ","
+      endsep = " & ! "
+    endif
+  endif
+  
+    
+  
+    
   print*, "____"
   print*, ">>>>   Integer Matrix: "//i2s(imax)//" x "//i2s(jmax)
   
-  if(xnice==1)then
-    
-    do i = 1,imax 
-      print'('//i2s(jmax)//'(I'//i2s(xspace)//',a),a)',(matrix(i,j),',',j=1,jmax),' & ! '
+  
+  
+  do i = 1,imax 
+    do j = 1, jmax
+      write(*,'(I'//i2s(maxx(j))//',a)',advance="no") matrix(i,j),sep 
     enddo
+    write(*,'(a)') endsep
+  enddo
     
-  else
     
-    do i = 1,imax
-      print'(*(I'//i2s(xspace)//'))', matrix(i,:)
-    enddo
     
-  endif
   
 end subroutine 
 

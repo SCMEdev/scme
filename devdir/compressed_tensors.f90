@@ -37,8 +37,8 @@ subroutine main
     
     call test_mp_pot
     
-    call printo(tmatr,3,1)
-    call printo(matr,3,1)
+    call printo(tmatr,0)
+    call printo(matr,0)
     !call test_intfac_ff
     
     !print*, pos00+1
