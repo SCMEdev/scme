@@ -827,28 +827,37 @@ subroutine test_next_pow_nl!_apple
 end
 
 
-                                                                       subroutine main2; call test_init_nl; end
+                                                                       subroutine main2; call test_nl; end
 
-subroutine test_init_nl
-    integer ll(3), nn(3),nn_2(3), n_2, l
-    integer i
-    nn = [6,9,4]
+subroutine test_nl
+    integer ll(3), nn(3),nn_2(3), n_2, l, it, numbers(100)
+    !integer i
+    logical proceed
+    nn = [7,3,6]*2
     nn_2 = nn/2
     n_2 = sum(nn_2)
-    l = 6
-    call init_nl(nn_2,l,ll)
+    !l = 4
+    do l = 1, n_2
+        call init_nl(nn_2,l,ll)
+        
+        print*
+        
+        print*, '__nn/2_=_['//str(nn_2,2)//']__l_=_'//str(l)//"__"
+        
+        proceed = .true.
+        it=0
+        do while (proceed)
+            it=it+1
+            print*, 'll = '//str(ll,2)//"  finder(ll) = "//str(finder(ll))
+            call next_pow_nl(nn_2,ll,proceed)
+        enddo    
+        
+        print*, "# entries = "//str(it)
+        numbers(l)=it
+    enddo
+    print*, "# entries = "//str(numbers(1:l-1),3)
     
-    print*, 'nn   = '//str(nn,2)
-    print*, 'nn/2 = '//str(nn_2,2)
-    print*, 'l    = '//str(l)
-    print*, 'll   = '//str(ll,2)
-    
-    do i = 1,10
-      call next_pow_nl(nn_2,ll)
-      print*, 'next ll   = '//str(ll,2)
-    enddo    
-    
-    print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
+    !print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
 end subroutine
 
 subroutine init_nl(nn_2, l, ll)
@@ -873,29 +882,33 @@ end subroutine
 
 
 
-subroutine next_pow_nl(nn_2,ll)
-  integer, intent(in)    :: nn_2(3) 
-  integer, intent(inout) :: ll(3) 
-  integer a,b,c , ra,rb,rc 
-  
-  ra=nn_2(1);rb=nn_2(2);rc=nn_2(3)
-  a=ll(1);b=ll(2);c=ll(3)
-  
-  if (b>0 .and.rc>c)then
-      b = b-1
-      c = c+1
-  elseif (a>0 .and.rb>b)then
-      a = a-1
-      b = b+1
-      do while (c>0 .and.rb>b)
+subroutine next_pow_nl(nn_2,ll, proceed)
+    integer, intent(in)    :: nn_2(3) 
+    integer, intent(inout) :: ll(3) 
+    integer a,b,c , ra,rb,rc 
+    logical proceed
+    
+    proceed = .true.
+    ra=nn_2(1);rb=nn_2(2);rc=nn_2(3)
+    a=ll(1);b=ll(2);c=ll(3)
+    
+    if (b>0 .and.rc>c)then
+        b = b-1
+        c = c+1
+    elseif (a>0 .and.rb>b)then
+        a = a-1
         b = b+1
-        c = c-1
-      enddo
-  elseif (a>0 .and.rc>c)then
-      a = a-1
-      c = c+1
-  endif
-  ll = [a,b,c]
+        do while (c>0 .and.rb>b)
+            b = b+1
+            c = c-1
+        enddo
+    elseif (a>0 .and.rc>c)then
+        a = a-1
+        c = c+1
+    else
+        proceed = .false.
+    endif
+    ll = [a,b,c]
 end
 
 
