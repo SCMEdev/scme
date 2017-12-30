@@ -16,66 +16,43 @@ function del(a,b)
 end
 
 
-
-subroutine print_product_index_matrix
-    integer, parameter :: k = 7
+subroutine print_trace_index_matrix(k)
+    integer k
     integer j1,j2, icol, irow, ileng,v2(sumfac(k+1)), v4(sumfac(k+1)),v3(sumfac(k+1)), tleng !((k+1)*(k+2)/2),
-    
+
     ileng=sumfac(k+1)
-    
-    tleng = sumfac((k+2)/2)
-    print*, tleng
-    tleng = sumfac((k-1))
-    print*, tleng
     tleng = sumfac((k/2+1))
-    print*, tleng
-    
-    
-    !v1 = [(j1,j1=1,ileng)]
-    !v4 = [((i*(i+1)-i+1, j=0,i),i = 0,k/2)]
-    print*
-    
-    
     v2 = [((j1, j2=1,j1),j1 = 1,k+1)]-1 !for index matrix
     v3 = 2*v2![((j1, j2=1,j1,2),j1 = 1,k+1,2)] !for trace matrix
     v4 = v2*v2 !for trace matrix
-    
-    print*, ''
-    !print'(a,*(I3))',"v4: ", v4
+    print*,"______"
     print'(a,*(I3))',"v2: ", v2
     print'(a,*(I3))',"v3: ", v3
     print'(a,*(I3))',"v4: ", v4
     
-    !    
-    !do irow = 23, max(0,sumfac(k+1))
-    !    !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-    !    !print'(*(I4))',v3
-    !    write(*,'(*(a))'),(str(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1))//',', icol = 1,ileng),'&'
-    !    !print'(*(I4))',v3
-    !    
-    !    enddo
-    
-    ! Print traces
-    print*, ""
-    do irow = 1, min(22,ileng)
-        !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-        !print'(*(I4))',v3
+    print*
+    do irow = 1, ileng
         write(*,'(*(I3,a),a)'),((icol-1)*2 + v4(icol) + irow + (v3(icol))*(v2(irow)),',', icol = 1,tleng)
-        !print'(*(I4))',v3
-        
-        enddo
+    enddo
+end subroutine
+
+subroutine print_product_index_matrix(k)
+    !integer, parameter :: k = 7
+    integer k
+    integer j1,j2, icol, irow, ileng,v2(sumfac(k+1))
+    
+    ileng=sumfac(k+1)
+    
+    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]-1 !for index matrix
+    
+    print*,"______"
+    print'(a,*(I3))',"v2: ", v2
     
     
-    
-    ! Print with alignment
-    print*, ""
-    do irow = 1, min(22,ileng)
-        !v3 = [(irow + icol -1 + (v2(icol)-1)*(v2(irow)-1), icol = 1,ileng)]
-        !print'(*(I4))',v3
+    print*
+    do irow = 1, ileng
         write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol))*(v2(irow)),',', icol = 1,ileng)
-        !print'(*(I4))',v3
-        
-        enddo
+    enddo
     
     !Print tight
     !print*, sumfac(k+1), "cols/rows"
@@ -91,45 +68,20 @@ subroutine print_product_index_matrix
 end subroutine
 
 subroutine print_choose_matrix
-    integer, parameter :: k = 7
+    integer, parameter :: k = 19
     integer i,j
     !integer , parameter :: k = 10
     !integer, parameter :: init(0:k,0:k) = 
-    integer mat(0:k,0:k), temp, arr(0:k)
+    integer mat(0:k,0:k), temp
     
-    arr = 1
-    mat(0,:)=arr
-    do i = 1, k
-        do j = 1,k
-            arr(j) = arr(j)+arr(j-1)
-        enddo
-        mat(i,:) = arr
-    enddo
-    
-    call printo(mat)
-    
-    
-    mat = 0
+    ! Put 1 on edges and diagonal
     mat(:,0)=1
     mat(0,:)=1
-    
-    do i = 1, k
-        do j = 1,k
-            mat(i,j) = mat(i-1,j) + mat(i, j-1)
-        enddo
-    enddo
-    
-    
-    call printo(mat)
-    
-    mat = 0
-    mat(:,0)=1
-    mat(0,:)=1
-    
     do i = 0,k
         mat(i,i) = 1
     enddo
-        
+    
+    ! Fill lower triangle with sum rule, symmetrize
     do i = 2, k
         do j = 1,i-1
             temp = mat(i-1,j-1) + mat(i-1, j)
@@ -138,15 +90,53 @@ subroutine print_choose_matrix
         enddo
     enddo
     
-    call printo(mat)
-    !print*
-    !do i = 0,k
-    !    !print'(*(I5))',mat(i,:)
-    !    print'('//str(k+1)//'(I5,a),a)',(mat(i,j),',',j=0,k),'&'
-    !enddo
-
-
+    ! Print for copying
+    write(*,'(a)') "integer, parameter :: choose_matrix(0:"//str(k)//",0:"//str(k)//") = reshape( [&"
+    call printo(mat,0,1)
+    write(*,'(a)') " ], shape(choose_matrix) )"
 end subroutine
+
+
+subroutine print_apple_g
+    integer i, j, n(3), it, gsiz, linelen, gval, glen
+    character(1) zero
+    print*,"____"
+    print*,">>>>  g-arrays:"
+    it = 0
+    zero = "0"
+    do i = 0,10
+      glen = sumfac(i+1)
+      if(i>9)zero=""
+      write(*,'(a)',advance="no") "integer, parameter :: g"//trim(zero)//str(i)//"("//str(glen)//") = ["
+      if (i>6) write(*,'(a)') "& "
+      
+      linelen = 0
+      
+      n = 0
+      n(1)= i
+      do j = 1, glen
+        if(j>1)call nextpown(n)
+        
+        gval = apple_g(n)
+        gsiz = ceiling(log10(dble(gval+1))) 
+        linelen = linelen + gsiz+1
+        write(*,'(I'//str(gsiz)//')',advance="no") gval
+        it = it+1
+        if (j<glen)then
+          write(*,'(a)',advance="no") ','
+          if(linelen>110)then
+            print'(a)', '& '
+            linelen = 0
+          endif
+        else 
+          write(*,'(a)') "]"
+        endif
+      enddo
+      !print*!,'&'
+      enddo
+    print*, "entries", it
+end subroutine
+
 
 
 subroutine main
@@ -179,87 +169,37 @@ subroutine main
     
     !call test_next_key2n(7,1)
     
-    call print_product_index_matrix
-    call print_choose_matrix
-    !call print_traces(8)
+    !call print_choose_matrix
+    
+    !call test_nextpown
+    !call print_apple_g
+    
+    !call print_product_index_matrix(6)
+    !call print_trace_index_matrix(6)
+    !call print_traces(6)
+    
+    !call test_choose
+    
+    
+    !call test_brakk
+    call main2
+    
+    
+end subroutine
+
+subroutine test_nr_of_trace_elements
+    integer k, n, su
+    do n = 12,1,-1
+      su = 0
+      do k= 1,n/2
+        su = su + sumfac(n-2*k+1) 
+      enddo
+      print'(a)',"rank="//str(n)//" self="//str(sumfac(n+1))//" sum="//str(su)
+    enddo
 end subroutine
 
 
-subroutine make_gs
-integer i, j, n(3), it
-it = 0
-do i = 1,10
-  n = 0
-  n(1)= i
-  do j = 1, sumfac(i+1)
-    !if(j>1)call nextpov(n)
-    if(j>1)call nextpow(n(1),n(2),n(3))
-    
-    !print'(4(I4))', n, apple_g(n)
-    write(*,'((I5,a))',advance="no") apple_g(n),','
-    it = it+1
-    enddo
-  print*,'&'
-  enddo
-print*, "entries", it
-end
 
-subroutine test_nextpow(k)
-  integer a,b,c, k
-  integer ind
-  
-  a=k
-  b=0
-  c=0
-  
-  do ind = 1,sumfac(k+1)
-     if(ind>1)call nextpow(a,b,c)
-     print'(3I2,I5)',a,b,c,ind
-     enddo
-     
-end
-
-subroutine test_nextpo_w_v
-    
-
-end
-
-subroutine nextpow(a,b,c)
-  integer a,b,c
-
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-end
-
-function nextpov(nn)
-  integer a,b,c, nn(3), nextpov(3)
-  a = nn(1)
-  b = nn(2)
-  c = nn(3)
-
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-  
-  nextpov(1) = a
-  nextpov(2) = b
-  nextpov(3) = c
-
-  
-end
-
-   
 subroutine test_sumfac
    integer i
    
@@ -279,6 +219,8 @@ endfunction
 
 
 subroutine test_choose
+integer, parameter :: k = 10
+integer i,j, mat(0:k,0:k)
 print*,'choose(6,2)', choose(6,2)
 print*,'choose(5,2)', choose(5,2)
 print*,'choose(6,3)', choose(6,3)
@@ -287,6 +229,12 @@ print*,'choose(4,0)', choose(4,0)
 print*,'choose(0,4)', choose(0,4)
 print*,'choose(0,2)', choose(0,2)
 
+do i = 0, k
+  do j = 0, k
+    mat(i,j) = choose(i,j)
+  enddo
+enddo
+call printo(mat,3)
 end
 !function choose(M,k)
 !    implicit none
@@ -440,24 +388,26 @@ subroutine print_traces(rank)
             if(i==1)then
                 mbar = [rank-2*k,0,0]
             else
-                mbar = nextpov(mbar)
+                call nextpown(mbar)
             endif
                 
-            print*," mbar =["//str(mbar,2)//"], finder(mbar)="//str(finder(mbar)) //", i="//str(i)
+            !print*," mbar =["//str(mbar,2)//"], finder(mbar)="//str(finder(mbar))//", i="//str(i)
             
             
             do j = 1, sumfac(k+1)
                 if(j==1)then
                     kbar = [k, 0, 0]
                 else
-                    kbar = nextpov(kbar)
+                    call nextpown(kbar)
                 endif 
                 sup = kbar*2 + mbar
                 !print*, "new:"
                 !print'(*(a,3I4))','  kbar:',kbar, ' 2key:', 2*kbar, ' mbar+2key:', sup
                 !print'(*(a,I4))','  kbar:',finder(kbar), ' 2key:',finder(2*kbar), ' mbar+2key:',finder(sup)
-                print'(a)', "trace: finder(["//str(sup,2)//"])="//str(finder(sup),3)
+                !print'(a)', "trace: finder(["//str(sup,2)//"])="//str(finder(sup),3)
+                write(*,'(I3)',advance="no") finder(sup)
             enddo
+            print*!, "<< finished trace"
         enddo
             
             
@@ -764,6 +714,277 @@ function fac(inn)
 
 end
 
+function lfac(inn) result(fac)
+    integer*8 inn, i, fac
+    fac=1
+    do i = 1, inn
+      fac = fac*i
+      enddo
 
+end
+
+
+subroutine test_brakk
+    integer n, l
+    do n = 1, 20
+    do l = 1, n/2
+    print*, n,l, brakk(n,l), brakk_bad(n,l)
+    enddo
+    enddo
+end subroutine
+
+function vecbrakk(nn,ll) result(res)
+    integer nn(3), ll(3)
+    integer res
+    res = brakk(nn(1),ll(1)) * brakk(nn(2),ll(2)) * brakk(nn(3),ll(3)) 
+end function
+
+
+function brakk(n,l) result(p)
+    ! This routine calculates the expression n!/(2^l*l!*(n-2l)),
+    ! i.e. how many ways to select index pairs (for kroneker-delta) 
+    ! from a group of indices without regards to order within the pair or group.
+    ! It is done through a numerically stable recursion relation that I derived.
+    integer,intent(in) :: n, l
+    integer i, l2
+    integer p
+    
+    l2 = 2*l
+    
+    if(n<l2)stop"n<l2 in brakk"
+    if (n>19 .and. l>5)stop"Too big value in 'brakk()'"
+    
+    p=1
+    do i = l2+1, n   !recursion relation
+      p = (p*i)/(i-l2)
+    enddo
+    do i = 3,l2-1, 2 !remaining double factorial
+      p = p*i
+    enddo
+    
+end function
+
+
+
+subroutine test_nextpown!_apple
+  integer n(3), k
+  integer ind
+  
+  k = 4
+  n(1) = k
+  n(2) = 0
+  n(3) = 0
+  
+  do ind = 1,sumfac(k+1)
+     if(ind>1)call nextpown(n)
+     print'(3I2,2I5)',n,ind, apple_g(n)
+     enddo
+     
+end
+
+subroutine nextpown(nn)
+  integer, intent(inout) :: nn(3) 
+  integer a,b,c 
+  a=nn(1);b=nn(2);c=nn(3)
+  if (b>0)then
+    b=b-1
+    c=c+1
+  elseif (a>0)then
+    a=a-1
+    b=c+1
+    c=0
+  endif
+  nn = [a,b,c]
+end
+
+!subroutine nextpown(n)
+!  integer, intent(inout) :: n(3) 
+!  integer a,b,c 
+!  if (n(2)>0)then
+!    n(2)=n(2)-1
+!    n(3)=n(3)+1
+!  elseif (a>0)then
+!    n(1)=n(1)-1
+!    n(2)=n(3)+1
+!    n(3)=0
+!  endif
+!end
+
+subroutine test_next_pow_nl!_apple
+  integer n(3), k
+  integer ind
+  
+  k = 4
+  n(1) = k
+  n(2) = 0
+  n(3) = 0
+  
+  do ind = 1,sumfac(k+1)
+     if(ind>1)call nextpown(n)
+     print'(3I2,2I5)',n,ind, apple_g(n)
+     enddo
+     
+end
+
+
+                                                                       subroutine main2; call test_init_nl; end
+
+subroutine test_init_nl
+    integer ll(3), nn(3),nn_2(3), n_2, l
+    integer i
+    nn = [6,9,4]
+    nn_2 = nn/2
+    n_2 = sum(nn_2)
+    l = 6
+    call init_nl(nn_2,l,ll)
+    
+    print*, 'nn   = '//str(nn,2)
+    print*, 'nn/2 = '//str(nn_2,2)
+    print*, 'l    = '//str(l)
+    print*, 'll   = '//str(ll,2)
+    
+    do i = 1,10
+      call next_pow_nl(nn_2,ll)
+      print*, 'next ll   = '//str(ll,2)
+    enddo    
+    
+    print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
+end subroutine
+
+subroutine init_nl(nn_2, l, ll)
+    
+    integer, intent(in)  :: nn_2(3), l
+    integer, intent(out) :: ll(3)
+    
+    integer ls, i
+    
+    ls = l
+    
+    ll=0
+    do i = 1,3 
+      do while (ls>0 .and. nn_2(i)>ll(i))
+        ll(i) = ll(i)+1
+        ls = ls -1
+      enddo
+    enddo
+    
+end subroutine
+
+
+
+
+subroutine next_pow_nl(nn_2,ll)
+  integer, intent(in)    :: nn_2(3) 
+  integer, intent(inout) :: ll(3) 
+  integer a,b,c , ra,rb,rc 
+  
+  ra=nn_2(1);rb=nn_2(2);rc=nn_2(3)
+  a=ll(1);b=ll(2);c=ll(3)
+  
+  if (b>0 .and.rc>c)then
+      b = b-1
+      c = c+1
+  elseif (a>0 .and.rb>b)then
+      a = a-1
+      b = b+1
+      do while (c>0 .and.rb>b)
+        b = b+1
+        c = c-1
+      enddo
+  elseif (a>0 .and.rc>c)then
+      a = a-1
+      c = c+1
+  endif
+  ll = [a,b,c]
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+! bad but not yet trash !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+function brakk_bad(n,l) result(res)
+    integer,intent(in) :: n, l
+    integer n_2l, a,b,  i
+    integer*8 p1,p2
+    integer res
+    n_2l = n-2*l
+    b = max(l,n_2l)
+    a = min(l,n_2l)
+    
+    p1=1
+    p2=1
+    
+    do i = b+1,n
+     p1 = p1*i
+    enddo
+    
+    do i = 2, a
+     p2 = p2*i
+    enddo
+    
+    res = int(p1/p2)/2**l
+end function
+
+subroutine test_nextpow(k)
+  integer a,b,c, k
+  integer ind
+  
+  a=k
+  b=0
+  c=0
+  
+  do ind = 1,sumfac(k+1)
+     if(ind>1)call nextpow(a,b,c)
+     print'(3I2,I5)',a,b,c,ind
+     enddo
+     
+end
+subroutine nextpow(a,b,c)
+  integer a,b,c
+
+  if (b>0)then
+    b=b-1
+    c=c+1
+  elseif (a>0)then
+    a=a-1
+    b=c+1
+    c=0
+  endif
+end
+
+function nextpov(nn)
+  integer a,b,c, nn(3), nextpov(3)
+  a = nn(1)
+  b = nn(2)
+  c = nn(3)
+
+  if (b>0)then
+    b=b-1
+    c=c+1
+  elseif (a>0)then
+    a=a-1
+    b=c+1
+    c=0
+  endif
+  
+  nextpov(1) = a
+  nextpov(2) = b
+  nextpov(3) = c
+
+  
+end
 
 endmodule

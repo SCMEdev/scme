@@ -1,3 +1,5 @@
+
+
 subroutine pascal_matrix(size)
   integer :: size, row1(size), row2(size), i1,i2, i12, pmat(size,size), temp, choom(size,size)
   

@@ -16,7 +16,7 @@ module printer_mod
     
     ! Interface for tensor printed in given order
     interface printo !cat_tens
-        module procedure print_order1, print_order2, print_order3, print_order4, print_integer_matrix
+        module procedure print_order1, print_order2, print_order3, print_order4, print_integer_matrix, print_integer_vector
     end interface
     
     ! Interface for an str() funciton like in python
@@ -250,8 +250,8 @@ end subroutine
 subroutine print_integer_matrix(matrix,space,copy)
   integer, optional :: space, copy
   integer :: matrix(:,:),imax, jmax, i, j, xspace, maxx(size(matrix,2))
-  character(5) :: endsep 
-  character(1) :: sep
+  character(1) :: endsep ,midsep, sep
+  logical info
   
   imax = size(matrix,1)
   jmax = size(matrix,2)
@@ -270,34 +270,72 @@ subroutine print_integer_matrix(matrix,space,copy)
     maxx = xspace
   endif  
   
-  
-  sep = " "
+  info=.true.
+  midsep = " "
   endsep = " "
   if(present(copy)) then 
     if (copy>0)then
-      sep = ","
-      endsep = " & ! "
+      midsep = ","
+      endsep = "&"
+      info=.false.
     endif
   endif
   
-    
-  
-    
-  print*, "____"
-  print*, ">>>>   Integer Matrix: "//i2s(imax)//" x "//i2s(jmax)
-  
-  
+  if(info)then
+    print*, "____"
+    print*, ">>>>   Integer Matrix: "//i2s(imax)//" x "//i2s(jmax)
+  endif
   
   do i = 1,imax 
+    sep = midsep
+    write(*,'(a)',advance="no") " "
     do j = 1, jmax
+      if(j==jmax.and.i==imax) sep = " "
       write(*,'(I'//i2s(maxx(j))//',a)',advance="no") matrix(i,j),sep 
     enddo
     write(*,'(a)') endsep
   enddo
-    
-    
-    
   
+end subroutine 
+
+
+subroutine print_integer_vector(vector,space,copy)
+  integer, optional :: space, copy
+  integer :: vector(:),jmax, j, xspace, maxx(size(vector))
+  character(1) :: sep
+  logical info
+  
+  jmax = size(vector)
+  
+  
+  xspace = 5
+  if(present(space)) xspace = space
+  
+  if(xspace==0)then
+    maxx = ceiling(log10(dble(vector+1)))
+  else
+    maxx = xspace
+  endif  
+  
+  info=.true.
+  sep = " "
+  if(present(copy)) then 
+    if (copy>0)then
+      sep = ","
+      info=.false.
+    endif
+  endif
+  
+  if (info)then  
+    print*, "____"
+    print*, ">>>>   Integer vector, size: "//i2s(jmax)
+  endif
+  
+  do j = 1, jmax
+    if(j==jmax)sep=" "
+    write(*,'(I'//i2s(maxx(j))//',a)',advance="no") vector(j),sep 
+  enddo
+  print*
 end subroutine 
 
 

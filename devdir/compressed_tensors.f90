@@ -19,10 +19,41 @@ integer, parameter :: dp = kind(0d0)
 contains !///////////////////////////////////////////////
 
 
+subroutine get_traces
+integer k,n, i, tvecl, nt, g1,g2
+real(dp) :: testvec(21),tvec(1000)
+n = 5
+
+!testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0 ]
+!testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0 ]
+testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0, 2d0, 4d0, 3d0, 1d0, 5d0, 6d0 ]
+
+do k = 1,n/2
+    tvecl = sumfac(n-2*k+1)
+    nt = len00(k)
+    g1 = pos00(k)+1
+    g2 = pos00(k+1)
+    print'(a,*(I4))', "g1,g2:", g1,g2
+    print'(a,*(I4))', "gg=", gg(g1:g2)
+    
+    do i = 1, tvecl
+        tvec(i) = sum(testvec(tmatr(i,1:nt)*gg(g1:g2)))
+        print'(a,*(I3))',"trace index", tmatr(i,1:nt)
+    enddo
+    print'(a,*(f7.3))', "trace array", tvec(1:tvecl)    
+enddo
+
+end subroutine
+
+
+
+
+
 
 
 
 subroutine main
+    !call get_traces
     !call testing
     !call test_sumfac
     !call test_rpow
@@ -31,14 +62,16 @@ subroutine main
     !call subdiv_pow(5,5)
     
     
-    call test_old_field
-    call test_potgrad
-    !call test_inner
-    
-    call test_mp_pot
-    
-    call printo(tmatr,0)
-    call printo(matr,0)
+    !call test_old_field
+    !call test_potgrad
+    !!call test_inner
+    !
+    !call test_mp_pot
+    !
+    !call printo(tmatr,0)
+    !call printo(matr,0,0)
+    !
+    !call printo([1,2,3,4,5,6,77,7777,777,9],0,0)
     !call test_intfac_ff
     
     !print*, pos00+1
