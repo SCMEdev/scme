@@ -45,7 +45,10 @@ opole.x: $(b)/opole_dev.o $(gen-f90) $(lib-a)
 convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90)
+utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90) $(lb)/compressed_arrays.o
+	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+
+fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
 
@@ -61,10 +64,13 @@ $(lib-a):$(wildcard ../src/*.f90)
 	(cd .. && make)
 
 $(lb)/compressed_tensors.o: $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
+
+$(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
+
 $(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
 $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o: $(lb)/data_types.o
 
-$(lb)/compressed_utils.o: $(print-o)
+$(lb)/compressed_utils.o: $(print-o) $(lb)/compressed_arrays.o
 
 clean:
 	rm *.x build/*

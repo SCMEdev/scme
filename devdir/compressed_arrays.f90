@@ -3,12 +3,12 @@ implicit none
 
 
 
-integer j11,j22, i00, matcol, matrow, icol, irow 
+integer j1,j2, ii, matcol, matrow, icol, irow 
 integer, parameter :: matk = 7, matsize = (matk+1)*(matk+2)/2
-!integer, parameter :: sumfacv(matk+1) = [(i00*(i00+1)/2, i00 = 1,matk+1)]
+!integer, parameter :: sumfacv(matk+1) = [(ii*(ii+1)/2, ii = 1,matk+1)]
 
 
-integer, parameter :: v2(matsize) = [((j11, j22=1,j11),j11 = 1,matk+1)]-1
+integer, parameter :: v2(matsize) = [((j1, j2=1,j1),j1 = 1,matk+1)]-1
 integer, parameter :: v3(matsize) = 2 *v2 !for trace matrix
 integer, parameter :: v4(matsize) = v2*v2 !for trace matrix
 
@@ -73,10 +73,8 @@ integer, parameter :: choose_matrix(0:19,0:19) = reshape( [&
 integer, parameter :: matchoo(0:matk,0:matk) = choose_matrix(0:matk,0:matk)
 
 !integer, parameter :: temp_position(0:10) = [0, 1, 4, 10, 20, 35, 56, 84, 120, 165, 220]
-integer, parameter :: temp_position(0:matk+1) = [(i00*(i00+1)*(i00+2)/6,i00=0,matk+1)]
-
-integer, parameter :: pos00(0:matk+1) = temp_position(:)-1
-integer, parameter :: len00(0:matk+1) = [(i00*(i00+1)/2,i00=0+1,matk+1+1)]
+integer, parameter :: pos00(0:matk+1) = [(ii*(ii+1)*(ii+2)/6,ii=0,matk+1)]-1
+integer, parameter :: len00(0:matk+1) = [(ii*(ii+1)/2,ii=1,matk+2)]
 
 integer, parameter :: gg(0:pos00(matk+1)) = gg10(0:pos00(matk+1))
 

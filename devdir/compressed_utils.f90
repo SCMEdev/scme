@@ -1,6 +1,7 @@
 module compressed_utils
 
 use printer_mod, only: str, printer, printo
+use compressed_arrays 
 implicit none
 
 integer, parameter :: dp = kind(0d0)
@@ -827,36 +828,54 @@ subroutine test_next_pow_nl!_apple
 end
 
 
-                                                                       subroutine main2; call test_nl; end
+                                    !subroutine main2; call print_trace_index_matrix(7); call test_nl; end
+                                    subroutine main2; call test_nl; end
+                                    
+
 
 subroutine test_nl
-    integer ll(3), nn(3),nn_2(3), n_2, l, it, numbers(100)
+    integer ll(3), nn(3),nn_2(3), n_2, l, it, numbers(100), key(3), ind, nrank, nlen
     !integer i
     logical proceed
-    nn = [7,3,6]*2
-    nn_2 = nn/2
-    n_2 = sum(nn_2)
-    !l = 4
-    do l = 1, n_2
-        call init_nl(nn_2,l,ll)
-        
-        print*
-        
-        print*, '__nn/2_=_['//str(nn_2,2)//']__l_=_'//str(l)//"__"
-        
-        proceed = .true.
-        it=0
-        do while (proceed)
-            it=it+1
-            print*, 'll = '//str(ll,2)//"  finder(ll) = "//str(finder(ll))
-            call next_pow_nl(nn_2,ll,proceed)
-        enddo    
-        
-        print*, "# entries = "//str(it)
-        numbers(l)=it
-    enddo
-    print*, "# entries = "//str(numbers(1:l-1),3)
     
+    ! To investigate all the trace subtractions associated with one specific tensor entry
+    nrank = 10
+    
+    ! initial nkey & nkey/2
+    nn = [nrank,0,0]
+    
+    nlen = sumfac(nrank+1)
+    do ind = 1, nlen ! Go through all tensor entries
+        
+        if (ind>1) call nextpown(nn)
+        nn_2 = nn/2
+        n_2 = sum(nn_2)
+        
+        print*, ">>> Entry=["//str(nn,2)//"] index="//str(ind)//' finder(nn) = '//str(finder(nn))
+        print*, "     Half=["//str(nn_2,2)//"]"
+        
+        do l = 1, n_2 ! Increment the l-rank (the number of deltas)
+            call init_nl(nn_2,l,ll)
+            
+            print*, "    l="//str(l)//":"
+            
+            
+            proceed = .true.
+            it=0
+            do while (proceed) ! Go through all compatible ll-keys
+                it=it+1
+                key = nn - 2*ll
+                !print*, '       ll=['//str(ll,2)//']  finder(ll) = '//str(finder(ll))
+                print*, '      key=['//str(key,2)//']  finder(key) = '//str(finder(key))
+                call next_pow_nl(nn_2,ll,proceed)
+            enddo    
+            
+            !print*, "    # entries = "//str(it)
+            numbers(l)=it
+        enddo
+        print*, "<<< #entries = "//str(numbers(1:l-1),3)
+        print*, ""
+    enddo
     !print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
 end subroutine
 
