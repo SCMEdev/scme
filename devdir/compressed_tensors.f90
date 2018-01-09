@@ -1,13 +1,13 @@
 module compressed_tensors
 
 use printer_mod, only: str, printer, printo
-use compressed_utils, bad=>main!,only: test_apple_g
+use compressed_utils, bad=>main, bad=>main2!,only: test_apple_g
 
 use detrace_apple, bad=>main
 
 use calc_derivs, only:calcDv
 
-use compressed_arrays!, only: matr, gg, pos00, len00, matchoo, tmatr 
+use compressed_arrays!, p_=>pos00, l_=>len00!, only: matr, gg, pos00, len00, matchoo, tmatr 
 implicit none
 
 integer, parameter :: dp = kind(0d0)
@@ -53,6 +53,7 @@ end subroutine
 
 
 subroutine main
+    call main2
     !call get_traces
     !call testing
     !call test_sumfac
@@ -1002,11 +1003,14 @@ end subroutine
 
 
 
-
+subroutine main2; call & ! MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
+test_rrr
+end 
 
 subroutine test_rrr
     integer, parameter :: k=5
-    real(dp) :: rrr(sumfacfac(k+1)-1), rr(3), rrr3(10), rrr2(6), rrr5(sumfac(6)), rrr32(sumfac(6))
+    real(dp) :: rrr(0:pos00(k+1)), rr(3), rrr3(10), rrr2(6), rrr5(len00(5)), rrr32(len00(5))
+    real(dp) :: rrr4(len00(4)), rrr31(len00(4)), rrr22(len00(4)), rrr21(len00(3))
     integer i, p1, p2, p3, p4
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
     call random_number(rr)
@@ -1020,27 +1024,39 @@ subroutine test_rrr
     call printer(rrr,'rrr',1)
     
     
-    i = 3
-    p1 = pos00(i-1)+1
-    p2 = pos00(i)
-    p3 = pos00(i)+1
-    p4 = pos00(i+1)
-    
+    i = 2
+    p1 = pos00(i)+1
+    p2 = pos00(i+1)
     rrr2=rrr(p1:p2)
-    rrr3=rrr(p3:p4)
+    
+    i = 3
+    p1 = pos00(i)+1
+    p2 = pos00(i+1)
+    rrr3=rrr(p1:p2)
+    
+    i = 4
+    p1 = pos00(i)+1
+    p2 = pos00(i+1)
+    rrr4=rrr(p1:p2)
     
     i=5
-    p3 = pos00(i)+1
-    p4 = pos00(i+1)
+    p1 = pos00(i)+1
+    p2 = pos00(i+1)
     
-    rrr5=rrr(p3:p4)
+    rrr5=rrr(p1:p2)
     
     rrr32 = symouter(3,2,rrr3,rrr2)
+    rrr22 = symouter(2,2,rrr2,rrr2)
+    rrr31 = symouter(3,1,rrr3,rr)
+    rrr21 = symouter(2,1,rrr2,rr)
     
     
     call printer(rrr5,"5th",1)
     call printer(rrr32,"symouter(3,2)",1)
-    call printer(rrr5-rrr32,"diff",1)
+    call printer(rrr32/rrr5,"frac32",1)
+    call printer(rrr22/rrr4,"frac22",1)
+    call printer(rrr31/rrr4,"frac31",1)
+    call printer(rrr21/rrr3,"frac21",1)
     
     print*, "above, TEST RRR ------------------------------------------------------------------"
 
@@ -1048,8 +1064,8 @@ end
 
 
 subroutine vector_powers(k,r,rr) 
-    ! Do not use this routine, it does not produce th outer products, since it lacks the scaling parameter hhh
-    ! Generates k powers of r(3) in tricorn polytensor
+    ! Computes successive outer products of 3-vector r(:)
+    ! and stores in tricorn polytensor rr(:)
     ! r(3)   position vector
     ! k      highest rank/power
     ! rr     output tricorn-ordered polytensor
@@ -1064,7 +1080,7 @@ subroutine vector_powers(k,r,rr)
     do i = 2,k
        ! p=previous, c=current, l=length
        ! x, y, z refer to the position of the x-only, y-only, z-only rows. 
-       px = pos00(i-1)+1 !simfacfac(i-1)
+       px = pos00(i-1)+1 !simfacfac(i-1) !+1 because interval indexing, no index addition
        pl = len00(i-1) !sumfac(i)
        cl = len00(i) ! sumfac(i+1)
        
