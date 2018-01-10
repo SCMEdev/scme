@@ -51,6 +51,9 @@ utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90) $(lb)/compressed_arrays.
 fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
+test.x: $(lb)/compressed_testing.o $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+
 
 
 $(lb)/%.o:%.f90
@@ -66,6 +69,8 @@ $(lib-a):$(wildcard ../src/*.f90)
 $(lb)/compressed_tensors.o: $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
 
 $(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
+
+$(lb)/compressed_testing.o: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
 
 $(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
 $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o: $(lb)/data_types.o

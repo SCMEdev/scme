@@ -10,6 +10,32 @@ private dp
 
 contains !//////////////////////////////////////////////////
 
+subroutine main
+call print_trace_lengths    
+end subroutine
+
+
+subroutine print_trace_lengths
+    integer i , n, acc, vall, temp(0:100), n05
+    
+    n = 4
+    do n = 0, 15
+        acc=0
+        n05=n/2
+        do i = 1, n05
+            vall = len_(n-2*i)
+            acc = acc+vall
+            temp(i) =vall
+            !print*, vall, acc
+        enddo
+        print*, "n="//str(n,2)//", len="//str(acc,3)//" <= "//str(temp(1:n05))!//" => "//str(sum(temp(1:n05)))
+    enddo
+    
+    call printo([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
+    print*, str([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
+end subroutine
+
+
 function del(a,b)
     integer a, b, del
     del=0
@@ -140,53 +166,6 @@ end subroutine
 
 
 
-subroutine main
-!integer i
-    !call testing
-    !call test_sumfac
-    !call test_rpow
-    !call test_nextpow(7)
-    !call compow2(7)
-    !call subdiv_pow(4,4)
-    !print*, ""
-    !call subdiv_pow(4,3)
-    !print*, ""
-    !call subdiv_pow(3,4)
-    !print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
-    !call test_factorial(5)
-    !call test_choose
-    !call test_matri(7)
-    
-    !print*, ""
-    !call test_contind(6)
-    
-    !call test_matr(7)
-    !call printer(matr, 'matr',1)
-    !call test_apple_g
-    !call make_gs
-    !print'(*(a))', (str(sumfacfac(i))//", ", i = 1,10)
-    !call test_rrpow
-    !call test_next_rev_key2n(4)
-    
-    !call test_next_key2n(7,1)
-    
-    !call print_choose_matrix
-    
-    !call test_nextpown
-    !call print_apple_g
-    
-    !call print_product_index_matrix(6)
-    !call print_trace_index_matrix(6)
-    !call print_traces(6)
-    
-    !call test_choose
-    
-    
-    !call test_brakk
-    call main2
-    
-    
-end subroutine
 
 subroutine test_nr_of_trace_elements
     integer k, n, su
@@ -201,14 +180,6 @@ end subroutine
 
 
 
-subroutine test_sumfac
-   integer i
-   
-   do i = 1,10
-     print*, sumfac(i) , i, 1
-   enddo
-endsubroutine
-
 
 pure function sumfac(u)
     !third row in pascal matrix (for tricorn lengths)
@@ -218,25 +189,40 @@ pure function sumfac(u)
 endfunction
 
 
-
-subroutine test_choose
-integer, parameter :: k = 10
-integer i,j, mat(0:k,0:k)
-print*,'choose(6,2)', choose(6,2)
-print*,'choose(5,2)', choose(5,2)
-print*,'choose(6,3)', choose(6,3)
-print*,'choose(2,4)', choose(4,2)
-print*,'choose(4,0)', choose(4,0)
-print*,'choose(0,4)', choose(0,4)
-print*,'choose(0,2)', choose(0,2)
-
-do i = 0, k
-  do j = 0, k
-    mat(i,j) = choose(i,j)
-  enddo
-enddo
-call printo(mat,3)
+function hh(n1, n2) !Make a matrix of this sheeeet
+    integer n1(3),n2(3), nn(3), hh
+    nn = n1+n2
+    hh = vfac(nn)/( vfac([n1,n2]) )
+    !( fac(nn(1))*fac(nn(2))*fac(nn(3)) ) / ( fac(n1(1))*fac(n1(2))*fac(n1(3)) * fac(n2(1))*fac(n2(2))*fac(n2(3)) )
 end
+
+
+
+function hh_abc(a1,b1,c1, a2,b2,c2) result(hh) !Make a matrix of this sheeeet
+    integer a1,b1,c1, a2,b2,c2
+    integer aa,bb,cc, hh
+    aa = a1+a2
+    bb = b1+b2
+    cc = c1+c2
+    
+    hh = ( fac(aa)*fac(bb)*fac(cc) ) / ( fac(a1)*fac(a2)*fac(b1)*fac(b2)*fac(c1)*fac(c2) )
+
+end
+
+function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
+    integer, intent(in) :: i,j, ki,kj
+    integer kij, hhh, cc, gi,gj,gij
+    kij = ki+kj
+    cc = binc_(kij,ki)
+    gi = gg_(pos_(ki)+i)
+    gj = gg_(pos_(kj)+j) 
+    gij = gg_(pos_(kij) + mm_(i,j))
+    hhh = (gi*gj*cc) / gij
+    
+end
+
+
+
 !function choose(M,k)
 !    implicit none
 !    integer, intent(in) :: M, k
@@ -267,17 +253,6 @@ pure function choose(m1,m2)
 end 
 
 
-subroutine test_apple_g
-print*, "xxyy", apple_g([2,2,0])
-print*, "xy", apple_g([1,1,0])
-
-print*, "xxyz", apple_g([2,1,1])
-print*, apple_g([1,1,0])
-print*, apple_g([1,0,1])
-print*, apple_g([0,1,1])
-
-print*, "xxxy", apple_g([3,1,0])
-end subroutine
 
 function apple_g(n) result(g)
    ! Applequist g()-function. 
@@ -310,50 +285,6 @@ function apple_g(n) result(g)
    g=int(gl,kind(g))
 end
 
-subroutine test_next_key2n(rank,tric) !result(ns)
-    integer, intent(in) :: rank, tric
-    integer trilen, key(rank), nn(3), upper
-    !integer :: ns(3, ((rank+1)*(rank+2))/2)
-    integer i, j
-    print '('//str(4)//'I2)', next_can([3,3,1,1],0)
-    print '('//str(4)//'I2)', next_can([3,3,1,1],1)
-    
-    print '('//str(4)//'I2)', next_can([1,1,3,3],0)
-    print '('//str(4)//'I2)', next_can([1,1,3,3],1)
-    
-    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
-    
-    trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
-    
-    key = 1
-       
-    print*, 'n(1:'//str(rank)//') array:'
-    nn = key2n(key)
-    i = 1
-    call pprint
-    
-    if(tric==1)upper=trilen
-    if(tric==0)upper=3**rank
-    
-    do i = 2,upper!3**rank!trilen
-       key = next(key,tric)
-       
-       nn = key2n(key)
-       call pprint
-    enddo
-    
-    
-    
-    contains !// ////////////////////////
-      
-      
-      
-      subroutine pprint
-         print*, "key=",(str(key(j))//" ",j=1,rank ),"  nn=",(str(nn(j))//" ",j=1,3 ),&
-                 "  row:"//str(i), "  found row:"//str(finder(nn)), "  g:"//str(apple_g(nn))
-      end subroutine
-      
-end
 
 function key2n(key) result(n)
    integer, intent(in) :: key(:)
@@ -432,14 +363,6 @@ end
 
 
 
-subroutine test_sorted()
-    integer, allocatable :: key(:)!, key2(:)
-    integer rank
-    key = [4,5,2,1,3,1,7,1,3,2,6,1]
-    rank = size(key)
-    print '('//str(rank)//'I2)', sorted(key)
-end subroutine
-
 
 pure function sorted(key) 
    ! given an unsorted key, returns surted key. 
@@ -461,53 +384,6 @@ pure function sorted(key)
       enddo
       sorted(i)=minimum
       sorted(minposi)=saveit
-   enddo
-end function
-
-subroutine test_tric_prod()
-    integer rank
-    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
-    print*, ''
-    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
-
-end subroutine
-
-function tric_prods(rank) result(prods)
-   integer rank, trilen, key(rank)
-   integer :: prods( ((rank+1)*(rank+2))/2 ), prod
-   integer i, j
-   
-   trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
-   key = 1
-   prods(1) = 1
-   
-   do i = 2,trilen
-   !print*, 2
-      
-      key = next(key,1)
-      
-      prod=1
-      do j = 1,rank
-        prod = prod*key(j)
-      enddo
-      
-      prods(i) =  prod
    enddo
 end function
 
@@ -614,29 +490,6 @@ function expand(tricorn, rank) result(linfull)
     
 end 
 
-subroutine test__expand_compress()
-    integer rank
-    real(dp) :: tricorn(10), full(3,3,3)!, linfu(3**3)
-    real(dp) :: tricorn4(15), full4(3,3,3,3)!, linfull4(3**4)!, linfu(3**3)
-    
-    rank = 3
-    tricorn = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0]
-    full = reshape(expand(tricorn,rank),shape(full),order=[3,1,2])
-    call printo(full,[2,1,3])
-    
-    
-    
-    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full,[3**rank]),rank)
-    
-    rank=4
-    tricorn4 = [1d0, 2d0, 3d0, 4d0, 5d0, 6d0, 7d0, 8d0, 9d0, 10d0,11d0,12d0,13d0,14d0,15d0]
-    full4 = reshape(expand(tricorn4,rank),shape(full4),order=[3,1,2,4])
-    call printo(full4,[1,2,3,4])
-    !linfull4 = reshape(full,[3**3])
-    print '('//str( triclen(rank) )//'f7.3)', compress(reshape(full4,[3**4]),rank)
-    
-    
-end subroutine
 
 pure function sumfacfac(u)
     !fourth row in pascal matrix ( for tricorn positions in polytensor)
@@ -698,15 +551,7 @@ function intff(aa,bb) result(cc)
     enddo
 end
 
-subroutine test_fac(k)
-integer k, i
-do i = 1, k
-  print*, fac(i)
-  enddo
-
-end
-
-function fac(inn) 
+function fac(inn) !short iteger factorial
     integer inn, i, fac
     fac=1
     do i = 1, inn
@@ -715,7 +560,7 @@ function fac(inn)
 
 end
 
-function lfac(inn) result(fac)
+function lfac(inn) result(fac) !long integer factorial
     integer*8 inn, i, fac
     fac=1
     do i = 1, inn
@@ -724,17 +569,22 @@ function lfac(inn) result(fac)
 
 end
 
+function vfac(vec) result(prod)
+    ! Returns the product of the factorials of the elements of an integer vector
+    integer prod, vec(:), i, j, si
+    si = size(vec)
+    prod = 1
+    do i = 1, si
+        do j = 2, vec(i)
+            prod = prod*j
+        enddo
+    enddo
+end function
 
-subroutine test_brakk
-    integer n, l
-    do n = 1, 20
-    do l = 1, n/2
-    print*, n,l, brakk(n,l), brakk_bad(n,l)
-    enddo
-    enddo
-end subroutine
+
 
 function vecbrakk(nn,ll) result(res)
+    ! Returns the product of the brakks (see 'brakk' funciton) of the elements of two same-length integer vectors
     integer nn(3), ll(3)
     integer res
     res = brakk(nn(1),ll(1)) * brakk(nn(2),ll(2)) * brakk(nn(3),ll(3)) 
@@ -767,120 +617,26 @@ end function
 
 
 
-subroutine test_nextpown!_apple
-  integer n(3), k
-  integer ind
-  
-  k = 4
-  n(1) = k
-  n(2) = 0
-  n(3) = 0
-  
-  do ind = 1,sumfac(k+1)
-     if(ind>1)call nextpown(n)
-     print'(3I2,2I5)',n,ind, apple_g(n)
-     enddo
-     
-end
-
 subroutine nextpown(nn)
-  integer, intent(inout) :: nn(3) 
-  integer a,b,c 
-  a=nn(1);b=nn(2);c=nn(3)
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-  nn = [a,b,c]
-end
-
-!subroutine nextpown(n)
-!  integer, intent(inout) :: n(3) 
-!  integer a,b,c 
-!  if (n(2)>0)then
-!    n(2)=n(2)-1
-!    n(3)=n(3)+1
-!  elseif (a>0)then
-!    n(1)=n(1)-1
-!    n(2)=n(3)+1
-!    n(3)=0
-!  endif
-!end
-
-subroutine test_next_pow_nl!_apple
-  integer n(3), k
-  integer ind
-  
-  k = 4
-  n(1) = k
-  n(2) = 0
-  n(3) = 0
-  
-  do ind = 1,sumfac(k+1)
-     if(ind>1)call nextpown(n)
-     print'(3I2,2I5)',n,ind, apple_g(n)
-     enddo
-     
+    ! Updates the argument to the next power vector in lex ordering
+    integer, intent(inout) :: nn(3) 
+    integer a,b,c 
+    a=nn(1);b=nn(2);c=nn(3)
+    if (b>0)then
+        b=b-1
+        c=c+1
+    elseif (a>0)then
+        a=a-1
+        b=c+1
+        c=0
+    endif
+    nn = [a,b,c]
 end
 
 
-                                    !subroutine main2; call print_trace_index_matrix(7); call test_nl; end
-                                    subroutine main2; call test_nl; end
-                                    
-
-
-subroutine test_nl
-    integer ll(3), nn(3),nn_2(3), n_2, l, it, numbers(100), key(3), ind, nrank, nlen
-    !integer i
-    logical proceed
-    
-    ! To investigate all the trace subtractions associated with one specific tensor entry
-    nrank = 10
-    
-    ! initial nkey & nkey/2
-    nn = [nrank,0,0]
-    
-    nlen = sumfac(nrank+1)
-    do ind = 1, nlen ! Go through all tensor entries
-        
-        if (ind>1) call nextpown(nn)
-        nn_2 = nn/2
-        n_2 = sum(nn_2)
-        
-        print*, ">>> Entry=["//str(nn,2)//"] index="//str(ind)//' finder(nn) = '//str(finder(nn))
-        print*, "     Half=["//str(nn_2,2)//"]"
-        
-        do l = 1, n_2 ! Increment the l-rank (the number of deltas)
-            call init_nl(nn_2,l,ll)
-            
-            print*, "    l="//str(l)//":"
-            
-            
-            proceed = .true.
-            it=0
-            do while (proceed) ! Go through all compatible ll-keys
-                it=it+1
-                key = nn - 2*ll
-                !print*, '       ll=['//str(ll,2)//']  finder(ll) = '//str(finder(ll))
-                print*, '      key=['//str(key,2)//']  finder(key) = '//str(finder(key))
-                call next_pow_nl(nn_2,ll,proceed)
-            enddo    
-            
-            !print*, "    # entries = "//str(it)
-            numbers(l)=it
-        enddo
-        print*, "<<< #entries = "//str(numbers(1:l-1),3)
-        print*, ""
-    enddo
-    !print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
-end subroutine
-
-subroutine init_nl(nn_2, l, ll)
-    
+subroutine init_pow_nl(nn_2, l, ll)
+    ! Returns the first l-vector given an n/2-vector
+    ! l-vector is the powers of delta; n-vector is the powers of xyz
     integer, intent(in)  :: nn_2(3), l
     integer, intent(out) :: ll(3)
     
@@ -930,93 +686,5 @@ subroutine next_pow_nl(nn_2,ll, proceed)
     ll = [a,b,c]
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-! bad but not yet trash !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-function brakk_bad(n,l) result(res)
-    integer,intent(in) :: n, l
-    integer n_2l, a,b,  i
-    integer*8 p1,p2
-    integer res
-    n_2l = n-2*l
-    b = max(l,n_2l)
-    a = min(l,n_2l)
-    
-    p1=1
-    p2=1
-    
-    do i = b+1,n
-     p1 = p1*i
-    enddo
-    
-    do i = 2, a
-     p2 = p2*i
-    enddo
-    
-    res = int(p1/p2)/2**l
-end function
-
-subroutine test_nextpow(k)
-  integer a,b,c, k
-  integer ind
-  
-  a=k
-  b=0
-  c=0
-  
-  do ind = 1,sumfac(k+1)
-     if(ind>1)call nextpow(a,b,c)
-     print'(3I2,I5)',a,b,c,ind
-     enddo
-     
-end
-subroutine nextpow(a,b,c)
-  integer a,b,c
-
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-end
-
-function nextpov(nn)
-  integer a,b,c, nn(3), nextpov(3)
-  a = nn(1)
-  b = nn(2)
-  c = nn(3)
-
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-  
-  nextpov(1) = a
-  nextpov(2) = b
-  nextpov(3) = c
-
-  
-end
 
 endmodule

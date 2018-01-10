@@ -21,7 +21,7 @@ module printer_mod
     
     ! Interface for an str() funciton like in python
     interface str
-        module procedure i2s, i2s_align, f2s, l2s, iv2s!, sp2s
+        module procedure i2s, i2s_align, f2s, l2s, iv2s!, iv2s_align!, sp2s
     end interface
     
     ! Private/Public
@@ -44,23 +44,53 @@ function i2s_align(inte, space) result(ch)
     integer, intent(in) ::  inte!, length
     integer, intent(in) :: space
     character(:), allocatable :: ch
+    character(50) temp1
     character(space) temp
-    write(temp,'(I'//i2s(space)//')') inte
-    ch = adjustr(temp)
+        
+    if(space>0)then
+        write(temp,'(I'//i2s(space)//')') inte
+        ch = adjustr(temp)
+    else
+        write(temp1,'(I50)') inte
+        ch = trim(adjustl(temp1))
+    endif
 end function
+
+!function iv2s_align(inte, a, b) result(ch)
+!    integer, intent(in) ::  inte(:), a, b
+!    character(:), allocatable :: ch
+!    character(100) temp
+!    integer i, si
+!    
+!    temp=""
+!    si = size(inte)
+!    do i = 1, si
+!        temp = trim(adjustl(temp))//" "//i2s(inte(i))
+!    enddo
+!    ch = temp!trim(adjustl(temp))
+!endfunction
+    
 
 
 
 function iv2s(int_vec,space) result(ch)
     integer, intent(in) ::  int_vec(:)
     integer, intent(in), optional :: space!, length
-    integer xspace
     character(:), allocatable :: ch
     character(1000) temp
-    xspace = 5
-    if(present(space)) xspace = space
-    write(temp,'(*(I'//i2s(xspace)//'))') int_vec
-    ch = trim(adjustl(temp))
+    integer i, si
+    
+    if(present(space) .and. space>0)then 
+        write(temp,'(*(I'//i2s(space)//'))') int_vec
+        ch = trim(adjustl(temp))
+    else
+        temp=""
+        si = size(int_vec)
+        do i = 1, si
+            temp = trim(adjustl(temp))//" "//i2s(int_vec(i))
+        enddo
+        ch = trim(adjustl(temp))
+    endif
 endfunction
 
 

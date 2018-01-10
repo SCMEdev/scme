@@ -1,3 +1,59 @@
+subroutine test_nextpow_v_wn(k)
+    integer a,b,c, k, nn(3) , nn2(3)
+    integer ind
+    
+    a=k
+    b=0
+    c=0
+    nn = [a,b,c]
+    nn2 = nn
+    
+    do ind = 1,sumfac(k+1)
+        if(ind>1)then 
+            call nextpow(a,b,c)
+            nn = nextpov(nn)
+            call nextpown(nn2)
+        endif
+        print*, "a,b,c:"//str([a,b,c])//", nn="//str(nn)//", nn2="//str(nn2)//",    index="//str(ind)
+    enddo
+     
+end
+
+subroutine nextpow(a,b,c)
+  integer a,b,c
+
+  if (b>0)then
+    b=b-1
+    c=c+1
+  elseif (a>0)then
+    a=a-1
+    b=c+1
+    c=0
+  endif
+end
+
+
+function nextpov(nn)
+  integer a,b,c, nn(3), nextpov(3)
+  a = nn(1)
+  b = nn(2)
+  c = nn(3)
+
+  if (b>0)then
+    b=b-1
+    c=c+1
+  elseif (a>0)then
+    a=a-1
+    b=c+1
+    c=0
+  endif
+  
+  nextpov(1) = a
+  nextpov(2) = b
+  nextpov(3) = c
+
+  
+end
 
 
 subroutine pascal_matrix(size)
@@ -327,4 +383,51 @@ end
 !      enddo
 !
 !end
+
+subroutine test_tric_prod()
+    integer rank
+    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', tric_prods(rank)
+    print*, ''
+    rank=1; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=2; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=3; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=4; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=5; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=6; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=7; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=8; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+    rank=9; print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', sorted(tric_prods(rank))
+
+end subroutine
+
+function tric_prods(rank) result(prods)
+   integer rank, trilen, key(rank)
+   integer :: prods( ((rank+1)*(rank+2))/2 ), prod
+   integer i, j
+   
+   trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
+   key = 1
+   prods(1) = 1
+   
+   do i = 2,trilen
+   !print*, 2
+      
+      key = next(key,1)
+      
+      prod=1
+      do j = 1,rank
+        prod = prod*key(j)
+      enddo
+      
+      prods(i) =  prod
+   enddo
+end function
 
