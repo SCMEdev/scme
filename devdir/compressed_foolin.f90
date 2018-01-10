@@ -17,21 +17,24 @@ subroutine print_trace_ind
     k = 7
     
     do i = 0, k, 2
-        print*, len00(i), len00(i+1), pos2-1, pos00(i)+1, pos00(i+1)+1
-        pos2(1) = pos2(1) + len00(i+0)
-        pos2(2) = pos2(2) + len00(i+1)
+        print*, len_(i), len_(i+1), pos2-1, pos_(i), pos_(i+1)
+        pos2(1) = pos2(1) + len_(i+0)
+        pos2(2) = pos2(2) + len_(i+1)
         
     enddo
-    print*, pos00
-    print*, len00
+    print*, "pos_: "//str(pos_)
+    print*, "pos_(0): "//str(pos_(0))
+    print*, len_(0:4)
     print*, (i,i=0,k)
+    print*, "pos(11): "//str(pos_(11))
+    print *, "sixe of gg: "//str(size(gg_))
 end subroutine
 
 
 subroutine main; ! MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
 call &
-!print_trace_ind 
-stupido
+print_trace_ind 
+!stupido
 end
 
 

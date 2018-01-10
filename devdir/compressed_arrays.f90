@@ -1,10 +1,11 @@
-module compressed_arrays
+module compressed_arrays 
 implicit none
 
 
 
 integer j1,j2, ii, matcol, matrow, icol, irow 
 integer, parameter :: matk = 7, matsize = (matk+1)*(matk+2)/2
+integer, parameter :: maxk = 19
 !integer, parameter :: sumfacv(matk+1) = [(ii*(ii+1)/2, ii = 1,matk+1)]
 
 
@@ -13,9 +14,12 @@ integer, parameter :: v3(matsize) = 2 *v2 !for trace matrix
 integer, parameter :: v4(matsize) = v2*v2 !for trace matrix
 
 
+integer, parameter :: pos_(0:maxk) = [(ii*(ii+1)*(ii+2)/6,ii=0,maxk  )]
+integer, parameter :: len_(0:maxk) = [(ii*(ii+1)/2,       ii=1,maxk+1)]
 
 
-!applequist g-function arrays. Create higher order arrays with "print_apple_g" in compressed_utils.f90
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Applequist g-function arrays. Create higher order arrays with "print_apple_g" in compressed_utils.f90
 integer, parameter :: g00(1) = [1]
 integer, parameter :: g01(3) = [1,1,1]
 integer, parameter :: g02(6) = [1,2,2,1,2,1]
@@ -37,14 +41,17 @@ integer, parameter :: g10(66) = [&
 90,10,1,10,45,120,210,252,210,120,45,10,1]
 
 
+integer, parameter :: gg10(286) = [g00,g01,g02,g03,g04,g05,g06,g07,g08,g09,g10] ! compiler bug? cannot put "pos_(11)" in initializer argument
+integer, parameter :: gg_(pos_(matk+1)) = gg10(1:pos_(matk+1))
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
-integer, parameter :: gg10(0:285) = [g00,g01,g02,g03,g04,g05,g06,g07,g08,g09,g10] 
 
 
 
 
-!Choose matrix. Create higher order matrix with "print_choose_matrix" in compressed_utils.f90
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Choose matrix. Create higher order matrix with "print_choose_matrix" in compressed_utils.f90
 integer, parameter :: choose_matrix(0:19,0:19) = reshape( [&
  1, 1,  1,  1,   1,    1,    1,    1,    1,    1,    1,    1,    1,    1,    1,   1,    1,    1,    1,    1,&
  1, 1,  2,  3,   4,    5,    6,    7,    8,    9,   10,   11,   12,   13,   14,  15,   16,   17,   18,   19,&
@@ -68,34 +75,25 @@ integer, parameter :: choose_matrix(0:19,0:19) = reshape( [&
  1,19,171,969,3876,11628,27132,50388,75582,92378,92378,75582,50388,27132,11628,3876,  969,  171,   19,    1 &
  ], shape(choose_matrix) )
 
-
-! matrix of: binaomial coefficients / pascal-triangle / choose 
-integer, parameter :: matchoo(0:matk,0:matk) = choose_matrix(0:matk,0:matk)
-
-!integer, parameter :: temp_position(0:10) = [0, 1, 4, 10, 20, 35, 56, 84, 120, 165, 220]
-integer, parameter :: pos00(0:matk+1) = [(ii*(ii+1)*(ii+2)/6,ii=0,matk+1)]-1
-integer, parameter :: len00(0:matk+1) = [(ii*(ii+1)/2,ii=1,matk+2)]
-
-integer, parameter :: gg(0:pos00(matk+1)) = gg10(0:pos00(matk+1))
+integer, parameter :: binc_(0:matk,0:matk) = choose_matrix(0:matk,0:matk)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
-
-
-
-integer, parameter :: matr(matsize,matsize) = reshape( [ &
+! 
+integer, parameter :: mm_(matsize,matsize) = reshape( [ &
                         ((matrow + matcol -1 + v2(matcol)*v2(matrow), matcol = 1,matsize), matrow = 1, matsize) &
-                        ], shape(matr) )
+                        ], shape(mm_) )
 
 integer, parameter :: tsize = (matk/2+1)*(matk/2+2)/2
 
-integer, parameter :: tmatr(matsize,tsize) = reshape([ &
+integer, parameter :: tmm_(matsize,tsize) = reshape([ &
                         (( (icol-1)*2 + v4(icol) + irow + (v3(icol))*(v2(irow)), icol = 1,tsize),irow=1,matsize) &
-                        ], shape(tmatr), order=[2,1])
+                        ], shape(tmm_), order=[2,1])
 
 
 private
-public matr, gg, pos00, len00, matchoo, tmatr 
+public mm_, gg_, pos_, len_, binc_, tmm_ ! Global variables marked with "_"
 
 
 end module

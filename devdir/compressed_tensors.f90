@@ -1,4 +1,4 @@
-module compressed_tensors
+module compressed_tensors 
 
 use printer_mod, only: str, printer, printo
 use compressed_utils, bad=>main, bad=>main2!,only: test_apple_g
@@ -7,13 +7,11 @@ use detrace_apple, bad=>main
 
 use calc_derivs, only:calcDv
 
-use compressed_arrays!, p_=>pos00, l_=>len00!, only: matr, gg, pos00, len00, matchoo, tmatr 
+use compressed_arrays!, p_=>pos_, l_=>len_!, only: mm_, gg_, pos_, len_, binc_, tmm_ 
 implicit none
 
 integer, parameter :: dp = kind(0d0)
 
-!integer i,j
-!integer, parameter :: mat(0:k,0:k) = reshape( [((1, i = 0,k),j=0,k)],shape(mat))
     
 
 contains !///////////////////////////////////////////////
@@ -30,15 +28,15 @@ testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0, 2d
 
 do k = 1,n/2
     tvecl = sumfac(n-2*k+1)
-    nt = len00(k)
-    g1 = pos00(k)+1
-    g2 = pos00(k+1)
+    nt = len_(k)
+    g1 = pos_(k)+1
+    g2 = pos_(k+1)
     print'(a,*(I4))', "g1,g2:", g1,g2
-    print'(a,*(I4))', "gg=", gg(g1:g2)
+    print'(a,*(I4))', "gg=", gg_(g1:g2)
     
     do i = 1, tvecl
-        tvec(i) = sum(testvec(tmatr(i,1:nt)*gg(g1:g2)))
-        print'(a,*(I3))',"trace index", tmatr(i,1:nt)
+        tvec(i) = sum(testvec(tmm_(i,1:nt)*gg_(g1:g2)))
+        print'(a,*(I3))',"trace index", tmm_(i,1:nt)
     enddo
     print'(a,*(f7.3))', "trace array", tvec(1:tvecl)    
 enddo
@@ -53,7 +51,9 @@ end subroutine
 
 
 subroutine main
-    call main2
+    !call main2
+    call all_tests
+    
     !call get_traces
     !call testing
     !call test_sumfac
@@ -69,13 +69,13 @@ subroutine main
     !
     !call test_mp_pot
     !
-    !call printo(tmatr,0)
-    !call printo(matr,0,0)
+    !call printo(tmm_,0)
+    !call printo(mm_,0,0)
     !
     !call printo([1,2,3,4,5,6,77,7777,777,9],0,0)
     !call test_intfac_ff
     
-    !print*, pos00+1
+    !print*, pos_+1
     !call test_hhh(3,3)
     !print*, ""
     !call subdiv_pow(4,3)
@@ -91,7 +91,7 @@ subroutine main
     !call print_product_index_matrix (6)
     
     !call test_matr(7)
-    !call printer(matr, 'matr',1)
+    !call printer(mm_, 'matr',1)
     !call test_apple_g
     
     !call test_rrpow
@@ -111,12 +111,74 @@ subroutine main
     
     !call pascal_matrix(10)
     !do i00 = 0,8
-    !  print*, sumfac(i00+1),len00(i00)
+    !  print*, sumfac(i00+1),len_(i00)
     !enddo
     
     
     
 end subroutine
+
+subroutine all_tests
+    !call get_traces
+    call test_sumfac
+    !call test_rpow
+    !call test_nextpow(7)
+    !call compow2(7)
+    !call subdiv_pow(5,5)
+    
+    
+    !call test_old_field
+    !call test_potgrad
+    !!call test_inner
+    !
+    !call test_mp_pot
+    !
+    !call printo(tmm_,0)
+    !call printo(mm_,0,0)
+    !
+    !call printo([1,2,3,4,5,6,77,7777,777,9],0,0)
+    !call test_intfac_ff
+    
+    !print*, pos_+1
+    !call test_hhh(3,3)
+    !print*, ""
+    !call subdiv_pow(4,3)
+    !print*, ""
+    !call subdiv_pow(3,4)
+    !print*,"fac 5 / 2 3", fac(5)/( fac(3)*fac(2))
+    !call test_factorial(5)
+    
+    !call test_choose
+    !call test_matri(7)
+    
+    !print*, ""
+    !call print_product_index_matrix (6)
+    
+    !call test_matr(7)
+    !call printer(mm_, 'matr',1)
+    !call test_apple_g
+    
+    !call test_rrpow
+    !print*,""
+    !call test_rrr
+    
+    !call test_next_rev_key2n(4)
+    !integer i, j
+    !do i = 1,10
+    !  do j = 1,10
+    !    write(*,'(I6,a)', advance="no") choose(i,j),", "
+    !    enddo
+    !  print*, ""
+    !  enddo
+    
+    !call h_testing
+    
+    !call pascal_matrix(10)
+    !do i00 = 0,8
+    !  print*, sumfac(i00+1),len_(i00)
+    !enddo
+end subroutine
+
 
 ! Testing /////////////////////////////////////////////////////
 
@@ -177,18 +239,18 @@ do i = 1, sfii
       !write(*,'(I3)', advance="no") hh(a1,b1,c1, a2,b2,c2)
       !write(*,'(*(I3))') hh(a1,b1,c1, a2,b2,c2), &
       !                 ( apple_g([a1,b1,c1])*apple_g([a2,b2,c2])*choose(ii+kii,ii) )/apple_g([aa,bb,cc]), &
-      !                 ( gg(pos00(ii)+i)*gg(pos00(kii)+j)*choose(ii+kii,ii) ) / gg(pos00(ii+kii) + matr(i,j)), & 
+      !                 ( gg(pos_(ii)+i)*gg(pos_(kii)+j)*choose(ii+kii,ii) ) / gg(pos_(ii+kii) + matr(i,j)), & 
       !                 00,&
       !                 apple_g([a1,b1,c1]), apple_g([a2,b2,c2]), choose(ii+kii,ii), apple_g([aa,bb,cc]), &
       !                 00, &
-      !                 gg(pos00(ii)+i), gg(pos00(kii)+j), choose(ii+kii,ii), gg(pos00(ii+kii) + matr(i,j)), & 
+      !                 gg(pos_(ii)+i), gg(pos_(kii)+j), choose(ii+kii,ii), gg(pos_(ii+kii) + matr(i,j)), & 
       !                 00
       
       !write(*,'(I6)', advance="no") ( apple_g([a1,b1,c1])*apple_g([a2,b2,c2])*choose(ii+kii,ii) )/apple_g([aa,bb,cc])
-      !write(*,'(I6)', advance="no") ( gg(pos00(ii)+i)*gg(pos00(kii)+j)*choose(ii+kii,ii) ) / gg(pos00(ii+kii) + matr(i,j))
+      !write(*,'(I6)', advance="no") ( gg(pos_(ii)+i)*gg(pos_(kii)+j)*choose(ii+kii,ii) ) / gg(pos_(ii+kii) + matr(i,j))
       
       
-      !write(*,'(I6)', advance="no") ( gg(pos00(ii)+i)*gg(pos00(kii)+j)*choose(ii+kii,ii) ) / gg(pos00(ii+kii) + matr(i,j)) &
+      !write(*,'(I6)', advance="no") ( gg(pos_(ii)+i)*gg(pos_(kii)+j)*choose(ii+kii,ii) ) / gg(pos_(ii+kii) + matr(i,j)) &
       !                              - ( apple_g([a1,b1,c1])*apple_g([a2,b2,c2])*choose(ii+kii,ii) )/apple_g([aa,bb,cc])
       
       write(*,'(I6)', advance="no") hh(a1,b1,c1, a2,b2,c2) - hhh(i,j,ii,kii)
@@ -217,13 +279,13 @@ end
 subroutine test_hhh(k1, k2)
     integer i1, i2, k1,k2
     integer gp1, gp2, gp12, h, ch
-    gp1 = pos00(k1)
-    gp2 = pos00(k2)
-    gp12 = pos00(k1+k2)
+    gp1 = pos_(k1)
+    gp2 = pos_(k2)
+    gp12 = pos_(k1+k2)
     ch = choose(k1+k2,k1)
     do i1 = 1, sumfac(k1+1)
       do i2 = 1, sumfac(k2+1)
-        h = ( gg(gp1+i1)*gg(gp2+i2)*ch ) / gg(gp12 + matr(i1,i2))
+        h = ( gg_(gp1+i1)*gg_(gp2+i2)*ch ) / gg_(gp12 + mm_(i1,i2))
         write(*,'((I4))', advance="no") h-hhh(i1,i2,k1,k2)
         enddo
       print*,""
@@ -234,10 +296,10 @@ function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     integer, intent(in) :: i,j, ki,kj
     integer kij, hhh, cc, gi,gj,gij
     kij = ki+kj
-    cc = matchoo(kij,ki)
-    gi = gg(pos00(ki)+i)
-    gj = gg(pos00(kj)+j) 
-    gij = gg(pos00(kij) + matr(i,j))
+    cc = binc_(kij,ki)
+    gi = gg_(pos_(ki)+i)
+    gj = gg_(pos_(kj)+j) 
+    gij = gg_(pos_(kij) + mm_(i,j))
     hhh = (gi*gj*cc) / gij
     
 end
@@ -412,12 +474,12 @@ function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
    maxi = (kqr+1)*(kqr+2)/2
    maxj = (kr+1)*(kr+2)/2
    
-   gplace = pos00(kr)
+   gplace = pos_(kr)
    
    vqr(:) = 0
    do i = 1, maxi
      do j = 1,maxj
-       vqr(i) = vqr(i) + vq(matr(i,j)) * vr(j) * gg(gplace+j)
+       vqr(i) = vqr(i) + vq(mm_(i,j)) * vr(j) * gg_(gplace+j)
        enddo
        enddo
    
@@ -531,26 +593,26 @@ function symouter(k1,k2,v1,v2) result(vout)
     logical pri
     
     k12 = k1+k2
-    cho = matchoo(k12,k1)
+    cho = binc_(k12,k1)
     
     pri=.false.!.true.
     if(pri)print*, "choose", cho
     
-    pi  = pos00(k1)
-    pj  = pos00(k2)
-    pij = pos00(k12)
+    pi  = pos_(k1)
+    pj  = pos_(k2)
+    pij = pos_(k12)
     if(pri)print*, "pi, pj, pij", pi, pj, pij
     
     vout=0
     
-    do i = 1, len00(k1)!sumfac(k1+1)
-    do j = 1, len00(k2)!sumfac(k2+1)
+    do i = 1, len_(k1)!sumfac(k1+1)
+    do j = 1, len_(k2)!sumfac(k2+1)
         
-        mij = matr(i,j)
+        mij = mm_(i,j)
         
-        gi  = gg(pi + i)
-        gj  = gg(pj + j)
-        gij = gg(pij + mij)
+        gi  = gg_(pi + i)
+        gj  = gg_(pj + j)
+        gij = gg_(pij + mij)
         
         !if(pri)print*,  pi + i, pj + j, pij + mij
         !if(pri)print*,  'gi, gj, gij', gi, gj, gij
@@ -637,7 +699,7 @@ subroutine test_potgrad
     integer, parameter :: kmax=5, nmax = 3
     integer i
     real(dp) rr(3) 
-    real(dp) :: rrr(0:pos00(kmax+1)), quad(6), octa(10), rnorm, rsqe
+    real(dp) :: rrr(pos_(kmax+1)), quad(6), octa(10), rnorm, rsqe
     real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
     real(dp) :: dd(3), dr, d2v(3,3)
     integer be, ga
@@ -689,7 +751,7 @@ subroutine test_potgrad
     
     
     
-    print*, 'above, TEST POTGRAD-----------------------------------------------'
+    print*, 'ABOVE: TEST POTGRAD-----------------------------------------------'
 end
 
 subroutine test_mp_pot
@@ -704,14 +766,14 @@ subroutine test_mp_pot
     integer, parameter :: kmax=6, nmax = 5
     integer i
     real(dp) rr(3) 
-    real(dp) :: rrr(0:pos00(kmax+1)), rnorm, rsqe
+    real(dp) :: rrr(pos_(kmax+1)), rnorm, rsqe
     real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
     real(dp) :: dd(3), dr, cq(6), co(10), ch(15)
     !real(dp) :: quad(6), octa(10),
     
     integer n,k
     integer p1,p2,q1,q2
-    real(dp) :: phi_old(pos00(6)),phi(pos00(6)), qq(pos00(5))
+    real(dp) :: phi_old(pos_(6)),phi(pos_(6)), qq(pos_(5))
     
     
     print*, size(phi), sumfacfac(6), 3+6+10+21+15, size(qq), sumfacfac(5)
@@ -738,27 +800,27 @@ subroutine test_mp_pot
     
     
     qq = 0
-    qq = [dd,cq,co,ch]
+    qq = [0d0,dd,cq,co,ch]
     
     !print*,"q-thigs"
     !n=1
-    !q1 = pos00(n)+1
-    !q2 = pos00(n+1)
+    !q1 = pos_(n)+1
+    !q2 = pos_(n+1)
     !print'(*(I3))',n, q1,q2
     !
     !qq(q1:q2) = dd
     !
     !n=2
-    !q1 = pos00(n)+1
-    !q2 = pos00(n+1)
+    !q1 = pos_(n)+1
+    !q2 = pos_(n+1)
     !print'(*(I3))',n, q1,q2
     !
     !qq(q1:q2) = cq
     
     
     print*
-    print'(*(f10.4))', qq
-    print*, 'size(qq)',size(qq), 3+6+10+15
+    print'(*(f10.4))', qq(2:)
+    print*, 'size(qq)',size(qq), 1+3+6+10+15
     
     call  vector_powers(kmax,rr,rrr)
     
@@ -804,34 +866,37 @@ subroutine test_mp_pot
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     
+    phi_old(1) = 0
+    phi(1) = 0
+    
     
     k=1
-    p1 = pos00(k)+1
-    p2 = pos00(k+1)
+    p1 = pos_(k)+1
+    p2 = pos_(k+1)
     print'(6(I3))',k, p1,p2
     phi_old(p1:p2) = d1v(:,2)
     
     k=2
-    p1 = pos00(k)+1
-    p2 = pos00(k+1)
+    p1 = pos_(k)+1
+    p2 = pos_(k+1)
     print'(6(I3))',k, p1,p2
     phi_old(p1:p2) = opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
     
     k=3
-    p1 = pos00(k)+1
-    p2 = pos00(k+1)
+    p1 = pos_(k)+1
+    p2 = pos_(k+1)
     print'(6(I3))',k, p1,p2
     phi_old(p1:p2) = opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
     
     k=4
-    p1 = pos00(k)+1
-    p2 = pos00(k+1)
+    p1 = pos_(k)+1
+    p2 = pos_(k+1)
     print'(6(I3))',k, p1,p2
     phi_old(p1:p2) = opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
     
     k=5
-    p1 = pos00(k)+1
-    p2 = pos00(k+1)
+    p1 = pos_(k)+1
+    p2 = pos_(k+1)
     print'(6(I3))',k, p1,p2
     phi_old(p1:p2) = opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
     
@@ -840,11 +905,11 @@ subroutine test_mp_pot
     
     phi=0
     do n = 1, 4
-        q1 = pos00(n)+1
-        q2 = pos00(n+1)
+        q1 = pos_(n)+1
+        q2 = pos_(n+1)
             do k = 1,5
-                p1 = pos00(k)+1
-                p2 = pos00(k+1)
+                p1 = pos_(k)+1
+                p2 = pos_(k+1)
                 print'(6I3)',n,k,q1,q2, p1,p2
                 phi(p1:p2) = phi(p1:p2) + opdetr(potgrad(qq(q1:q2),n,k,rinvv,rrr),k)
             enddo
@@ -853,9 +918,9 @@ subroutine test_mp_pot
     
     
     
-    print'(a,*(g30.15))', 'phi    ',phi
-    print'(a,*(g30.15))', 'phi_old',phi_old
-    print'(a,*(g30.15))', 'phi+old',phi_old+phi
+    print'(a,*(g30.15))', 'phi    ',phi(2:)
+    print'(a,*(g30.15))', 'phi_old',phi_old(2:)
+    print'(a,*(g30.15))', 'phi+old',phi_old(2:)+phi(2:)
     
     
     
@@ -927,14 +992,14 @@ subroutine test_mp_pot
     
 
     
-   print*, 'ABOVE: dip: grad vs old --------------------------'
+   print*, 'ABOVE: test_mp_pot  --------------------------'
      
 end
 
 
 
 function potgrad(qq,nn,kk,rpows,rrr) 
-    real(dp), intent(in) :: qq((nn+1)*(nn+2)/2),rpows(:),rrr(0:)
+    real(dp), intent(in) :: qq((nn+1)*(nn+2)/2),rpows(:),rrr(:)
     integer, intent(in) :: nn, kk
     real(dp) potgrad((kk+1)*(kk+2)/2)
     integer i!,j
@@ -948,10 +1013,10 @@ function potgrad(qq,nn,kk,rpows,rrr)
         k_i = kk-i
         n_i = nn-i
         
-        k1 = pos00(k_i)+1
-        k2 = pos00(k_i+1)
-        n1 = pos00(n_i)+1
-        n2 = pos00(n_i+1)
+        k1 = pos_(k_i)+1
+        k2 = pos_(k_i+1)
+        n1 = pos_(n_i)+1
+        n2 = pos_(n_i+1)
         
         potgrad(:) = potgrad(:) &
                     + (-1)**sig * intfac(nn,n_i) * intff(kni2-1,2*nn-1) * rpows(kni2+1) & !why +nn in first term???
@@ -959,7 +1024,7 @@ function potgrad(qq,nn,kk,rpows,rrr)
     enddo
     
 end
-  !integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use pos00
+  !integer, parameter :: rpos(8) = [1,      4,     10,     20,     35,     56,     84,    120] ! remove this, use pos_
     
   !print*, 'rrr(0) i potgrad',rrr(0)
     
@@ -988,7 +1053,7 @@ subroutine test_matr(nn)
     if(nn>7)stop"rank cant be larger than 7 in matr intdex matrix"
     maxi = sumfac(nn)
     do i = 1, maxi
-      print'(28I3)', matr(i,1:maxi)
+      print'(28I3)', mm_(i,1:maxi)
     enddo
 end subroutine
 
@@ -1009,9 +1074,9 @@ end
 
 subroutine test_rrr
     integer, parameter :: k=5
-    real(dp) :: rrr(0:pos00(k+1)), rr(3), rrr3(10), rrr2(6), rrr5(len00(5)), rrr32(len00(5))
-    real(dp) :: rrr4(len00(4)), rrr31(len00(4)), rrr22(len00(4)), rrr21(len00(3))
-    integer i, p1, p2, p3, p4
+    real(dp) :: rrr(pos_(k+1)), rr(3), rrr3(10), rrr2(6), rrr5(len_(5)), rrr32(len_(5))
+    real(dp) :: rrr4(len_(4)), rrr31(len_(4)), rrr22(len_(4)), rrr21(len_(3))
+    integer i, p1, p2
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
     call random_number(rr)
     rr = [1d0,2d0,3d0]
@@ -1025,23 +1090,23 @@ subroutine test_rrr
     
     
     i = 2
-    p1 = pos00(i)+1
-    p2 = pos00(i+1)
+    p1 = pos_(i)+1
+    p2 = pos_(i+1)
     rrr2=rrr(p1:p2)
     
     i = 3
-    p1 = pos00(i)+1
-    p2 = pos00(i+1)
+    p1 = pos_(i)+1
+    p2 = pos_(i+1)
     rrr3=rrr(p1:p2)
     
     i = 4
-    p1 = pos00(i)+1
-    p2 = pos00(i+1)
+    p1 = pos_(i)+1
+    p2 = pos_(i+1)
     rrr4=rrr(p1:p2)
     
     i=5
-    p1 = pos00(i)+1
-    p2 = pos00(i+1)
+    p1 = pos_(i)+1
+    p2 = pos_(i+1)
     
     rrr5=rrr(p1:p2)
     
@@ -1071,18 +1136,18 @@ subroutine vector_powers(k,r,rr)
     ! rr     output tricorn-ordered polytensor
     integer, intent(in)   :: k
     real(dp), intent(in)  :: r(3)
-    real(dp), intent(out) :: rr(0:sumfacfac(k+1)-1)
+    real(dp), intent(out) :: rr(sumfacfac(k+1)-1)
     integer pl,cl,px,cx,i,pz,cz, py, cy
     
-    rr(0) = 1
-    rr(1:3) = r(:)
+    rr(1) = 1
+    rr(2:4) = r(:)
     
     do i = 2,k
        ! p=previous, c=current, l=length
        ! x, y, z refer to the position of the x-only, y-only, z-only rows. 
-       px = pos00(i-1)+1 !simfacfac(i-1) !+1 because interval indexing, no index addition
-       pl = len00(i-1) !sumfac(i)
-       cl = len00(i) ! sumfac(i+1)
+       px = pos_(i-1)+1 !simfacfac(i-1) !+1 because interval indexing, no index addition
+       pl = len_(i-1) !sumfac(i)
+       cl = len_(i) ! sumfac(i+1)
        
        cx = px+pl
        pz = cx-1
