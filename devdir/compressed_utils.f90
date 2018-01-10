@@ -461,13 +461,13 @@ function compress(linfull,rank) result(tricorn)
     key = 1
     tricorn(1) = linfull(1)
     do i = 2,trilen
-      key = next(key,1)
-      
-      ifull = 1
-      do j = 1,rank
-        ifull = ifull + (key(j)-1)*3**(j-1) 
-      enddo
-      tricorn(i) = linfull(ifull)
+        key = next(key,1)
+        
+        ifull = 1
+        do j = 1,rank
+            ifull = ifull + (key(j)-1)*3**(j-1) 
+        enddo
+        tricorn(i) = linfull(ifull)
     enddo
 end 
 
@@ -482,10 +482,10 @@ function expand(tricorn, rank) result(linfull)
     linfull(1) = tricorn(1)
     
     do i = 2,3**rank 
-      key = next(key,0)
-      nn = key2n(key)
-      tri_ind = finder(nn)
-      linfull(i) = tricorn(tri_ind)
+        key = next(key,0)
+        nn = key2n(key)
+        tri_ind = finder(nn)
+        linfull(i) = tricorn(tri_ind)
     enddo
     
 end 

@@ -103,39 +103,30 @@ function symouter(k1,k2,v1,v2) result(vout)
     integer i, j
     integer gi,gj,gij, k12, pi, pj, pij, mij, cho
     
-    logical pri
     
     k12 = k1+k2
     cho = binc_(k12,k1)
     
-    pri=.false.!.true.
-    if(pri)print*, "choose", cho
     
     pi  = pos_(k1)
     pj  = pos_(k2)
     pij = pos_(k12)
-    if(pri)print*, "pi, pj, pij", pi, pj, pij
     
     vout=0
     
-    do i = 1, len_(k1)!sumfac(k1+1)
-    do j = 1, len_(k2)!sumfac(k2+1)
-        
-        mij = mm_(i,j)
-        
+    do i = 1, len_(k1)
         gi  = gg_(pi + i)
-        gj  = gg_(pj + j)
-        gij = gg_(pij + mij)
-        
-        !if(pri)print*,  pi + i, pj + j, pij + mij
-        !if(pri)print*,  'gi, gj, gij', gi, gj, gij
-        
-        vout(mij) = vout(mij) + v1(i)*v2(j) * (gi*gj*cho)/gij
-        
-        if(pri)print*,  'i,j , v1(i), v2(j), h',i,j, v1(i), v2(j), (gi*gj*cho)/gij
-        
+        do j = 1, len_(k2)
+            
+            mij = mm_(j,i)!faster order, symmetric anyway
+            
+            gj  = gg_(pj + j)
+            gij = gg_(pij + mij)
+            
+            vout(mij) = vout(mij) + v1(i)*v2(j) * (gi*gj*cho)/gij
+            
         enddo
-        enddo
+    enddo
     
 end
 
