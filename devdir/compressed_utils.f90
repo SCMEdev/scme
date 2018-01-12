@@ -345,12 +345,28 @@ subroutine print_traces(rank)
             
         
     enddo
+    print*, "ABOVE: print_traces ---------------------------------------"
 end subroutine
     
 
 
+subroutine test_polyfinder
+integer nn(3), i, n, it
+it = 0
+print*, "key, pos, finder, polyf, it, polyf-it "
+do n = 0, 7
+    nn=[n,0,0]
+    do i = 1, len_(n)
+        if (i>1)call nextpown(nn)
+        it = it+1
+        print'(a,*(I4))'," ["//str(nn)//"]",pos_(n), finder(nn), polyfind(nn), it, polyfind(nn)-it
+    enddo
+enddo
+print*, str(pos_)
+end
+
 function finder(n) result(row)
-   ! Given nx,ny,nz, returns corresponding row in tricorn vector. 
+   ! Given nx,ny,nz, returns corresponding row in tricorn _vector_. 
    integer n(3), row, n23 !rank, i
    
    n23 = n(2)+n(3)
@@ -359,6 +375,18 @@ function finder(n) result(row)
    !do i = 1,rank - n(1) !addition factorial
    !  row = row + i
    !enddo
+end
+
+function polyfind(nn) result(row)
+   ! Given nx,ny,nz, returns corresponding row in tricorn _polytensor_. 
+   integer nn(3), row, n32, n321 !rank, i
+   
+   n32 = nn(2)+nn(3)
+   row = 1 + nn(3) + len_(n32-1)
+   
+   n321 = n32+nn(1)
+   row = row + pos_(n321)
+   
 end
 
 
@@ -615,6 +643,18 @@ function brakk(n,l) result(p)
     
 end function
 
+subroutine nextpow(a,b,c)
+  integer a,b,c
+
+  if (b>0)then
+    b=b-1
+    c=c+1
+  elseif (a>0)then
+    a=a-1
+    b=c+1
+    c=0
+  endif
+end
 
 
 subroutine nextpown(nn)

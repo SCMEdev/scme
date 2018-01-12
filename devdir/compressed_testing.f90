@@ -11,12 +11,21 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
-all_tests
+!test_polyfinder
+test_detracer
+!all_tests
+!get_traces !-----------
+!call &
+!test_brakk
+!print_traces(5)
+!print_trace_keys
+!test_intfac_ff
 end subroutine
 
 
 subroutine all_tests
-    call get_traces
+    
+    !call get_traces
     call test_sumfac
     !call test_nextpow(7)
     !call test_nextpow_v_wn(10)
@@ -32,7 +41,7 @@ subroutine all_tests
     call test_brakk
     call test_nextpown
     call test_next_pown
-    call test_nl
+    call print_trace_keys
     
     call h_testing
     call test_hhh(3,4)
@@ -61,9 +70,9 @@ subroutine all_tests
     
     call test_rrr
     
+    call test_polyfinder
     
     
-    print*, "hej"
     print*, '------------------------------------------------------------'
     print*, 'ABOVE: all_tests -------------------------------------------'
     print*, '------------------------------------------------------------'
@@ -272,53 +281,6 @@ subroutine test_next_pown!_nl!_apple
     print*, 'ABOVE: test_next_pown -------------------------------------------'
 end
 
-subroutine test_nl
-    integer ll(3), nn(3),nn_2(3), n_2, l, it, numbers(100), key(3), ind, nrank, nlen
-    !integer i
-    logical proceed
-    
-    ! To investigate all the trace subtractions associated with one specific tensor entry
-    nrank = 10
-    
-    ! initial nkey & nkey/2
-    nn = [nrank,0,0]
-    
-    nlen = sumfac(nrank+1)
-    do ind = 1, nlen ! Go through all tensor entries
-        
-        if (ind>1) call nextpown(nn)
-        nn_2 = nn/2
-        n_2 = sum(nn_2)
-        
-        print*, ">>> Entry=["//str(nn,2)//"] index="//str(ind)//' finder(nn) = '//str(finder(nn))
-        print*, "     Half=["//str(nn_2,2)//"]"
-        
-        do l = 1, n_2 ! Increment the l-rank (the number of deltas)
-            call init_pow_nl(nn_2,l,ll)
-            
-            print*, "    l="//str(l)//":"
-            
-            
-            proceed = .true.
-            it=0
-            do while (proceed) ! Go through all compatible ll-keys
-                it=it+1
-                key = nn - 2*ll
-                !print*, '       ll=['//str(ll,2)//']  finder(ll) = '//str(finder(ll))
-                print*, '      key=['//str(key,2)//']  finder(key) = '//str(finder(key))
-                call next_pow_nl(nn_2,ll,proceed)
-            enddo    
-            
-            !print*, "    # entries = "//str(it)
-            numbers(l)=it
-        enddo
-        print*, "<<< #entries = "//str(numbers(1:l-1),3)
-        print*, ""
-    enddo
-    !print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
-    print*, "ABOVE: test_nl ----------------------------------------------------------------------"
-end subroutine
-
 
 subroutine test_subdiv_pow_h(ii,kii)
     integer ii, kii
@@ -394,6 +356,29 @@ end
 
 
 ! TENSORS __________________________________________________________________________________________________________________________
+subroutine test_detracer
+    integer, parameter :: n = 5
+    real(dp) ::  compvec(len_(n)), AA(len_(n)),newvec(len_(n))
+    
+
+    !testvec = [1,0,0,2,0,3]
+    
+    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0 ]
+    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0 ]
+    !testvec = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0]/10d0
+    AA = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0,16d0,17d0,18d0,19d0,20d0,21d0]/10d0
+
+    newvec = detracer(AA,n)
+    
+    
+    compvec = opdetr(AA,n)
+    print'(a,*(f10.2))', 'testvec', AA
+    print'(a,*(f10.2))', 'newvec ', newvec
+    print'(a,*(f10.2))', 'compvec', compvec
+    print'(a,*(f10.2))', 'frac   ', newvec/compvec
+    print*, "ABOVE: test_detracer ---------------------------------------"
+
+end
 
 
 subroutine h_testing

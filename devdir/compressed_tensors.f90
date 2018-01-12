@@ -22,32 +22,128 @@ end subroutine
 
 
 
-subroutine get_traces
-    integer k,n, i, tvecl, nt, g1,g2
-    real(dp) :: testvec(21),tvec(1000)
-    n = 5
-    
-    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0 ]
-    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0 ]
-    testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0, 2d0, 4d0, 3d0, 1d0, 5d0, 6d0 ]
-    
-    do k = 1,n/2
-        tvecl = sumfac(n-2*k+1)
-        nt = len_(k)
-        g1 = pos_(k)+1
-        g2 = pos_(k+1)
-        print'(a,*(I4))', "g1,g2:", g1,g2
-        print'(a,*(I4))', "gg=", gg_(g1:g2)
-        
-        do i = 1, tvecl
-            tvec(i) = sum(testvec(tmm_(i,1:nt)*gg_(g1:g2)))
-            print'(a,*(I3))',"trace index", tmm_(i,1:nt)
-        enddo
-        print'(a,*(f7.3))', "trace array", tvec(1:tvecl)    
-    enddo
-    
-end subroutine
 
+
+function detracer(AA,n) result (newvec)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+    integer, intent(in) :: n
+    real(dp), intent(in)  :: AA(len_(n))
+    real(dp) :: newvec(len_(n)), tvec(1000)
+    real(dp) su
+    
+    integer g1,g2, cols, rows
+    integer l1,l2,l3,l32, t1, ti
+    
+    integer l, i
+    integer m, mm(3), br3, br32, br, n1,n2,n3
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    tvec=0
+    do l = 0,n/2 !fill in the trace-arrays (polytensor)
+        m = n-2*l        !rank of trace
+        rows = len_(m)   !lenght of trace (sub-)array
+        t1 = pos_(m)     !position in trace-polytensor
+        
+        cols = len_(l)  !first entries of tm-row that sample A
+        
+        g1 = pos_(l)+1  !
+        g2 = pos_(l+1)  !section of apple-g polytensor
+        
+        
+        do i = 1, rows !over rows of trace-index-matrix (tm)
+            
+            tvec(t1+i) = dot_product(AA(tmm_(i,1:cols)), gg_(g1:g2)) !tm-row * apple-g
+            
+        enddo
+        !print'(a,*(f7.3))', "partial trace array", tvec(t1+1:t1+rows)    
+        
+    enddo
+
+    !print'(a,*(f7.3))', "full trace array",tvec(1:pos_(n+1)) !float måste ha en rutin !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    n1 = n; n2 = 0; n3 = 0
+    do i = 1, len_(n)
+        if(i>1)call nextpow(n1,n2,n3)
+        
+        su = 0
+        do l3 = 0, n3/2
+            br3 = brakk(n3,l3)
+            mm(3) = n3-2*l3
+            
+            do l2 = 0, n2/2
+                br32 = br3 * brakk(n2,l2)
+                l32 = l3+l2
+                mm(2) = n2-2*l2
+                
+                do l1 = 0, n1/2
+                    br = br32 * brakk(n1,l1)
+                    l = l32+l1
+                    mm(1) = n1-2*l1
+                    
+                    
+                    ti = polyfind(mm)!finder(nn-2*ll)
+                    su = su + (-1)**l * intff(2*(n-l)-1,1) * br *  tvec(ti)
+                enddo
+            enddo
+        enddo
+        
+        newvec(i) = su
+        
+    enddo
+    newvec = newvec/dble(intff(2*n-1,1))
+    
+    
+
+end
+
+
+subroutine print_trace_keys
+    integer ll(3), nn(3),nn_2(3), n_2, l, it, numbers(100), key(3), ind, nrank, nlen
+    !integer i
+    logical proceed
+    
+    ! To investigate all the trace subtractions associated with one specific tensor entry
+    nrank = 10
+    
+    ! initial nkey & nkey/2
+    nn = [nrank,0,0]
+    
+    nlen = sumfac(nrank+1)
+    do ind = 1, nlen ! Go through all tensor entries
+        
+        if (ind>1) call nextpown(nn)
+        nn_2 = nn/2
+        n_2 = sum(nn_2)
+        
+        print*, ">>> Entry=["//str(nn,2)//"] index="//str(ind)//' finder(nn) = '//str(finder(nn))
+        print*, "     Half=["//str(nn_2,2)//"]"
+        
+        do l = 1, n_2 ! Increment the l-rank (the number of deltas)
+            call init_pow_nl(nn_2,l,ll)
+            
+            print*, "    l="//str(l)//":"
+            
+            
+            proceed = .true.
+            it=0
+            do while (proceed) ! Go through all compatible ll-keys
+                it=it+1
+                key = nn - 2*ll
+                !print*, '       ll=['//str(ll,2)//']  finder(ll) = '//str(finder(ll))
+                print*, '      key=['//str(key,2)//']  finder(key) = '//str(finder(key))
+                call next_pow_nl(nn_2,ll,proceed)
+            enddo    
+            
+            !print*, "    # entries = "//str(it)
+            numbers(l)=it
+        enddo
+        print*, "<<< #entries = "//str(numbers(1:l-1),3)
+        print*, ""
+    enddo
+    !print*, "choices "//str( choose(n_2-l,l)/fac(ll(1))/fac(ll(2))/fac(nn_2(3)) )
+    print*, "ABOVE: test_nl ----------------------------------------------------------------------"
+end subroutine
 
 
 

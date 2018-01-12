@@ -1,3 +1,205 @@
+subroutine detracing_old
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer l, i, nn(3), ll(3)
+ !   real(dp) :: testvec(21), newvec(21), compvec(21), tvec(1000)
+    real(dp) su
+    
+        integer, parameter :: n = 5
+    !real(dp) :: testvec(21), newvec(21), compvec(21), tvec(1000)
+    real(dp) :: testvec(len_(n)), newvec(len_(n)), compvec(len_(n)), tvec(1000)
+
+    
+    !first implementation
+    integer g1,g2, cols, rows, key(3), nh, nnh(3), tpos, t1, n_2l
+    logical proceed
+    
+    !real(dp) :: testvec(15), newvec(15), compvec(15), tvec(1000)
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    
+    !testvec = [1,0,0,2,0,3]
+    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0 ]
+    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0 ]
+    !testvec = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0]/10d0
+    testvec = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0,16d0,17d0,18d0,19d0,20d0,21d0]/10d0
+    
+    tvec=0
+    
+    do l = 0,n/2 !fill in the trace-arrays (polytensor)
+        n_2l = n-2*l        !rank of trace
+        rows = len_(n_2l)   !lenght of trace (sub-)array
+        t1 = pos_(n_2l)     !position in trace-polytensor
+        
+        cols = len_(l)  !first entries of tm-row that sample A
+        
+        g1 = pos_(l)+1  !
+        g2 = pos_(l+1)  !section of apple-g polytensor
+        
+        print*, "l = "//str(l)
+        print'(a,*(I4))', "g1,g2:", g1,g2
+        print'(a,*(I4))', "gg=", gg_(g1:g2)
+        
+        do i = 1, rows !over rows of trace-index-matrix (tm)
+            
+            tvec(t1+i) = dot_product(testvec(tmm_(i,1:cols)), gg_(g1:g2)) !tm-row * apple-g
+            print'(a,*(I3))',"trace index  ", tmm_(i,1:cols)
+            print'(a,*(f7.3))',"trace vallues", testvec(tmm_(i,1:cols))
+            
+            !print'(a,*(I3))',"apple-g num", gg_(g1:g2)
+        enddo
+        print'(a,*(f7.3))', "partial trace array", tvec(t1+1:t1+rows)    
+        
+    enddo
+    print'(a,*(f7.3))', "full trace array",tvec(1:pos_(n+1)) !float måste ha en rutin !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    
+    
+    nn = [n,0,0]
+    do i = 1, len_(n)
+        if(i>1)call nextpown(nn)
+        nnh = nn/2
+        nh = sum(nnh)
+        
+        su = 0
+        do l = 0, nh
+            call init_pow_nl(nnh,l,ll)
+            n_2l = n-2*l
+            
+            tpos = pos_(n_2l)
+            proceed = .true.
+            
+            do while (proceed)
+                key = nn - 2*ll
+                t1 = finder(key)
+    !            print*, "nn="//str(nn)//", nn/2="//str(nnh)//", ll="//str(ll)//", key="//str(key)//&
+    !            ", pos="//str(tpos,3)//" =>idx="//str(t1,3)//" =>val="//str(tvec(tpos+t1))
+                print*, t1, tpos+t1
+                su = su + (-1)**l * intff(2*(n-l)-1,1) * vecbrakk(nn,ll) * tvec(tpos+t1)
+                call next_pow_nl(nnh,ll,proceed)
+            enddo
+        enddo
+        !print*, "su", su
+        newvec(i) = su
+        
+        
+    enddo
+    
+    
+    
+    
+     
+    compvec = detrace_a(testvec,n)
+    print'(a,*(f10.2))', 'testvec', testvec
+    print'(a,*(f10.2))', 'newvec ', newvec
+    print'(a,*(f10.2))', 'compvec', compvec
+    print'(a,*(f10.2))', 'frac   ', newvec/compvec
+    
+    
+    print*, "ABOVE: detracing_old ---------------------------------------"
+end subroutine
+
+
+subroutine detracing_new
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer l, i, nn(3), ll(3)
+    integer, parameter :: n = 5
+    !real(dp) :: testvec(21), newvec(21), compvec(21), tvec(1000)
+    real(dp) :: testvec(len_(n)), newvec(len_(n)), compvec(len_(n)), AA(len_(n)), tvec(1000)
+    !real(dp) :: testvec(15), newvec(15), compvec(15), tvec(1000)
+    real(dp) su
+    
+    !reimplementation
+    integer l1,l2,l3,l32, ti, ni
+    
+    integer m, mi, mm(3), li, mpo, br3, br32, br, n1,n2,n3
+    !real(dp) :: tAA(1000)
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    !testvec = [1,0,0,2,0,3]
+    
+    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0 ]
+    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0 ]
+    !testvec = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0]/10d0
+    testvec = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0,16d0,17d0,18d0,19d0,20d0,21d0]/10d0
+    
+    tvec=0
+    AA = testvec
+    do l = 0, n/2
+        
+        m = n-2*l
+        mpo = pos_(m)
+        
+        mm = [m,0,0]
+        do mi = 1,len_(m)
+            if(mi>1)call nextpown(mm)
+            
+            su = 0
+            ll = [l,0,0]
+            do li = 1,len_(l)
+                if(li>1)call nextpown(ll)
+                
+                
+                nn = mm + 2*ll
+                ni = finder(nn) 
+                !print*, "ni=",ni
+                
+                su = su + fac(l)/vfac(ll) * AA(ni)
+            enddo
+            tvec(mpo+mi) = su
+            !print*,"su=",su
+            !print*, "mpo+mi", mpo+mi
+        enddo
+    enddo
+    
+    print'(a,*(f7.3))', "full trace array",tvec(1:pos_(n+1)) !float måste ha en rutin !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    n1 = n; n2 = 0; n3 = 0
+    do i = 1, len_(n)
+        if(i>1)call nextpow(n1,n2,n3)
+        
+        su = 0
+        do l3 = 0, n3/2
+            br3 = brakk(n3,l3)
+            mm(3) = n3-2*l3
+            
+            do l2 = 0, n2/2
+                br32 = br3 * brakk(n2,l2)
+                l32 = l3+l2
+                mm(2) = n2-2*l2
+                
+                do l1 = 0, n1/2
+                    br = br32 * brakk(n1,l1)
+                    l = l32+l1
+                    mm(1) = n1-2*l1
+                    
+                    
+                    ti = polyfind(mm)!finder(nn-2*ll)
+                    su = su + (-1)**l * intff(2*(n-l)-1,1) * br *  tvec(ti)
+                    !print*, "vecbrakk(nn,ll)", vecbrakk(nn,ll)
+                    !print*, "ti=",ti, "tvec(ti)=", tvec(ti)
+                    !print*, "doing"
+                enddo
+            enddo
+        enddo
+        
+        newvec(i) = su
+        
+    enddo
+    
+    compvec = detrace_a(testvec,n)
+    print'(a,*(f10.2))', 'testvec', testvec
+    print'(a,*(f10.2))', 'newvec ', newvec
+    print'(a,*(f10.2))', 'compvec', compvec
+    print'(a,*(f10.2))', 'frac   ', newvec/compvec
+    
+    
+    print*, "ABOVE: detracing new ---------------------------------------"
+end
+
 subroutine test_nextpow_v_wn(k)
     integer a,b,c, k, nn(3) , nn2(3)
     integer ind
@@ -19,18 +221,6 @@ subroutine test_nextpow_v_wn(k)
      
 end
 
-subroutine nextpow(a,b,c)
-  integer a,b,c
-
-  if (b>0)then
-    b=b-1
-    c=c+1
-  elseif (a>0)then
-    a=a-1
-    b=c+1
-    c=0
-  endif
-end
 
 
 function nextpov(nn)

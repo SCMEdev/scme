@@ -14,8 +14,8 @@ integer, parameter :: v3(matsize) = 2 *v2 !for trace matrix
 integer, parameter :: v4(matsize) = v2*v2 !for trace matrix
 
 
-integer, parameter :: pos_(0:maxk) = [(ii*(ii+1)*(ii+2)/6,ii=0,maxk  )]
-integer, parameter :: len_(0:maxk) = [(ii*(ii+1)/2,       ii=1,maxk+1)]
+integer, parameter :: pos_(0:maxk) =  [(ii*(ii+1)*(ii+2)/6,ii=0,maxk  )]
+integer, parameter :: len_(-1:maxk) = [(ii*(ii+1)/2,       ii=0,maxk+1)]
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
