@@ -57,7 +57,7 @@ good := $(lb)/compressed_arrays.o generic_program.f90 $(lb)/printer_mod.o
 
 test_good := $(good) $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o 
 
-
+# using 'good':
 utils.x: $(lb)/compressed_utils.o  $(good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
@@ -67,16 +67,15 @@ convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(good)
 fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(good) 
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-
+# using 'test_good':
 tests.x: $(lb)/compressed_tests.o $(test_good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
-
 
 run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(test_good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
 
-
+# Rules
 $(lb)/%.o:%.f90
 	gfortran -I$(lb) -J$(lb) -c $< -o $@ -Wall
 
@@ -98,12 +97,12 @@ $(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o
 $(lb)/compressed_tests.o: $(lb)/compressed_foolin.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o 
 
 $(lb)/compressed_run.o: $(lb)/compressed_tests.o 
-# compressed run actually depend on all of the above objects, but if A list B, and B lists C, no need for A to list C
 
 $(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
 $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o: $(lb)/data_types.o
 
 
+# Clean
 clean:
 	rm *.x build/*
 
