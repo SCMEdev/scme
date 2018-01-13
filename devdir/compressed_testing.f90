@@ -11,8 +11,9 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
+test_polydet
 !test_polyfinder
-test_detracer
+!test_detracer
 !all_tests
 !get_traces !-----------
 !call &
@@ -71,7 +72,8 @@ subroutine all_tests
     call test_rrr
     
     call test_polyfinder
-    
+    call test_polydet
+    call test_detracer
     
     print*, '------------------------------------------------------------'
     print*, 'ABOVE: all_tests -------------------------------------------'
@@ -377,6 +379,40 @@ subroutine test_detracer
     print'(a,*(f10.2))', 'compvec', compvec
     print'(a,*(f10.2))', 'frac   ', newvec/compvec
     print*, "ABOVE: test_detracer ---------------------------------------"
+
+end
+
+subroutine test_polydet
+    integer, parameter :: nmax = 5
+    real(dp) ::  compvec(pos_(nmax+1)), AA(pos_(nmax+1)),oldvec(pos_(nmax+1))
+    integer n1, n2, n, i
+    
+    n = 0; AA(pos_(n)+1:pos_(n+1)) = [ 1d0]/10d0
+    n = 1; AA(pos_(n)+1:pos_(n+1)) = [ 1d0,2d0,3d0]/10d0
+    n = 2; AA(pos_(n)+1:pos_(n+1)) = [ 1d0,2d0,3d0,4d0,5d0,6d0]/10d0
+    n = 3; AA(pos_(n)+1:pos_(n+1)) = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0]/10d0
+    n = 4; AA(pos_(n)+1:pos_(n+1)) = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0]/10d0
+    n = 5; AA(pos_(n)+1:pos_(n+1)) = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0,16d0,&
+                                        17d0,18d0,19d0,20d0,21d0]/10d0
+    
+    oldvec=AA
+    
+    do n = 0, nmax
+        n1 = pos_(n)+1
+        n2 = pos_(n+1)
+        compvec(n1:n2) = opdetr(AA(n1:n2),n)
+    enddo
+    
+    call polydet(AA,nmax)
+    
+    
+    print*, "   old,    AA,    comp"
+    do i = 1, pos_(nmax+1)
+        print'(3(f10.4))', oldvec(i), AA(i), compvec(i)
+    enddo
+    print*, "ABOVE: test_detracer ---------------------------------------"
+    
+    
 
 end
 

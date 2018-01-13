@@ -35,29 +35,24 @@ function detracer(AA,n) result (newvec)
     integer l1,l2,l3,l32, t1, ti
     
     integer l, i
-    integer m, mm(3), br3, br32, br, n1,n2,n3
+    integer m, mm(3), br3, br32, br, n1,n2,n3, n21
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-    
+    n21 = 2*n-1
     tvec=0
-    do l = 0,n/2 !fill in the trace-arrays (polytensor)
-        m = n-2*l        !rank of trace
-        rows = len_(m)   !lenght of trace (sub-)array
-        t1 = pos_(m)     !position in trace-polytensor
+    do l = 0,n/2        !loop over traces
+        m = n-2*l       !rank of trace (the non-deltas)
+        rows = len_(m)  !lenght of trace vector
+        t1 = pos_(m)    !position in trace-polytensor
         
-        cols = len_(l)  !first entries of tm-row that sample A
+        cols = len_(l)  !first cols of tm-row that sample A
         
         g1 = pos_(l)+1  !
-        g2 = pos_(l+1)  !section of apple-g polytensor
+        g2 = pos_(l+1)  ! section of apple-g polytensor
         
-        
-        do i = 1, rows !over rows of trace-index-matrix (tm)
-            
+        do i = 1, rows !over rows of tm
             tvec(t1+i) = dot_product(AA(tmm_(i,1:cols)), gg_(g1:g2)) !tm-row * apple-g
-            
         enddo
-        !print'(a,*(f7.3))', "partial trace array", tvec(t1+1:t1+rows)    
-        
     enddo
 
     !print'(a,*(f7.3))', "full trace array",tvec(1:pos_(n+1)) !float måste ha en rutin !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -83,7 +78,7 @@ function detracer(AA,n) result (newvec)
                     
                     
                     ti = polyfind(mm)!finder(nn-2*ll)
-                    su = su + (-1)**l * intff(2*(n-l)-1,1) * br *  tvec(ti)
+                    su = su + (-1)**l / dble(intff(n21,n21-2*l)) * br *  tvec(ti)
                 enddo
             enddo
         enddo
@@ -91,10 +86,90 @@ function detracer(AA,n) result (newvec)
         newvec(i) = su
         
     enddo
-    newvec = newvec/dble(intff(2*n-1,1))
+    !newvec = newvec/dble(intff(2*n-1,1))
     
     
 
+end
+
+
+
+subroutine polydet(AA,nmax) 
+    ! Possibly efficient implementation of Applequist's detracer for polytensors
+    ! It requires the trace-matrix tmm. 
+    ! The input polytensor AA is used as the temporary array holding the traces
+    ! and thus one kan skip the l=0 loop that only copies the original tensor into the temporary array. 
+    ! The detraced tensor is written into NEW and in the end AA=new. 
+    ! One could probably use pointers to avoid the last copy, or is the compiler fixing that?
+    !
+    !Equation reference to (Jon Applequist 1989, Traceless cartesian...)
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+    integer, intent(in) :: nmax
+    real(dp), intent(inout)  :: AA(pos_(nmax+1))
+    real(dp) :: NEW(pos_(nmax+1))
+    real(dp) su
+    
+    integer g1,g2, cols, l_m
+    integer l1,l2,l3,l32, p_m, ti
+    
+    integer l, i
+    integer m, mm(3), br3, br32, br, n1,n2,n3, n2_1, n, p_n
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    NEW(1:4) = AA(1:4) !the 0 & 1 ranks
+    
+    do n = 2,nmax ! loop over ranks
+        n2_1 = 2*n-1
+        p_n = pos_(n) !polytensor rank position
+        
+        ! Eq. 2.4:
+        do l = 1,n/2 !loop over traces. Starts on 1 on this implementation!
+            m = n-2*l       !rank of trace (the non-deltas)
+            l_m = len_(m)    !lenght of trace vector
+            p_m = pos_(m)    !position in trace-polytensor
+            
+            cols = len_(l)  !first cols of tm-row that sample A
+            g1 = pos_(l)+1  !
+            g2 = pos_(l+1)  ! section of apple-g polytensor
+            
+            do i = 1, l_m !over rows of tm
+                AA(p_m+i) = dot_product(AA(p_n + tmm_(i,1:cols)), gg_(g1:g2)) ! 
+            enddo
+        enddo
+        
+        ! Eq. 5.6:
+        n1=n;n2=0;n3=0
+        do i = 1, len_(n) ! single-loop over the tensor entries n1,n2,n3, or i
+            if(i>1)call nextpow(n1,n2,n3)
+            
+            su = 0
+            do l3 = 0, n3/2 !the tripple sum in Eq 5.6 
+                br3 = brakk(n3,l3) 
+                mm(3) = n3-2*l3
+                
+                do l2 = 0, n2/2
+                    br32 = br3 * brakk(n2,l2)
+                    l32 = l3+l2
+                    mm(2) = n2-2*l2
+                    
+                    do l1 = 0, n1/2
+                        br = br32 * brakk(n1,l1)
+                        l = l32+l1
+                        mm(1) = n1-2*l1
+                        
+                        ti = polyfind(mm)!finder(nn-2*ll)
+                        su = su + (-1)**l / dble(intff(n2_1,n2_1-2*l)) * br *  AA(ti)
+                    enddo
+                enddo
+            enddo
+            
+            NEW(pos_(n)+i) = su
+            
+        enddo
+        
+    enddo
+    AA = NEW !Here we should use pointer reassignment instead of a copy. 
 end
 
 
