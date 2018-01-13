@@ -11,6 +11,7 @@ lib-a   := $(b)/libscme.a
 gen-f90 := generic_program.f90
 detr-o  := $(b)/detrace_mod.o
 
+
 vpath %.f90 ../src
 
 all:
@@ -52,21 +53,28 @@ opole.x: $(b)/opole_dev.o $(gen-f90) $(lib-a)
 	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
 
+good := $(lb)/compressed_arrays.o generic_program.f90 $(lb)/printer_mod.o
 
-convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+test_good := $(good) $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o 
+
+
+utils.x: $(lb)/compressed_utils.o  $(good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90) $(lb)/compressed_arrays.o
+convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(good) 
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+
+tests.x: $(lb)/compressed_tests.o $(test_good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-tests.x: $(lb)/compressed_tests.o $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+
+run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(test_good)
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+
 
 
 $(lb)/%.o:%.f90
