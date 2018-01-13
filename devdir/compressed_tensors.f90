@@ -2,11 +2,6 @@ module compressed_tensors
 
 use printer_mod, only: str, printer, printo
 use compressed_utils, bad=>main!, bad=>main2!,only: test_apple_g
-
-use detrace_apple, bad=>main
-
-use calc_derivs, only:calcDv
-
 use compressed_arrays!, p_=>pos_, l_=>len_!, only: mm_, gg_, pos_, len_, binc_, tmm_ 
 implicit none
 

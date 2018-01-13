@@ -13,6 +13,17 @@ detr-o  := $(b)/detrace_mod.o
 
 vpath %.f90 ../src
 
+all:
+	make -j4 run.x
+	make -j4 tests.x
+
+rrun:
+	make -j4 run.x && ./run.x
+
+ttests:
+	make -j4 tests.x && ./tests.x
+	
+
 prog.x: poldip.f90 $(lib-a)
 	$(compiler) $^ -o $@
 
@@ -51,9 +62,11 @@ utils.x: $(lb)/compressed_utils.o $(print-o) $(gen-f90) $(lb)/compressed_arrays.
 fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
-test.x: $(lb)/compressed_testing.o $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
 	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
+tests.x: $(lb)/compressed_tests.o $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(print-o) $(gen-f90) $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/compressed_arrays.o
+	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
 
 
 $(lb)/%.o:%.f90
@@ -66,16 +79,22 @@ $(b)/%.o:%.f90
 $(lib-a):$(wildcard ../src/*.f90)
 	(cd .. && make)
 
-$(lb)/compressed_tensors.o: $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
+# Hierarchical dependencies
 
-$(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
+$(lb)/compressed_utils.o: $(print-o) $(lb)/compressed_arrays.o
 
-$(lb)/compressed_testing.o: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(print-o) $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/compressed_arrays.o
+$(lb)/compressed_tensors.o: $(lb)/compressed_utils.o 
+
+$(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o 
+
+$(lb)/compressed_tests.o: $(lb)/compressed_foolin.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o 
+
+$(lb)/compressed_run.o: $(lb)/compressed_tests.o 
+# compressed run actually depend on all of the above objects, but if A list B, and B lists C, no need for A to list C
 
 $(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
 $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o: $(lb)/data_types.o
 
-$(lb)/compressed_utils.o: $(print-o) $(lb)/compressed_arrays.o
 
 clean:
 	rm *.x build/*

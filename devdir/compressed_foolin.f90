@@ -2,6 +2,9 @@ module compressed_foolin !>>>
 
 use printer_mod, only: str, printer, printo
 use compressed_arrays 
+use compressed_tensors, bad=>main 
+use compressed_utils, bad=>main
+
 implicit none
 
 contains !//////////////////////////////////////////////////////////////
