@@ -1,64 +1,58 @@
+#.SUFIXES:
+#.PREFIXES
+
 ### VARIABLES
 b:=build
-s:=src
+lib:=$b/libscme.a
+
+vpath %.f90 src
+vpath %.f90 devdir
 
 FC:=gfortran
 #FC:=flang
 opti:= -O0
 #opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
-#-Wall
 
 FFLAGS:= $(opti) -pg -I$b -J$b -cpp -D'DEBUG_PRINTING' 
+#-Wall
 #CFLAGS:= $(opti) -I$b -J$b -lstdc++
 
-### FILE NAMES (according to dependencies)
+### OBJECT FILES grouped by dependencies
 # Depend only on data_types:
-bulk_names:=\
-	multipole_parameters polariz_parameters \
-	calcEnergy_mod inducePoles ps_pes ps_dms printer_mod \
-	sf_disp_tangtoe force_torqueCM localAxes_mod qpole opole\
-	detrace_apple
+bulk_obj:=$(addprefix $b/, \
+	multipole_parameters.o polariz_parameters.o \
+	calcEnergy_mod.o inducePoles.o ps_pes.o ps_dms.o printer_mod.o \
+	sf_disp_tangtoe.o force_torqueCM.o localAxes_mod.o qpole.o opole.o )
 
 # Depend also on swiching-func (sf):
-sf_names:=\
-	calc_derivs calc_higher_order\
-	calc_lower_order molecProperties
-
-print_names :=\
-	compressed_tensors compressed_utils
-
+sf_obj:= $(addprefix $b/, \
+	calc_derivs.o calc_higher_order.o calc_lower_order.o molecProperties.o )
+	
 # Depends on all/none (ENDpoints of dep.-tree)
-end_names:=\
-	scme_ps data_types
+end_obj:= $(addprefix $b/, \
+	scme_ps.o data_types.o )
+
+# extra from development dir
+dev_obj := $(addprefix $b/, \
+	compressed_utils.o detrace_apple.o compressed_arrays.o )
+	# compressed_tensors.o
 
 ### OBJECT LISTS:
-sf_obj   := $(addprefix $b/, $(sf_names:=.o) )
-print_obj:= $(addprefix $b/, $(print_names:=.o) )
-most_obj := $(sf_obj) $(print_obj)  $(addprefix $b/, $(bulk_names:=.o))
-all_obj  := $(most_obj) $(addprefix $b/, $(end_names:=.o) ) 
+most_obj:=$(sf_obj) $(bulk_obj)
+all_obj:= $(dev_obj) $(most_obj) $(end_obj)
 
-lib:=$b/libscme.a
 
 
 ### RULES:
 all:
-	make -j4 $(lib)
+	make -r -j4 $(lib)
 
 # (.mod-files still needed for compilation)
 $(lib): $(all_obj) 
 	ar rcs $@ $^
 
-#temporary !!!!!!!!!/////////////////////////////////////////////////////////////////////
-$b/compressed_tensors.o:devdir/compressed_tensors.f90
-	$(FC) $(FFLAGS) -o $@ -c $<
 
-$b/compressed_utils.o:devdir/compressed_utils.f90
-	$(FC) $(FFLAGS) -o $@ -c $<
-
-$b/detrace_apple.o:devdir/detrace_apple.f90
-	$(FC) $(FFLAGS) -o $@ -c $<
-
-$b/%.o: $s/%.f90 
+$b/%.o: %.f90 
 	$(FC) $(FFLAGS) -o $@ -c $<
 
 $b:
@@ -70,19 +64,13 @@ clean:
 
 
 ### DEPENDENCIES
-# swich-func dep:
+
+#temporary >>>
+$b/compressed_utils.o:$b/compressed_arrays.o $b/printer_mod.o
+$b/calc_derivs.o : $b/detrace_apple.o
+$b/scme_ps.o:  $b/compressed_utils.o
+#temporary <<<
+
 $(sf_obj): $b/sf_disp_tangtoe.o 
-
-$(print_obj): $b/printer_mod.o
-
-$b/compressed_tensors.o:$b/compressed_utils.o
-
-$/scme_ps.o $b/calc_derivs.o: $b/detrace_apple.o $b/compressed_tensors.o
-# scme depends on all:
-$b/scme_ps.o: $(most_obj)
-
-# all depend on data_types:
-$(most_obj) $b/scme_ps.o: $b/data_types.o
-
-# printer dep:
-
+$(most_obj): $b/data_types.o
+$b/scme_ps.o:  $(most_obj) 

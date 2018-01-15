@@ -1,19 +1,39 @@
+### DIRECTORIES
 b:=../build
-modflags := -I$(b) -J$(b)
-flags    := -Wall
+ob := obuild
+lb := lbuild
+
+
+### COMPILATION 
 fc := gfortran
-compiler := $(fc) $(modflags) $(flags)
-#$(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o polariz_parameters.o)
-lb := build
+lib_comp := $(fc) -I$(b) -J$(ob)
+loc_comp := $(fc) -I$(lb) -J$(lb)
+# Must place main object first for generic program to call the correct module. 
+generic = $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) generic_program.f90
+comp1 = $(lib_comp) $(generic)
+comp2 = $(loc_comp) $(generic)
 
-print-o := $(lb)/printer_mod.o
-lib-a   := $(b)/libscme.a
-gen-f90 := generic_program.f90
-detr-o  := $(b)/detrace_mod.o
+$(lb)/%.o:%.f90
+	$(loc_comp) -c $< -o $@
 
+$(ob)/%.o:%.f90
+	$(fc) -J$(ob) -I$(ob) -I$(b) -c $^ -o $@  -Wall
+
+
+$(lib-a):$(wildcard ../src/*.f90)
+	(cd .. && make)
 
 vpath %.f90 ../src
 
+# -I = where to search! (for #/include and .mod)
+# -J = where to put!    (.mod)
+
+
+
+
+
+
+# Fast commands
 all:
 	make -j4 run.x
 	make -j4 tests.x
@@ -23,78 +43,83 @@ rrun:
 
 ttests:
 	make -j4 tests.x && ./tests.x
-	
 
-prog.x: poldip.f90 $(lib-a)
-	$(compiler) $^ -o $@
+old: 
+	make -j4 prog.x stupid.x detraceo.x detraceh.x detraceg.x qpole.x opole.x
 
-stupid.x:$(detr-o) $(gen-f90) $(lib-a)
-	$(compiler) $^ -o $@ -cpp -D'STUPID'
-
-detraceo.x: $(detr-o) $(gen-f90) $(lib-a)
-	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) -DSUB=io_octa
+new: 
+	make -j4 apple.x utils.x convert.x fool.x tests.x run.x 
 
 
-detraceh.x: $(detr-o) $(gen-f90) $(lib-a)
-	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) -DSUB=io_hexa
 
 
-#$(detr-o) $(b)/detrace_mod.o
-detraceg.x: $(detr-o) $(gen-f90) $(lib-a)
-	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) -DSUB=io_general
 
-apple.x: $(b)/detrace_apple.o $(gen-f90) 
-	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+### OLDER
 
-qpole.x: $(b)/qpole_dev.o $(gen-f90) $(lib-a)
-	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+print-o := $(ob)/printer_mod.o
+detr-o  := $(ob)/detrace_mod.o
+lib-a   := $(b)/libscme.a
 
-opole.x: $(b)/opole_dev.o $(gen-f90) $(lib-a)
-	$(compiler) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+prog.x: $(ob)/poldip.o $(lib-a)
+	$(lib_comp) $^ -o $@
 
-
-good := $(lb)/compressed_arrays.o generic_program.f90 $(lb)/printer_mod.o
-
-test_good := $(good) $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o 
-
-# using 'good':
-utils.x: $(lb)/compressed_utils.o  $(good)
-	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
-
-convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(good)
-	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
-
-fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(good) 
-	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
-
-# using 'test_good':
-tests.x: $(lb)/compressed_tests.o $(test_good)
-	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
-
-run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(test_good)
-	$(fc) -I$(lb) -J$(lb) $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=))
+stupid.x: generic_program.f90 $(lib-a)
+	$(lib_comp) $^ -o $@ -cpp -D'STUPID'
 
 
-# Rules
-$(lb)/%.o:%.f90
-	gfortran -I$(lb) -J$(lb) -c $< -o $@ -Wall
-
-$(b)/%.o:%.f90
-	$(compiler) -c $^ -o $@
+detraceo.x: $(detr-o) $(lib-a)
+	$(comp1) -DSUB=io_octa
 
 
-$(lib-a):$(wildcard ../src/*.f90)
-	(cd .. && make)
+detraceh.x: $(detr-o) $(lib-a)
+	$(comp1) -DSUB=io_hexa
 
-# Hierarchical dependencies
 
-$(lb)/compressed_utils.o: $(print-o) $(lb)/compressed_arrays.o
+detraceg.x: $(detr-o) $(lib-a)
+	$(comp1) -DSUB=io_general
+
+qpole.x: $(ob)/qpole_dev.o $(lib-a)
+	$(comp1)
+
+opole.x: $(ob)/opole_dev.o $(lib-a)
+	$(comp1)
+
+
+
+### COMPRESSED
+
+apple.x: $(lb)/detrace_apple.o 
+	$(comp2)
+
+objects := $(lb)/compressed_arrays.o $(lb)/printer_mod.o
+# using 'objects':
+utils.x: $(lb)/compressed_utils.o  $(objects)
+	$(comp2)
+convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(objects)
+	$(comp2)
+fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(objects) 
+	$(comp2)
+
+test_objects := $(objects) $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o 
+# using 'test_objects':
+tests.x: $(lb)/compressed_tests.o $(test_objects)
+	$(comp2)
+
+run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(test_objects)
+	$(comp2)
+
+
+### RULES
+
+### DEPENDENCIES
+
+$(lb)/compressed_utils.o: $(lb)/printer_mod.o $(lb)/compressed_arrays.o
 
 $(lb)/compressed_tensors.o: $(lb)/compressed_utils.o 
 
 $(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o 
 
-$(lb)/compressed_tests.o: $(lb)/compressed_foolin.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o 
+$(lb)/compressed_tests.o: $(lb)/compressed_tensors.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o 
 
 $(lb)/compressed_run.o: $(lb)/compressed_tests.o 
 
@@ -102,10 +127,13 @@ $(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
 $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o: $(lb)/data_types.o
 
 
-# Clean
+### CLEAN
 clean:
-	rm *.x build/*
+	rm -f *.x *.mod *.o lbuild/* obuild/*
 
 comp-clean:
 	rm *.x build/comp*
 
+
+
+#$(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o polariz_parameters.o)

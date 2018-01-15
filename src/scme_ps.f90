@@ -65,7 +65,7 @@ module scme
   
   use opole, only: get_octupoles
   
-  use compressed_tensors,only: compress, expand
+  use compressed_utils,only: compress, expand
   use detrace_apple, only: detrace_a, ff
   
   implicit none
