@@ -35,9 +35,17 @@ end subroutine
 
 
 subroutine main; ! MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
-call &
-print_trace_ind 
+!call &
+!print_trace_ind 
 !stupido
+integer*16 i , kl, end
+end = 9538998
+do i = end-100, end
+    kl = i*(i+1)*(i+2)/6
+    print*, i, kl, kl*kl 
+enddo
+print*, end
+print*, huge(end)
 end
 
 
