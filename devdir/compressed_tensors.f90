@@ -16,7 +16,101 @@ end subroutine
 
 
 
+function apple_potgrad(qq,nn,kk,rpows,dtrrr) result(potgrad)
+    integer, intent(in)  :: nn, kk
+    real(dp), intent(in) :: qq(len_(nn)), dtrrr(len_(nn+kk)), rpows(:)
+    real(dp)             ::  potgrad(len_(kk))
+    integer i!,j
+    !integer k1, k2, n1, n2, kni2, sig, k_i, n_i
+    
+    
+    potgrad = (-1)**(kk) * 1d0/dble(intff(2*nn-1,1)) * rpows(2*(nn+kk)+1) * inner(nn+kk,nn,dtrrr,qq)
+    
+end    
 
+
+
+
+
+function polydet(invec,nmax) result(outvec)
+    ! Possibly efficient implementation of Applequist's detracer for polytensors
+    ! It requires the trace-matrix tmm. 
+    ! The input polytensor AA is used as the temporary array holding the traces
+    ! and thus one kan skip the l=0 loop that only copies the original tensor into the temporary array. 
+    ! The detraced tensor is written into NEW and in the end AA=new. 
+    ! One could probably use pointers to avoid the last copy, or is the compiler fixing that?
+    !
+    !Equation reference to (Jon Applequist 1989, Traceless cartesian...)
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
+    integer, intent(in) :: nmax
+    real(dp), intent(in)  :: invec(pos_(nmax+1))
+    real(dp) :: outvec(pos_(nmax+1)), tempvec(pos_(nmax+1)), su
+    
+    integer g1,g2, cols, l_m
+    integer l1,l2,l3,l32, p_m, ti
+    
+    integer l, i
+    integer m, mm(3), br3, br32, br, n1,n2,n3, n2_1, n, p_n
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    !Copy input vector, to not destroy it and to use intent(in)
+    tempvec = invec
+    
+    
+    outvec(1:4) = tempvec(1:4) !the 0 & 1 ranks
+    
+    do n = 2,nmax ! loop over ranks
+        n2_1 = 2*n-1
+        p_n = pos_(n) !polytensor rank position
+        
+        ! Eq. 2.4:
+        do l = 1,n/2 !loop over traces. Starts on 1 in this implementation!
+            m = n-2*l       !rank of trace (the non-deltas)
+            l_m = len_(m)    !lenght of trace vector
+            p_m = pos_(m)    !position in trace-polytensor
+            
+            cols = len_(l)  !first cols of tm-row that sample A
+            g1 = pos_(l)+1  !
+            g2 = pos_(l+1)  ! section of apple-g polytensor
+            
+            do i = 1, l_m !over rows of tm
+                tempvec(p_m+i) = dot_product(tempvec(p_n + tmm_(i,1:cols)), gg_(g1:g2)) ! 
+            enddo
+        enddo
+        
+        ! Eq. 5.6:
+        n1=n;n2=0;n3=0
+        do i = 1, len_(n) ! single-loop over the tensor entries n1,n2,n3, or i
+            if(i>1)call nextpow(n1,n2,n3)
+            
+            su = 0
+            do l3 = 0, n3/2 !the tripple sum in Eq 5.6 
+                br3 = brakk(n3,l3) 
+                mm(3) = n3-2*l3
+                
+                do l2 = 0, n2/2
+                    br32 = br3 * brakk(n2,l2)
+                    l32 = l3+l2
+                    mm(2) = n2-2*l2
+                    
+                    do l1 = 0, n1/2
+                        br = br32 * brakk(n1,l1)
+                        l = l32+l1
+                        mm(1) = n1-2*l1
+                        
+                        ti = polyfind(mm)!finder(nn-2*ll)
+                        su = su + (-1)**l / dble(intff(n2_1,n2_1-2*l)) * br *  tempvec(ti)
+                    enddo
+                enddo
+            enddo
+            
+            outvec(pos_(n)+i) = su
+            
+        enddo
+        
+    enddo
+end
 
 
 function detracer(AA,n) result (newvec)
@@ -87,85 +181,6 @@ function detracer(AA,n) result (newvec)
 
 end
 
-
-
-subroutine polydet(AA,nmax) 
-    ! Possibly efficient implementation of Applequist's detracer for polytensors
-    ! It requires the trace-matrix tmm. 
-    ! The input polytensor AA is used as the temporary array holding the traces
-    ! and thus one kan skip the l=0 loop that only copies the original tensor into the temporary array. 
-    ! The detraced tensor is written into NEW and in the end AA=new. 
-    ! One could probably use pointers to avoid the last copy, or is the compiler fixing that?
-    !
-    !Equation reference to (Jon Applequist 1989, Traceless cartesian...)
-    
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
-    integer, intent(in) :: nmax
-    real(dp), intent(inout)  :: AA(pos_(nmax+1))
-    real(dp) :: NEW(pos_(nmax+1))
-    real(dp) su
-    
-    integer g1,g2, cols, l_m
-    integer l1,l2,l3,l32, p_m, ti
-    
-    integer l, i
-    integer m, mm(3), br3, br32, br, n1,n2,n3, n2_1, n, p_n
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    NEW(1:4) = AA(1:4) !the 0 & 1 ranks
-    
-    do n = 2,nmax ! loop over ranks
-        n2_1 = 2*n-1
-        p_n = pos_(n) !polytensor rank position
-        
-        ! Eq. 2.4:
-        do l = 1,n/2 !loop over traces. Starts on 1 on this implementation!
-            m = n-2*l       !rank of trace (the non-deltas)
-            l_m = len_(m)    !lenght of trace vector
-            p_m = pos_(m)    !position in trace-polytensor
-            
-            cols = len_(l)  !first cols of tm-row that sample A
-            g1 = pos_(l)+1  !
-            g2 = pos_(l+1)  ! section of apple-g polytensor
-            
-            do i = 1, l_m !over rows of tm
-                AA(p_m+i) = dot_product(AA(p_n + tmm_(i,1:cols)), gg_(g1:g2)) ! 
-            enddo
-        enddo
-        
-        ! Eq. 5.6:
-        n1=n;n2=0;n3=0
-        do i = 1, len_(n) ! single-loop over the tensor entries n1,n2,n3, or i
-            if(i>1)call nextpow(n1,n2,n3)
-            
-            su = 0
-            do l3 = 0, n3/2 !the tripple sum in Eq 5.6 
-                br3 = brakk(n3,l3) 
-                mm(3) = n3-2*l3
-                
-                do l2 = 0, n2/2
-                    br32 = br3 * brakk(n2,l2)
-                    l32 = l3+l2
-                    mm(2) = n2-2*l2
-                    
-                    do l1 = 0, n1/2
-                        br = br32 * brakk(n1,l1)
-                        l = l32+l1
-                        mm(1) = n1-2*l1
-                        
-                        ti = polyfind(mm)!finder(nn-2*ll)
-                        su = su + (-1)**l / dble(intff(n2_1,n2_1-2*l)) * br *  AA(ti)
-                    enddo
-                enddo
-            enddo
-            
-            NEW(pos_(n)+i) = su
-            
-        enddo
-        
-    enddo
-    AA = NEW !Here we should use pointer reassignment instead of a copy. 
-end
 
 
 subroutine print_trace_keys
@@ -347,7 +362,7 @@ end
 
 
 
-subroutine vector_powers(k,r,rr) 
+pure subroutine vector_powers(k,r,rr) 
     ! Computes successive outer products of 3-vector r(:)
     ! and stores in tricorn polytensor rr(:)
     ! r(3)   position vector
@@ -355,7 +370,7 @@ subroutine vector_powers(k,r,rr)
     ! rr     output tricorn-ordered polytensor
     integer, intent(in)   :: k
     real(dp), intent(in)  :: r(3)
-    real(dp), intent(out) :: rr(sumfacfac(k+1)-1)
+    real(dp), intent(out) :: rr(pos_(k+1))
     integer pl,cl,px,cx,i,pz,cz, py, cy
     
     rr(1) = 1

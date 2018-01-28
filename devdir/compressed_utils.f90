@@ -46,8 +46,9 @@ end
 subroutine print_trace_index_matrix(k)
     integer k
     integer j1,j2, icol, irow, ileng,v2(sumfac(k+1)), v4(sumfac(k+1)),v3(sumfac(k+1)), tleng !((k+1)*(k+2)/2),
-
-    ileng=sumfac(k+1)
+    integer matrix(sumfac(k+1),sumfac(k/2+1))
+    
+    ileng = sumfac(k+1)
     tleng = sumfac((k/2+1))
     v2 = [((j1, j2=1,j1),j1 = 1,k+1)]-1 !for index matrix
     v3 = 2*v2![((j1, j2=1,j1,2),j1 = 1,k+1,2)] !for trace matrix
@@ -59,16 +60,26 @@ subroutine print_trace_index_matrix(k)
     
     print*
     do irow = 1, ileng
-        write(*,'(*(I3,a),a)'),((icol-1)*2 + v4(icol) + irow + (v3(icol))*(v2(irow)),',', icol = 1,tleng)
+        
+        
+        !write(*,'(*(I3,a),a)'),((icol-1)*2 + v4(icol) + irow + (v3(icol))*(v2(irow)),',', icol = 1,tleng)
+        do icol = 1, tleng
+            matrix(irow,icol) = (icol-1)*2 + v4(icol) + irow + (v3(icol))*(v2(irow))
+        enddo
     enddo
+    print'(a)',"integer, parameter :: tmatrix("//str(ileng)//","//str(tleng)//") = reshape([ &"
+    call printo(matrix,0,1)
+    print'(a)',"], shape(tmatrix), order=[2,1])"
+
+    
 end subroutine
 
-subroutine print_product_index_matrix(k)
+subroutine print_long_index_matrix(k)
     !integer, parameter :: k = 7
     integer k
-    integer j1,j2, icol, irow, ileng,v2(sumfac(k+1))
+    integer j1,j2, icol, irow, ileng,v2(sumfac(k+1)), vall, linelen
     
-    ileng=sumfac(k+1)
+    ileng=len_(k)
     
     v2 = [((j1, j2=1,j1),j1 = 1,k+1)]-1 !for index matrix
     
@@ -77,9 +88,34 @@ subroutine print_product_index_matrix(k)
     
     
     print*
+    !do irow = 1, ileng
+    !    write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol))*(v2(irow)),',', icol = 1,ileng)
+    !enddo
+    
+    linelen = 0
+    print'(a)', "integer, parameter :: matr("//str(ileng)//","//str(ileng)//") = reshape( [ &"
     do irow = 1, ileng
-        write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol))*(v2(irow)),',', icol = 1,ileng)
+        do icol = 1, ileng
+            vall = irow + icol -1 + (v2(icol))*(v2(irow))
+            linelen = linelen + intsize(vall)+1
+            
+            if (linelen>110) then 
+                write(*,'(a)') "& "
+                linelen=0
+            endif
+            !write(*,'(a)',advance="no") str(vall)
+            
+            if (irow*icol < ileng**2) then
+                write(*,'(a)',advance="no") str(vall)//","
+            else
+                write(*,'(a)',advance="no") str(vall)
+            endif
+            
+        enddo
     enddo
+    print'(a)', ""
+    print'(a)', "], shape(matr) )"
+    
     
     !Print tight
     !print*, sumfac(k+1), "cols/rows"
@@ -93,6 +129,37 @@ subroutine print_product_index_matrix(k)
     !    enddo
     
 end subroutine
+
+subroutine print_square_index_matrix(k)
+    !integer, parameter :: k = 7
+    integer k
+    integer j1,j2, icol, irow, ileng,v2(len_(k)), matrix(len_(k),len_(k))
+    
+    ileng=len_(k)
+    
+    v2 = [((j1, j2=1,j1),j1 = 1,k+1)]-1 !for index matrix
+    
+    print*,"______"
+    print'(a,*(I3))',"v2: ", v2
+    
+    
+    print*
+    !do irow = 1, ileng
+    !    write(*,'(*(I2,a),a)'),(irow + icol -1 + (v2(icol))*(v2(irow)),',', icol = 1,ileng)
+    !enddo
+    
+    do irow = 1, ileng
+        do icol = 1, ileng
+            matrix(icol,irow) = irow + icol -1 + (v2(icol))*(v2(irow))
+            
+        enddo
+    enddo
+    print'(a)', "integer, parameter :: matr("//str(ileng)//","//str(ileng)//") = reshape( [ &"
+    call printo(matrix,0,1)
+    print'(a)', "], shape(matr) )"
+    
+end subroutine
+
 
 subroutine print_choose_matrix
     integer, parameter :: k = 19
@@ -123,19 +190,35 @@ subroutine print_choose_matrix
     write(*,'(a)') " ], shape(choose_matrix) )"
 end subroutine
 
+function intsize(ii) 
+    integer ii, intsize
+    intsize = ceiling(log10(dble(ii+1)))
+end
 
-subroutine print_apple_g
-    integer i, j, n(3), it, gsiz, linelen, gval, glen
+
+subroutine print_apple_g(imax)
+    integer i, j, n(3), it, gsiz, linelen, gval, glen, imax
     character(1) zero
+    character(:), allocatable :: gname
+    character(1000) :: allgs
     print*,"____"
     print*,">>>>  g-arrays:"
     it = 0
     zero = "0"
-    do i = 0,10
+    allgs="["
+    
+    do i = 0,imax
       glen = sumfac(i+1)
       if(i>9)zero=""
-      write(*,'(a)',advance="no") "integer, parameter :: g"//trim(zero)//str(i)//"("//str(glen)//") = ["
+      gname = "g"//trim(zero)//str(i)
+      write(*,'(a)',advance="no") "integer, parameter :: "//gname//"("//str(glen)//") = ["
       if (i>6) write(*,'(a)') "& "
+      
+      if(i<imax)then 
+        allgs = trim(allgs)//gname//","
+      else
+        allgs = trim(allgs)//gname//"]"
+      endif
       
       linelen = 0
       
@@ -145,7 +228,7 @@ subroutine print_apple_g
         if(j>1)call nextpown(n)
         
         gval = apple_g(n)
-        gsiz = ceiling(log10(dble(gval+1))) 
+        gsiz = intsize(gval)
         linelen = linelen + gsiz+1
         write(*,'(I'//str(gsiz)//')',advance="no") gval
         it = it+1
@@ -161,7 +244,11 @@ subroutine print_apple_g
       enddo
       !print*!,'&'
       enddo
-    print*, "entries", it
+    !print*, "entries", it
+    print*
+    gname = "gg"//str(imax)
+    print'(a)', "integer, parameter :: "//gname//"("//str(it)//") = "//trim(allgs)
+    print'(a)', "integer, parameter :: gg_(pos_(matk+1)) = "//gname//"(1:pos_(matk+1))"
 end subroutine
 
 
@@ -213,7 +300,7 @@ function hhh(i,j,ki,kj) !Make a matrix of this sheeeet
     integer, intent(in) :: i,j, ki,kj
     integer kij, hhh, cc, gi,gj,gij
     kij = ki+kj
-    cc = binc_(kij,ki)
+    cc = choose(kij,ki)
     gi = gg_(pos_(ki)+i)
     gj = gg_(pos_(kj)+j) 
     gij = gg_(pos_(kij) + mm_(i,j))

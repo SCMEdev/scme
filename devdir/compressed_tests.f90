@@ -26,7 +26,7 @@ subroutine suit
     !call test_nextpow_v_wn(10)
 
     
-    call test_subdiv_pow_h(5,5)
+    !call test_subdiv_pow_h(5,5) too high rank
     call test_subdiv_pow_h(4,3)
     call test_subdiv_pow_h(3,4)
     
@@ -58,7 +58,8 @@ subroutine suit
     call test_fac(5)
     call test_choose
     
-    call print_product_index_matrix (6)
+    call print_long_index_matrix (6)
+    call print_square_index_matrix (6)
     
     call test_matr(7)
     call test_apple_g
@@ -67,8 +68,10 @@ subroutine suit
     
     call test_polyfinder
     call test_polydet
-    call test_detracer
+    call test_detracers
+    call test_detracer_linearity
     
+    print*
     print*, '------------------------------------------------------------'
     print*, 'ABOVE: all_tests -------------------------------------------'
     print*, '------------------------------------------------------------'
@@ -77,6 +80,31 @@ end subroutine
 
 
 
+subroutine test_detracer_linearity
+    !This routine tests the linearity of the polytensor detracer. 
+    integer, parameter :: nmax =7
+    real(dp), dimension(pos_(nmax+1)) :: pt_new,pt_sum,pt_old, det_sum, sum_det
+    integer i
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34000])
+    pt_old=0
+    pt_sum = 0
+    sum_det=0
+    do i = 1,1000
+        call  random_number(pt_new)
+        pt_sum = pt_sum + pt_new
+        sum_det = sum_det + polydet(pt_new,nmax)
+        !print*, "changing? sums: new, old, diff, accum new", sum(pt_new), sum(pt_old),sum(pt_new-pt_old), sum(pt_sum)
+        pt_old=pt_new
+        
+    enddo
+    det_sum=polydet(pt_sum,nmax)
+    print*
+    print*, "_____________Linearity: "//str(i-1)//" loops__________________ " 
+    print'(a,*(e20.7))', "Diff", det_sum-sum_det
+    
+    print*, 'ABOVE: test_detracer_linearity -------------------------------------------'
+end
 
 ! UTILS ____________________________________________________________________________________________________________________________
 subroutine test_sumfac
@@ -354,33 +382,38 @@ end
 
 
 ! TENSORS @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-subroutine test_detracer
-    integer, parameter :: n = 5
-    real(dp) ::  compvec(len_(n)), AA(len_(n)),newvec(len_(n))
+subroutine test_detracers
+    !integer, parameter :: n = 5
+    real(dp), dimension(len_(10)) ::  compvec, randv, newvec1, newvec2, newvec3
+    real(dp) test
+    integer n, nend
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34000])
     
-
-    !testvec = [1,0,0,2,0,3]
-    
-    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0 ]
-    !testvec = [ 1d0,3d0,5d0,6d0,7d0,9d0,8d0,5d0,4d0,2d0, 4d0, 2d0, 6d0, 7d0, 1d0 ]
-    !testvec = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0]/10d0
-    AA = [ 1d0,2d0,3d0,4d0,5d0,6d0,7d0,8d0,9d0,10d0,11d0,12d0,13d0,14d0,15d0,16d0,17d0,18d0,19d0,20d0,21d0]/10d0
-
-    newvec = detracer(AA,n)
-    
-    
-    compvec = opdetr(AA,n)
-    print'(a,*(f10.2))', 'testvec', AA
-    print'(a,*(f10.2))', 'newvec ', newvec
-    print'(a,*(f10.2))', 'compvec', compvec
-    print'(a,*(f10.2))', 'frac   ', newvec/compvec
-    print*, "ABOVE: test_detracer ---------------------------------------"
+    do n = 1,10
+        nend = len_(n)
+        call random_number(randv(1:nend))
+        
+        newvec1(1:nend) = detracer(randv(1:nend),n)
+        
+        
+        compvec(1:nend) = opdetr(randv(1:nend),n)
+        
+        print*
+        print*, "RANK="//str(n)
+        print'(a,*(f8.3))', 'randv', randv(1:nend)
+        print'(a,*(f8.3))', 'newvec ', newvec1(1:nend)
+        print'(a,*(f8.3))', 'compvec', compvec(1:nend)
+        print'(a,*(f8.3))', 'frac   ', newvec1(1:nend)/compvec(1:nend)
+        test = sum((newvec1(1:nend)-compvec(1:nend))**2)
+        if( test < 1e-10)print*, "OOOOOK "//str(n)//":" , test
+        print*, "ABOVE: test_detracer ---------------------------------------"
+    enddo
 
 end
 
 subroutine test_polydet
     integer, parameter :: nmax = 5
-    real(dp) ::  compvec(pos_(nmax+1)), AA(pos_(nmax+1)),oldvec(pos_(nmax+1))
+    real(dp) ::  compvec(pos_(nmax+1)), AA(pos_(nmax+1)),oldvec(pos_(nmax+1)), newvec(pos_(nmax+1))
     integer n1, n2, n, i
     
     n = 0; AA(pos_(n)+1:pos_(n+1)) = [ 1d0]/10d0
@@ -399,12 +432,12 @@ subroutine test_polydet
         compvec(n1:n2) = opdetr(AA(n1:n2),n)
     enddo
     
-    call polydet(AA,nmax)
+    newvec = polydet(AA,nmax)
     
     
     print*, "   old,    AA,    comp"
     do i = 1, pos_(nmax+1)
-        print'(3(f10.4))', oldvec(i), AA(i), compvec(i)
+        print'(*(f10.4))', oldvec(i), AA(i), compvec(i), newvec(i)
     enddo
     print*, "ABOVE: test_polydet ---------------------------------------"
     
@@ -817,22 +850,33 @@ subroutine test_mp_pot
     integer, parameter :: kmax=6, nmax = 5
     integer i
     real(dp) rr(3) 
-    real(dp) :: rrr(pos_(kmax+1)), rnorm, rsqe
+    real(dp), dimension(pos_(kmax+1)) :: rrr, dtrrr
+    real(dp) :: rnorm, rsqe
     real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
     real(dp) :: dd(3), dr, cq(6), co(10), ch(15)
     !real(dp) :: quad(6), octa(10),
     
     integer n,k
     integer p1,p2,q1,q2
-    real(dp) :: phi_old(pos_(6)),phi(pos_(6)), qq(pos_(5))
+    real(dp), dimension(pos_(6)) :: phi_old,phi,phi2
+    real(dp), dimension(pos_(5)) :: qq
+    
+    
+    ! For apple_potgrad
+    integer, parameter :: nkmax = 10
+    real(dp) rrh(3), rrrh(pos_(nkmax+1))
+    
+    
     
     
     print*, size(phi), sumfacfac(6), 3+6+10+21+15, size(qq), sumfacfac(5)
     
     rr = [3.4231, 2.74389, 1.54739]
     
+    rrh = rr/sqrt(sum(rr**2)) !apple
     
     
+    ! Define Multipoles
     dd = [2.345d0, -0.453245d0,0.6564256d0]
     
     cq = [0.32534, 0.4352345, 1.5324, 1.2543, 1.35435, -1.57964]
@@ -842,15 +886,7 @@ subroutine test_mp_pot
     
     ch = [2.341,3.52345,3.2465,8.978,6.4356,7.77745,6.43563,7.73094589,3.421,3.4526,2.4564257,9.893543,3.464236,8.979,5.3452]
     ch = opdetr(ch,4)
-    
-    !dd = 0
-    !cq = 0
-    !co = 0
-    !ch = 0
-    
-    
-    
-    qq = 0
+        
     qq = [0d0,dd,cq,co,ch]
     
     !print*,"q-thigs"
@@ -873,7 +909,13 @@ subroutine test_mp_pot
     print'(*(f10.4))', qq(2:)
     print*, 'size(qq)',size(qq), 1+3+6+10+15
     
+    
+    
     call  vector_powers(kmax,rr,rrr)
+    
+    call  vector_powers(nkmax,rrh,rrrh)
+    
+    
     
     rsqe  = sum(rr**2)!dsqrt(rsq)
     rnorm = dsqrt(rsqe)
@@ -953,7 +995,7 @@ subroutine test_mp_pot
     
     
             
-    
+    dtrrr = polydet(rrr,kmax)
     phi=0
     do n = 1, 4
         q1 = pos_(n)+1
@@ -963,15 +1005,24 @@ subroutine test_mp_pot
                 p2 = pos_(k+1)
                 print'(6I3)',n,k,q1,q2, p1,p2
                 phi(p1:p2) = phi(p1:p2) + opdetr(potgrad(qq(q1:q2),n,k,rinvv,rrr),k)
+                phi2(p1:p2) = phi(p1:p2) + apple_potgrad(qq(q1:q2),n,k,rinvv,dtrrr)
             enddo
     enddo
     
     
     
-    
-    print'(a,*(g30.15))', 'phi    ',phi(2:)
-    print'(a,*(g30.15))', 'phi_old',phi_old(2:)
-    print'(a,*(g30.15))', 'phi+old',phi_old(2:)+phi(2:)
+    print*
+    print'(a,*(g30.15))', 'phi      ',phi(2:)
+    print*
+    print'(a,*(g30.15))', 'phi appl ',phi2(2:)
+    print*
+    print'(a,*(g30.15))', 'phi-appl ',phi(2:)-phi2(2:)
+    print*
+    print'(a,*(g30.15))', 'appl+old ',phi2(2:)+phi_old(2:)
+    print*
+    print'(a,*(g30.15))', 'phi_old  ',phi_old(2:)
+    print*
+    print'(a,*(g30.15))', 'phi+old  ',phi_old(2:)+phi(2:)
     
     
     

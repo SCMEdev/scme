@@ -4,35 +4,6 @@ ob := obuild
 lb := lbuild
 
 
-### COMPILATION 
-fc := gfortran
-lib_comp := $(fc) -I$(b) -J$(ob)
-loc_comp := $(fc) -I$(lb) -J$(lb)
-# Must place main object first for generic program to call the correct module. 
-generic = $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) generic_program.f90
-comp1 = $(lib_comp) $(generic)
-comp2 = $(loc_comp) $(generic)
-
-$(lb)/%.o:%.f90
-	$(loc_comp) -c $< -o $@
-
-$(ob)/%.o:%.f90
-	$(fc) -J$(ob) -I$(ob) -I$(b) -c $^ -o $@  -Wall
-
-
-$(lib-a):$(wildcard ../src/*.f90)
-	(cd .. && make)
-
-vpath %.f90 ../src
-
-# -I = where to search! (for #/include and .mod)
-# -J = where to put!    (.mod)
-
-
-
-
-
-
 # Fast commands
 all:
 	make -j4 run.x
@@ -49,6 +20,45 @@ old:
 
 new: 
 	make -j4 apple.x utils.x convert.x fool.x tests.x run.x 
+
+
+
+### COMPILATION 
+fc := gfortran
+opti = 
+#-Ofast -flto -march=native 
+# -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -finline-functions 
+err := -Wall -fmax-errors=3 -fcheck=all
+# -fcheck=all
+# $(err)
+lib_comp := $(fc) -I$(b) -J$(ob) $(err) $(opti) -ffree-line-length-0
+loc_comp := $(fc) -I$(lb) -J$(lb) $(err) $(opti) -ffree-line-length-0
+# Must place main object first for generic program to call the correct module. 
+generic = $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) generic_program.f90
+comp1 = $(lib_comp) $(generic)
+comp2 = $(loc_comp) $(generic)
+
+vpath %.f90 ../src
+
+# -I = where to search! (for #/include and .mod)
+# -J = where to put!    (.mod)
+
+$(lb)/%.o:%.f90
+	$(loc_comp) -c $< -o $@
+
+$(ob)/%.o:%.f90
+	$(fc) -J$(ob) -I$(ob) -I$(b) -c $^ -o $@  -Wall
+
+$(lb)/detrace_apple.o:detrace_apple.f90
+	$(fc) -I$(lb) -J$(lb) -c $< -o $@
+
+
+$(lib-a):$(wildcard ../src/*.f90)
+	(cd .. && make)
+
+
+
+
 
 
 
@@ -89,7 +99,7 @@ opole.x: $(ob)/opole_dev.o $(lib-a)
 ### COMPRESSED
 
 apple.x: $(lb)/detrace_apple.o 
-	$(comp2)
+	$(comp2) 
 
 objects := $(lb)/compressed_arrays.o $(lb)/printer_mod.o
 # using 'objects':
@@ -108,8 +118,6 @@ tests.x: $(lb)/compressed_tests.o $(test_objects)
 run.x: $(lb)/compressed_run.o $(lb)/compressed_tests.o $(test_objects)
 	$(comp2)
 
-
-### RULES
 
 ### DEPENDENCIES
 
@@ -132,8 +140,5 @@ clean:
 	rm -f *.x *.mod *.o lbuild/* obuild/*
 
 comp-clean:
-	rm *.x build/comp*
+	rm *.x lbuild/comp*
 
-
-
-#$(addprefix $(scme_build)/, multipole_parameters.o localAxes_mod.o data_types.o printer_mod.o qpole.o opole.o polariz_parameters.o)
