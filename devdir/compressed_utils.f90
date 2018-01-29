@@ -44,6 +44,7 @@ end
 
 
 subroutine print_trace_index_matrix(k)
+    ! this output requires -ffree-line-length-0 compilation flag in gfortran
     integer k
     integer j1,j2, icol, irow, ileng,v2(sumfac(k+1)), v4(sumfac(k+1)),v3(sumfac(k+1)), tleng !((k+1)*(k+2)/2),
     integer matrix(sumfac(k+1),sumfac(k/2+1))
@@ -131,6 +132,7 @@ subroutine print_long_index_matrix(k)
 end subroutine
 
 subroutine print_square_index_matrix(k)
+    ! this output requires -ffree-line-length-0 compilation flag in gfortran
     !integer, parameter :: k = 7
     integer k
     integer j1,j2, icol, irow, ileng,v2(len_(k)), matrix(len_(k),len_(k))
@@ -162,6 +164,7 @@ end subroutine
 
 
 subroutine print_choose_matrix
+    ! this output may require -ffree-line-length-0 compilation flag in gfortran
     integer, parameter :: k = 19
     integer i,j
     !integer , parameter :: k = 10
