@@ -11,7 +11,7 @@ vpath %.f90 devdir
 FC:=gfortran
 #FC:=flang
 opti:= -O0
-#opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -fopenmp -finline-functions
+#opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -finline-functions -fopenmp 
 
 FFLAGS:= $(opti) -pg -I$b -J$b -cpp -D'DEBUG_PRINTING' 
 #-Wall

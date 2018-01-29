@@ -392,7 +392,9 @@ contains
     if (n .ge. 2) then
        iaux = i(n)
        j = n-1
-       do while (i(j) .gt. iaux .and. j .ge. 1)
+       do !while (i(j) .gt. iaux .and. j .ge. 1) !this doesn't run with bounds checking
+          if(.not. j.ge.1)exit
+          if(.not. i(j).gt.iaux)exit
           i(j+1) = i(j)
           j = j - 1
        end do

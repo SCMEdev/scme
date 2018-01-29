@@ -9,7 +9,14 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
-test_polydet
+test_mp_pot
+!print_long_index_matrix(15)
+!print_square_index_matrix(15)
+!print_trace_index_matrix(15)
+!print_apple_g(15)
+!test_detracers
+!test_detracer_linearity
+!test_polydet
 !test_polyfinder
 !test_detracer
 !all_tests
