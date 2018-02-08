@@ -70,6 +70,7 @@ subroutine suit
     call test_polydet
     call test_detracers
     call test_detracer_linearity
+    call test_polynextpow_n
     
     print*
     print*, '------------------------------------------------------------'
@@ -78,7 +79,19 @@ subroutine suit
 
 end subroutine
 
-
+subroutine test_polynextpow_n
+    integer nn(3), i, a,b,c
+    nn=0
+    a=0;b=0;c=0
+    do i = 1, pos_(11)
+        if(i>1)then 
+            call polynextpown(nn)
+            call polynextpow(a,b,c)
+        endif
+        print*, str(i)//":"//str(nn)//','//str([a,b,c])//'     '//str(polyfind(nn))//','//str(polyfinder(a,b,c))
+        
+    enddo
+end
 
 subroutine test_detracer_linearity
     !This routine tests the linearity of the polytensor detracer. 
@@ -850,7 +863,7 @@ subroutine test_mp_pot
     integer, parameter :: kmax=6, nmax = 5
     integer i
     real(dp) rr(3) 
-    real(dp), dimension(pos_(kmax+1)) :: rrr, dtrrr
+    real(dp), dimension(pos_(kmax+1)) :: rrr
     real(dp) :: rnorm, rsqe
     real(dp) :: rinvv(2*(kmax+nmax)+1) !, rinvv1(2*(kmax+nmax)+1), rinvv2(2*(kmax+nmax)+1)
     real(dp) :: dd(3), dr, cq(6), co(10), ch(15)
@@ -864,8 +877,9 @@ subroutine test_mp_pot
     
     ! For apple_potgrad
     integer, parameter :: nkmax = 10
-    real(dp) rrh(3), rrrh(pos_(nkmax+1))
-    
+    real(dp) rrh(3)
+    real(dp), dimension(pos_(nkmax+1)) :: dtrrr,  rrrh
+    integer pq1,pq2
     
     
     
@@ -922,7 +936,7 @@ subroutine test_mp_pot
     rinvv(1) = 1d0/rnorm
     rinvv(2) = 1d0/rsqe
     
-    do i = 3, 2*(kmax+nmax)+1
+    do i = 3, 2*(nkmax)+1
       rinvv(i) = rinvv(i-2)*rinvv(2)
     enddo
     
@@ -995,18 +1009,45 @@ subroutine test_mp_pot
     
     
             
-    dtrrr = polydet(rrr,kmax)
+    dtrrr = polydet(rrrh,nkmax) !!!!!! måste ha den låååååånga!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    
+    
     phi=0
+    phi2=0
+    
+    !n=1;k=2
+    !
+    !q1 = pos_(n)+1
+    !q2 = pos_(n+1)
+    !p1 = pos_(k)+1
+    !p2 = pos_(k+1)
+    !pq1= pos_(n+k)+1
+    !pq2= pos_(n+k+1)
+    !
+    !print'(6I3)',n,k,q1,q2, p1,p2
+    !call printo( opdetr(potgrad(qq(q1:q2),n,k,rinvv,rrr),k) )
+    !call printo( apple_potgrad(qq(q1:q2),n,k,rinvv, dtrrr(pq1:pq2) ) )
+    !
+    !
+    !
+    !stop"hey"
+    
+    phi=0
+    phi2=0
     do n = 1, 4
         q1 = pos_(n)+1
         q2 = pos_(n+1)
-            do k = 1,5
-                p1 = pos_(k)+1
-                p2 = pos_(k+1)
-                print'(6I3)',n,k,q1,q2, p1,p2
-                phi(p1:p2) = phi(p1:p2) + opdetr(potgrad(qq(q1:q2),n,k,rinvv,rrr),k)
-                phi2(p1:p2) = phi(p1:p2) + apple_potgrad(qq(q1:q2),n,k,rinvv,dtrrr)
-            enddo
+        do k = 1,5
+            p1 = pos_(k)+1
+            p2 = pos_(k+1)
+            pq1= pos_(n+k)+1
+            pq2= pos_(n+k+1)
+            
+            print'(6I3)',n,k,q1,q2, p1,p2
+            phi(p1:p2) = phi(p1:p2) + opdetr(potgrad(qq(q1:q2),n,k,rinvv,rrr),k)
+            phi2(p1:p2) = phi2(p1:p2) + apple_potgrad(qq(q1:q2),n,k,rinvv, dtrrr(pq1:pq2) )
+        enddo
     enddo
     
     

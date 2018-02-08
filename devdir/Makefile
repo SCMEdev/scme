@@ -2,6 +2,7 @@
 b:=../build
 ob := obuild
 lb := lbuild
+dodir=@mkdir -p $(@D)
 
 
 # Fast commands
@@ -43,22 +44,22 @@ vpath %.f90 ../src
 # -I = where to search! (for #/include and .mod)
 # -J = where to put!    (.mod)
 
+
 $(lb)/%.o:%.f90
+	$(dodir)
 	$(loc_comp) -c $< -o $@
 
 $(ob)/%.o:%.f90
+	$(dodir)
 	$(fc) -J$(ob) -I$(ob) -I$(b) -c $^ -o $@  -Wall
 
 $(lb)/detrace_apple.o:detrace_apple.f90
+	$(dodir)
 	$(fc) -I$(lb) -J$(lb) -c $< -o $@
 
 
 $(lib-a):$(wildcard ../src/*.f90)
 	(cd .. && make)
-
-
-
-
 
 
 

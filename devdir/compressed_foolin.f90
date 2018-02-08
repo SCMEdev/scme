@@ -34,10 +34,19 @@ subroutine print_trace_ind
 end subroutine
 
 
+
 subroutine main; ! MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
 !call &
 !print_trace_ind 
-!stupido
+call printo(pos_,0)
+call printo(len_,0)
+!call printo(pow_,0)
+!call stupido
+
+end
+
+
+subroutine dunno; 
 integer*16 i , kl, end
 end = 9538998
 do i = end-100, end
@@ -50,25 +59,27 @@ end
 
 
 
-subroutine stupido
-integer p1(10), p2(10), p3(10)
-integer p10(0:10), p20(0:10), p30(0:10)
-integer p11(11), p21(11), p31(11)
-p1 =1; p2 =4; p3 = 0
-p10=1; p20=4; p30 = 0
-p11=1; p21=4; p31 = 0
-call stupido2(p1,p2,p3) 
-print*, p3
-end
-
-
-subroutine stupido2(p1,p2,p3)
-    integer, parameter :: start=0, fin=10
-    integer p1(start:fin),p2(start:fin),p3(start:fin), i
-    do i = start,fin 
-        p3(i) = p1(i)+p2(i)
-    enddo
-end
+!subroutine stupido
+!integer p1(10), p2(10), p3(10)
+!integer p10(0:10), p20(0:10), p30(0:10)
+!integer p11(11), p21(11), p31(11)
+!p1 =1; p2 =4; p3 = 0
+!p10=1; p20=4; p30 = 0
+!p11=1; p21=4; p31 = 0
+!call stupido2(p1,p2,p3) 
+!print*, p3
+!end
+!
+!
+!subroutine stupido2(p1,p2,p3)
+!    integer, parameter :: start=0, fin=10
+!    integer p1(start:fin),p2(start:fin),p3(start:fin), i
+!    do i = start,fin 
+!        p3(i) = p1(i)+p2(i)
+!    enddo
+!    print*, "p1:"
+!    call printo(p1)
+!end
 
 
 end module !<<< 

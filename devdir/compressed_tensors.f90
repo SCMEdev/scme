@@ -16,6 +16,55 @@ end subroutine
 
 
 
+
+subroutine dfdu(u,ders,nmax) 
+    integer,  intent(in) :: nmax
+    real(dp),intent(out) :: ders(0:nmax)
+    real(dp), intent(in) :: u !u=r^2
+    integer n
+    
+    ders(0) = 1_dp/sqrt(u)
+    do n = 1,nmax
+        ders(n) = (-1)**n * intff(2*n-1,1)/2**n / u**n * ders(0)
+    enddo
+    
+end
+
+
+subroutine dejun_df(nmax,rrr,df)
+    integer n1,n2,n3,n, k1,k2,k3,k
+    integer b1,b12,b123, i, in_2k, nmax
+    real(dp) su,r2, fff(0:nmax)
+    real(dp) df(pos_(nmax+1)), rrr(pos_(nmax+1))
+
+    
+    r2=sum(rrr(2:4)**2)
+    call dfdu(r2,fff,nmax)
+    
+    n1=0;n2=0;n3=0
+    do i = 1, pos_(nmax+1)
+        if(i>1)call polynextpow(n1,n2,n3)
+        n=n1+n2+n3
+        su = 0 
+        do k1 = 0,n1/2
+            b1 = brakk(n1,k1)
+            do k2 = 0,n2/2
+                b12 = b1*brakk(n2,k2)
+                do k3 = 0,n3/2
+                    b123 = b12*brakk(n3,k3)
+                    k=k1+k2+k3
+                    
+                    in_2k = polyfinder(n1-2*k1,n2-2*k2,n3-2*k3)
+                    
+                    su = su + 2**(n-k) * fff(n-k) * b123 * rrr(in_2k)
+                enddo
+            enddo
+        enddo
+        df(i)=su
+    enddo    
+end
+
+
 function apple_potgrad(qq,nn,kk,rpows,dtrrr) result(potgrad)
     integer, intent(in)  :: nn, kk
     real(dp), intent(in) :: qq(len_(nn)), dtrrr(len_(nn+kk)), rpows(:)
@@ -24,7 +73,7 @@ function apple_potgrad(qq,nn,kk,rpows,dtrrr) result(potgrad)
     !integer k1, k2, n1, n2, kni2, sig, k_i, n_i
     
     
-    potgrad = (-1)**(kk) * 1d0/dble(intff(2*nn-1,1)) * rpows(2*(nn+kk)+1) * inner(nn+kk,nn,dtrrr,qq)
+    potgrad = (-1)**(kk+1) * intff(2*(nn+kk)-1,2*nn-1) * rpows(nn+kk+1) * inner(nn+kk,nn,dtrrr,qq) !Kom ihåg att detracern är the shiiiiiit ohc inte har (2*n-1)!! i sig
     
 end    
 

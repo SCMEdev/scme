@@ -479,6 +479,16 @@ function polyfind(nn) result(row)
    
 end
 
+function polyfinder(a,b,c) result(row)
+   ! Given nx,ny,nz, returns corresponding row in tricorn _polytensor_. 
+   integer a,b,c, row, bc !rank, i
+   
+   bc = b+c
+   row = 1 + c + len_(bc-1)
+   
+   row = row + pos_(a+bc)
+   
+end
 
 
 
@@ -762,6 +772,42 @@ subroutine nextpown(nn)
     endif
     nn = [a,b,c]
 end
+
+subroutine polynextpown(nn)
+    ! Updates the argument to the next power vector in lex ordering
+    integer, intent(inout) :: nn(3) 
+    integer a,b,c 
+    a=nn(1);b=nn(2);c=nn(3)
+    if (b>0)then
+        b=b-1
+        c=c+1
+    elseif (a>0)then
+        a=a-1
+        b=c+1
+        c=0
+    else 
+        a=c+1
+        c=0
+    endif
+    nn = [a,b,c]
+end
+
+subroutine polynextpow(a,b,c)
+    ! Updates the argument to the next power vector in lex ordering
+    integer, intent(inout) :: a,b,c
+    if (b>0)then
+        b=b-1
+        c=c+1
+    elseif (a>0)then
+        a=a-1
+        b=c+1
+        c=0
+    else 
+        a=c+1
+        c=0
+    endif
+end
+
 
 
 subroutine init_pow_nl(nn_2, l, ll)

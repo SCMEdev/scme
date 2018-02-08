@@ -130,11 +130,12 @@ integer, parameter :: binc_(0:matk,0:matk) = choose_matrix(0:matk,0:matk)
 
 
 private
-public mm_, gg_, pos_, len_, binc_, tmm_ ! Global variables marked with "_"
+public mm_, gg_, pos_, len_, binc_, tmm_!, pow_ ! Global variables marked with "_"
 
 
-
-
+!integer, parameter :: tk=3
+!integer ik,i,j,k
+!integer, parameter :: pow_(1:3,1:pos_(tk)) = [(k,k=1,3)]
 
 
 
