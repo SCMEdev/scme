@@ -26,10 +26,11 @@ new:
 
 ### COMPILATION 
 fc := gfortran
-opti = 
+opti = -Ofast -flto -march=native 
 #-Ofast -flto -march=native 
 # -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -finline-functions 
-err := -Wall -fmax-errors=3 -fcheck=all
+err := 
+#-Wall -fmax-errors=3 -fcheck=all
 # -fcheck=all
 # $(err)
 lib_comp := $(fc) -I$(b) -J$(ob) $(err) $(opti) -ffree-line-length-0

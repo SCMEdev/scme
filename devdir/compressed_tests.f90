@@ -78,6 +78,56 @@ subroutine suit
     print*, '------------------------------------------------------------'
 
 end subroutine
+    
+subroutine test_polyinner
+    integer, parameter :: mmax=7, nmax=7
+    real(dp) qq(pos_(nmax+1)), ff(pos_(nmax+mmax+1)), phi(pos_(mmax+1))
+    integer i , imax
+    real(dp) scal
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34000])
+    
+    call  random_number(qq)
+    call  random_number(ff)
+    call  random_number(phi)
+    
+    
+    print'(a,*(f10.5))','   qq', qq
+    print*
+    print'(a,*(f10.5))','   ff', ff
+    print*
+    
+    phi = polyinner1(qq,ff,0,nmax,0,mmax)
+    print'(a,*(f10.5))','   phi', phi
+    phi=0
+    
+    phi = polyinner(qq,ff,0,nmax,0,mmax)
+    print'(a,*(f10.5))','   phi', phi
+    
+    
+    phi=0
+    phi = polyinner_matrix(qq,ff,0,nmax,0,mmax)
+    print'(a,*(f10.5))','   phi', phi
+    
+    
+    imax = 100000
+    scal = 1d0/imax
+    phi=0
+    do i = 1,imax
+        call  random_number(qq)
+        call  random_number(ff)
+        !phi =  phi + polyinner1(qq,ff,0,nmax,0,mmax)*scal
+        !phi =  phi + polyinner_matrix(qq,ff,0,nmax,0,mmax)*scal
+        phi =  phi + polyinner(qq,ff,0,nmax,0,mmax)*scal
+    enddo
+    print*
+    print'(a,*(f10.5))','10 phi', phi
+        
+    
+    
+    
+    
+end
 
 subroutine test_polynextpow_n
     integer nn(3), i, a,b,c

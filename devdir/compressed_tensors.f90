@@ -17,6 +17,137 @@ end subroutine
 
 
 
+function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
+    integer :: nn1,nn2,mm1,mm2
+    real(dp) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
+    real(dp) :: marr(pos_(mm2+1))
+    integer nn, mm
+    integer n1,n2,m1,m2,f1,f2
+    
+    marr = 0
+    do mm = mm1, mm2
+        m1 = pos_(mm)+1
+        m2 = pos_(mm+1)
+        do nn = nn1, nn2
+            
+            n1 = pos_(nn)+1
+            n2 = pos_(nn+1)
+            
+            f1 = pos_(nn+mm)+1
+            f2 = pos_(nn+mm+1)
+            
+            marr(m1:m2) = marr(m1:m2) + inner( nn+mm, nn, dfarr(f1:f2), narr(n1:n2) )
+            
+            !print*, mm,nn
+        enddo
+    enddo
+    
+end
+
+
+function polyinner2(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
+    integer,  intent(in) :: nn1,nn2,mm1,mm2
+    real(dp), intent(in) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
+    real(dp) :: marr(pos_(mm2+1))
+    integer nn, mm
+    integer n1,n2,m1,m2,f1,f2 !remove unneeded
+    integer nle,mle
+    integer mi,ni
+    marr = 0
+    do mm = mm1, mm2 ! m-rank gradient 
+        m1 = pos_(mm)
+        mle = len_(mm)
+        
+        do nn = nn1, nn2 ! sum m-rank gradients from all n-order multipoles
+            
+            n1 = pos_(nn)
+            nle = len_(nn)
+            
+            f1 = pos_(nn+mm)
+            
+            do mi = 1, mle ! do the inner product of the central tensor with the multipole
+                do ni = 1,nle
+                        !!!!!!!!!!!!! instead of plus, use interval indexing !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                    marr(m1+mi) = marr(m1+mi) + dfarr(f1+mm_(mi,ni)) * narr(n1+ni) * gg_(n1+ni)
+                    
+                enddo
+            enddo
+            !print'(a,*(f10.5))','>> marr', marr
+        enddo
+    enddo
+    
+end
+
+function polyinner_matrix(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
+    integer,  intent(in) :: nn1,nn2,mm1,mm2
+    real(dp), intent(in) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
+    real(dp) :: marr(pos_(mm2+1))
+    integer nn, mm
+    integer n1,n2,m1,m2,f1,f2
+    integer nle,mle
+    integer mi,ni
+    real(dp) :: matrix(pos_(mm2+1),pos_(nn2+1))
+    
+    
+    marr = 0
+    do mm = mm1, mm2 ! m-rank gradient 
+        m1 = pos_(mm)
+        mle = len_(mm)
+        
+        do nn = nn1, nn2 ! sum m-rank gradients from all n-order multipoles
+            
+            !!alt1 !this thing is for some reason 25% slower with no and full optimization 
+            !n1 = pos_(nn)+1
+            !n2 = pos_(nn+1)
+            !do mi = 1,mle
+            !    matrix(m1+mi,n1:n2) = dfarr(f1+mm_(mi,1:nle))
+            !enddo
+
+            
+            n1 = pos_(nn)
+            nle = len_(nn)
+            
+            f1 = pos_(nn+mm)
+            
+            do ni = 1, nle !changing this loop to interval indexing is 25% slower with no and full optimization 
+            do mi = 1, mle
+                matrix(m1+mi,n1+ni) = dfarr(f1+mm_(ni,mi))
+            enddo
+            enddo
+            
+        enddo
+    enddo
+    
+    marr = matmul( matrix, narr*gg_(1:pos_(nn2+1)) )
+    
+    
+    
+end
+
+
+
+function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
+    integer,  intent(in) :: kq, kr
+    real(dp), intent(in) :: vq(len_(kq)), vr(len_(kr))
+    real(dp) vqr(len_(kq-kr))
+    integer gplace, i, j, maxi, maxj
+    
+    maxi = len_(kq - kr)
+    maxj = len_(kr)
+    
+    gplace = pos_(kr)
+    
+    vqr = 0
+    do i = 1, maxi
+        do j = 1,maxj
+            vqr(i) = vqr(i) + vq(mm_(i,j)) * vr(j) * gg_(gplace+j)
+        enddo
+    enddo
+   
+end
+
+
+
 subroutine dfdu(u,ders,nmax) 
     integer,  intent(in) :: nmax
     real(dp),intent(out) :: ders(0:nmax)
@@ -282,28 +413,6 @@ end subroutine
 
 
 
-function inner(kq, kr, vq, vr) result(vqr) !assumes kq > kr
-   integer, intent(in) :: kq, kr
-   real(dp), intent(in) :: vq(:), vr(:)
-   real(dp) vqr((kq-kr+1)*(kq-kr+2)/2)
-   integer kqr, gplace, i, j, maxi, maxj
-   
-   !if(kr
-   
-   kqr = kq - kr
-   maxi = (kqr+1)*(kqr+2)/2
-   maxj = (kr+1)*(kr+2)/2
-   
-   gplace = pos_(kr)
-   
-   vqr(:) = 0
-   do i = 1, maxi
-     do j = 1,maxj
-       vqr(i) = vqr(i) + vq(mm_(i,j)) * vr(j) * gg_(gplace+j)
-       enddo
-       enddo
-   
-end
 
     
 !function symouter(k1,k2,v1,v2) result(vout)
