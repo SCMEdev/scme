@@ -148,29 +148,16 @@ end
 
 
 
-subroutine dfdu(u,ders,nmax) 
-    integer,  intent(in) :: nmax
-    real(dp),intent(out) :: ders(0:nmax)
-    real(dp), intent(in) :: u !u=r^2
-    integer n
-    
-    ders(0) = 1_dp/sqrt(u)
-    do n = 1,nmax
-        ders(n) = (-1)**n * intff(2*n-1,1)/2**n / u**n * ders(0)
-    enddo
-    
-end
-
 
 subroutine dejun_df(nmax,rrr,df)
     integer n1,n2,n3,n, k1,k2,k3,k
     integer b1,b12,b123, i, in_2k, nmax
-    real(dp) su,r2, fff(0:nmax)
+    real(dp) su,r2, sss(0:nmax)
     real(dp) df(pos_(nmax+1)), rrr(pos_(nmax+1))
-
     
     r2=sum(rrr(2:4)**2)
-    call dfdu(r2,fff,nmax)
+    print*, "rr dejun", rrr(2:4), r2
+    call dfdu_erf(r2,nmax,sss)
     
     n1=0;n2=0;n3=0
     do i = 1, pos_(nmax+1)
@@ -187,7 +174,7 @@ subroutine dejun_df(nmax,rrr,df)
                     
                     in_2k = polyfinder(n1-2*k1,n2-2*k2,n3-2*k3)
                     
-                    su = su + 2**(n-k) * fff(n-k) * b123 * rrr(in_2k)
+                    su = su + sss(n-k) * b123 * rrr(in_2k)
                 enddo
             enddo
         enddo
@@ -195,6 +182,100 @@ subroutine dejun_df(nmax,rrr,df)
     enddo    
 end
 
+subroutine dfdu(u,nmax,ders) 
+    !Derivatives of the Coulomb potential w.r.t. r^2!
+    integer,  intent(in) :: nmax
+    real(dp),intent(out) :: ders(0:nmax)
+    real(dp), intent(in) :: u !u=r^2
+    integer n
+    
+    ders(0) = 1_dp/sqrt(u)
+    do n = 1,nmax
+        ders(n) = (-1)**n * intff(2*n-1,1) / u**n * ders(0)
+    enddo
+    
+end
+
+subroutine dfdu_exp(u,nmax,ders) 
+    !Derivatives of the (1-exp(-r/a))/r potential w.r.t. r^2!
+    integer,  intent(in) :: nmax
+    real(dp),intent(out) :: ders(0:nmax)
+    real(dp), intent(in) :: u !u=r^2
+    real(dp) r, a, exp_ra
+    integer n
+    a = 0.7d0 !adjustable parameter
+    r = sqrt(u)
+    exp_ra = exp(r/a)
+    
+    
+    
+    if(nmax.ge.0)ders(0) = 2**0 * (1 - 1d0/exp_ra)/r
+    if(nmax.ge.1)ders(1) = 2**1 * (a - a*exp_ra + r)/(2*a*exp_ra*u**1.5d0)
+    if(nmax.ge.2)ders(2) = 2**2 * (3*a**2*(-1 + exp_ra) - 3*a*r - u)/(4*a**2*exp_ra*u**2.5d0)
+    if(nmax.ge.3)ders(3) = 2**3 * (-15*a**3*(-1 + exp_ra) + 15*a**2*r + 6*a*u + u**1.5d0)/(8*a**3*exp_ra*u**3.5d0)
+    if(nmax.ge.4)ders(4) = 2**4 * (105*a**4*(-1 + exp_ra) - 105*a**3*r - 45*a**2*u - 10*a*u**1.5d0 - u**2)/(16*a**4*exp_ra*u**4.5d0)
+    if(nmax.ge.5)ders(5) = 2**5 * (-945*a**5*(-1 + exp_ra) + 945*a**4*r + 420*a**3*u + 105*a**2*u**1.5d0 + 15*a*u**2 + u**2.5d0)/(32*a**5*exp_ra*u**5.5d0)
+    if(nmax.ge.6)ders(6) = 2**6 * (10395*a**6*(-1 + exp_ra) - 10395*a**5*r - 4725*a**4*u - 1260*a**3*u**1.5d0 - 210*a**2*u**2 - 21*a*u**2.5d0 - u**3)/(64*a**6*exp_ra*u**6.5d0)
+    if(nmax.ge.7)ders(7) = 2**7 * (-135135*a**7*(-1 + exp_ra) + 135135*a**6*r + 62370*a**5*u + 17325*a**4*u**1.5d0 + 3150*a**3*u**2 + 378*a**2*u**2.5d0 + 28*a*u**3 + u**3.5d0)/(128*a**7*exp_ra*u**7.5d0)
+    if(nmax.ge.8)ders(8) = 2**8 * (2027025*a**8*(-1 + exp_ra) - 2027025*a**7*r - 945945*a**6*u - 270270*a**5*u**1.5d0 - 51975*a**4*u**2 - 6930*a**3*u**2.5d0 - 630*a**2*u**3 - 36*a*u**3.5d0 - u**4)/(256*a**8*exp_ra*u**8.5d0)
+    if(nmax.ge.9)ders(9) = 2**9 * (-34459425*a**9*(-1 + exp_ra) + 34459425*a**8*r + 16216200*a**7*u + 4729725*a**6*u**1.5d0 + 945945*a**5*u**2 + 135135*a**4*u**2.5d0 + 13860*a**3*u**3 + 990*a**2*u**3.5d0 + 45*a*u**4 + u**4.5d0)/(512*a**9*exp_ra*u**9.5d0)
+    
+    
+    
+end
+
+subroutine dfdu_erf(u,nmax,ders) 
+    !Derivatives of the (1-exp(-r/a))/r potential w.r.t. r^2!
+    integer,  intent(in) :: nmax
+    real(dp),intent(out) :: ders(0:nmax)
+    real(dp), intent(in) :: u !u=r^2
+    real(dp) r, a, exp_ra, erf_ra, exp_ua2
+    real(dp), parameter :: sqpi = sqrt(acos(-1d0)) !sqrt(pi)
+    integer n
+    a = 1.6d0 !adjustable parameter
+    r = sqrt(u)
+    exp_ra = exp(r/a)
+    erf_ra = erf(r/a)
+    exp_ua2 = exp(u/a**2)
+    
+    if(nmax.ge.0)ders(0) = 2**0 *( erf_ra/r  )
+    if(nmax.ge.1)ders(1) = 2**1 *( 1/(a*exp_ua2*sqpi*u) - erf_ra/(2*u**1.5d0)  )
+    if(nmax.ge.2)ders(2) = 2**2 *( -(3*a**2 + 2*u)/(2*a**3*exp_ua2*sqpi*u**2) + (3*erf_ra)/(4*u**2.5d0)  )
+    if(nmax.ge.3)ders(3) = 2**3 *( (15*a**4 + 10*a**2*u + 4*u**2)/(4*a**5*exp_ua2*sqpi*u**3) - (15*erf_ra)/(8*u**3.5d0)  )
+    if(nmax.ge.4)ders(4) = 2**4 *( -(105*a**6 + 70*a**4*u + 28*a**2*u**2 + 8*u**3)/(8*a**7*exp_ua2*sqpi*u**4) + (105*erf_ra)/(16*u**4.5d0)  )
+    if(nmax.ge.5)ders(5) = 2**5 *( (945*a**8 + 630*a**6*u + 252*a**4*u**2 + 72*a**2*u**3 + 16*u**4)/(16*a**9*exp_ua2*sqpi*u**5) - (945*erf_ra)/(32*u**5.5d0)  )
+    if(nmax.ge.6)ders(6) = 2**6 *( -(10395*a**10 + 6930*a**8*u + 2772*a**6*u**2 + 792*a**4*u**3 + 176*a**2*u**4 + 32*u**5)/(32*a**11*exp_ua2*sqpi*u**6) + (10395*erf_ra)/(64*u**6.5d0)  )
+    if(nmax.ge.7)ders(7) = 2**7 *( (135135*a**12 + 90090*a**10*u + 36036*a**8*u**2 + 10296*a**6*u**3 + 2288*a**4*u**4 + 416*a**2*u**5 + 64*u**6)/(64*a**13*exp_ua2*sqpi*u**7) - (135135*erf_ra)/(128*u**7.5d0)  )
+    if(nmax.ge.8)ders(8) = 2**8 *( ((-2*r*(2027025*a**14 + 1351350*a**12*u + 540540*a**10*u**2 + 154440*a**8*u**3 + 34320*a**6*u**4 + 6240*a**4*u**5 + 960*a**2*u**6 + 128*u**7))/(a**15*exp_ua2*sqpi) + 2027025*erf_ra)/(256*u**8.5d0)  )
+    if(nmax.ge.9)ders(9) = 2**9 *( ((2*r*(34459425*a**16 + 22972950*a**14*u + 9189180*a**12*u**2 + 2625480*a**10*u**3 + 583440*a**8*u**4 + 106080*a**6*u**5 + 16320*a**4*u**6 + 2176*a**2*u**7 + 256*u**8))/(a**17*exp_ua2*sqpi)- 34459425*erf_ra)/(512*u**9.5d0)  )
+    
+    
+    
+end
+
+
+
+
+
+
+subroutine apple1_df(nmax,rrr,rpow,df)
+    integer , intent(in) :: nmax
+    real(dp),intent(out) :: df(pos_(nmax+1))
+    real(dp), intent(in) :: rrr(pos_(nmax+1))
+    real(dp), intent(in) :: rpow(2*nmax+1)
+    integer n, n1, n2
+    
+    do n = 0,nmax
+        n1 = pos_(n)+1
+        n2 = pos_(n+1)
+        df(n1:n2) = (-1)**n * rpow(2*n+1) * intff(2*n-1,1) * detracer(rrr(n1:n2),n)
+        print'(a,*(f10.5))','>> marr', df
+    enddo
+    
+end
+        
+    
+    
 
 function apple_potgrad(qq,nn,kk,rpows,dtrrr) result(potgrad)
     integer, intent(in)  :: nn, kk

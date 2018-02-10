@@ -9,9 +9,14 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
+!test_intfac_ff
+test_df
+
+print*, 362880d0**(1d0/9d0)
+print*, acos(-1d0)
 !test_polynextpow_n
 !test_mp_pot
-test_polyinner
+!test_polyinner
 !print_long_index_matrix(15)
 !print_square_index_matrix(15)
 !print_trace_index_matrix(15)

@@ -26,10 +26,10 @@ new:
 
 ### COMPILATION 
 fc := gfortran
-opti = -Ofast -flto -march=native 
+opti = 
 #-Ofast -flto -march=native 
 # -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -finline-functions 
-err := 
+err := -Wall -fmax-errors=3 -fcheck=all
 #-Wall -fmax-errors=3 -fcheck=all
 # -fcheck=all
 # $(err)

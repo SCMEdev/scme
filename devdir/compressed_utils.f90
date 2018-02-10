@@ -627,33 +627,6 @@ pure function sumfacfac(u)
 endfunction
 
 
-subroutine test_intfac_ff
-    integer a, b
-    character(3) ach, bch
-    call get_command_argument(1, ach)
-    call get_command_argument(2, bch)
-    
-    read(ach,*) a
-    read(bch,*) b
-    
-    print*, intfac(a,b)
-    print*, intff(a,b)
-    !print*, intfac(5,5)
-    !print*, intfac(5,4)
-    !print*, intfac(5,3)
-    !print*, intfac(7,3)
-    !print*, intfac(7,5)
-    !
-    !print*, intff(5,5)
-    !print*, intff(6,4)
-    !print*, intff(5,3)
-    !print*, intff(7,3)
-    !print*, intff(7,5)
-    !print*, intff(17,7)
-    
-    print*, "above, TEST_INTFAC_FF ------------------------------------------------------------------"
-    
-end
    
 
 function intfac(aa,bb) result(cc)
@@ -661,6 +634,8 @@ function intfac(aa,bb) result(cc)
     integer aa, bb
     integer i, cc
     if( aa<0 .or. bb<0 )stop"negative number in intfac"
+    if( aa<bb )stop"Denominator is larger in intfac"
+    
     cc = 1
     do i = bb+1,aa
       cc = cc*i
@@ -672,7 +647,9 @@ function intff(aa,bb) result(cc)
     integer aa, bb
     integer i, cc
     if (mod(aa-bb,2) .ne. 0)stop"number interval not divisible by 2 in intff"
-    if( aa<0 .or. bb<0 )stop"negative number in intff"
+    if( aa<-1 .or. bb<-1 )stop"Number in intff < -1"
+    if(bb>abs(aa))stop"Denominator is larger in intff"
+    
     cc = 1
     do i = bb+2,aa, 2
       cc = cc*i

@@ -79,6 +79,23 @@ subroutine suit
 
 end subroutine
     
+
+subroutine test_intfac_ff
+    integer a, b
+    character(3) ach, bch
+    call get_command_argument(1, ach)
+    call get_command_argument(2, bch)
+    
+    read(ach,*) a
+    read(bch,*) b
+    
+    !print*,'intfac', intfac(a,b)
+    print*,'intff ', intff(a,b)
+    
+    print*, "above, TEST_INTFAC_FF ------------------------------------------------------------------"
+    
+end
+
 subroutine test_polyinner
     integer, parameter :: mmax=7, nmax=7
     real(dp) qq(pos_(nmax+1)), ff(pos_(nmax+mmax+1)), phi(pos_(mmax+1))
@@ -101,7 +118,7 @@ subroutine test_polyinner
     print'(a,*(f10.5))','   phi', phi
     phi=0
     
-    phi = polyinner(qq,ff,0,nmax,0,mmax)
+    phi = polyinner2(qq,ff,0,nmax,0,mmax)
     print'(a,*(f10.5))','   phi', phi
     
     
@@ -118,7 +135,7 @@ subroutine test_polyinner
         call  random_number(ff)
         !phi =  phi + polyinner1(qq,ff,0,nmax,0,mmax)*scal
         !phi =  phi + polyinner_matrix(qq,ff,0,nmax,0,mmax)*scal
-        phi =  phi + polyinner(qq,ff,0,nmax,0,mmax)*scal
+        phi =  phi + polyinner2(qq,ff,0,nmax,0,mmax)*scal
     enddo
     print*
     print'(a,*(f10.5))','10 phi', phi
@@ -901,6 +918,100 @@ subroutine test_potgrad
     print*, 'ABOVE: TEST POTGRAD-----------------------------------------------'
 end
 
+
+
+subroutine test_df
+    integer, parameter :: kmax=5, nmax=4, nkmax = kmax+nmax
+    
+    real(dp), dimension(pos_(kmax+1)) :: phi_app, phi_lin
+    real(dp), dimension(pos_(nkmax+1)) :: df_lin, df_app, rrr 
+    
+    real(dp) qq(pos_(nmax+1))
+    real(dp) rinvv(2*nkmax+1) 
+    
+    real(dp) q1(3), q2(6), q3(10), q4(15)
+    real(dp) rr(3), rnorm
+        
+    integer i
+    
+    rr = [3.4231, 2.74389, 1.54739]
+    
+    !rrh = rr/sqrt(sum(rr**2)) !apple
+    
+    
+    ! Define Multipoles
+    q1 = [2.345d0, -0.453245d0,0.6564256d0]
+    
+    q2 = [0.32534, 0.4352345, 1.5324, 1.2543, 1.35435, -1.57964]
+    
+    q3 = [0.4352345, 1.5324, 1.2543, 1.35435, -1.57964,0.32534, 0.4352345, 1.5324, 1.2543, 1.35435]
+    q3 = opdetr(q3,3)
+    
+    q4 = [2.341,3.52345,3.2465,8.978,6.4356,7.77745,6.43563,7.73094589,3.421,3.4526,2.4564257,9.893543,3.464236,8.979,5.3452]
+    q4 = opdetr(q4,4)
+        
+    qq = [0d0,q1,q2,q3,q4]
+    
+    
+    
+    call  vector_powers(nkmax,rr,rrr)
+    print'(a,*(g30.17))','rrr', rrr
+    
+    
+    call inv_odd_powers(nkmax,rr,rinvv,rnorm)
+    
+    df_app=0
+    df_lin=0
+    
+    call dejun_df(nkmax,rrr,df_lin)
+    
+    call apple1_df(nkmax,rrr,rinvv,df_app)
+    
+    print*;print'(a,*(g30.17))','df_app', df_app
+    print*;print'(a,*(g30.17))','df_lin', df_lin
+    print*;print'(a,*(g30.17))','diff  ', df_lin - df_app
+    
+    phi_app = polyinner1(qq,df_app,0,nmax,0,kmax)
+    phi_lin = polyinner1(qq,df_lin,0,nmax,0,kmax)
+    
+    
+    print*;print'(a,*(g30.17))','phi_app', phi_app
+    print*;print'(a,*(g30.17))','phi_lin', phi_lin
+    print*;print'(a,*(g30.17))','diff  ', phi_app-phi_lin
+                                          
+    !(narr,dfarr,nn1,nn2,mm1,mm2)
+    
+    
+    
+end
+
+subroutine inv_odd_powers(nkmax,rr,rinvv,r1)
+    integer, intent(in) :: nkmax
+    real(dp),intent(in) :: rr(3)
+    real(dp), intent(out) :: rinvv(2*nkmax+1)
+    real(dp), intent(out),optional :: r1 
+    real(dp) rnorm, r2, or1, or2
+    integer i 
+    
+    rinvv=0
+    
+    r2  = sum(rr**2)!dsqrt(rsq)
+    or2 = 1d0/r2
+    
+    r1 = sqrt(r2)
+    or1 = 1d0/r1
+    
+    rinvv(1) = or1
+    rinvv(2) = or2
+    
+    
+    do i = 3, 2*(nkmax)+1,2
+      rinvv(i) = rinvv(i-2)*or2
+    enddo
+    print'(a,*(g30.17))','rinvv', rinvv
+    
+end
+
 subroutine test_mp_pot
     integer, parameter :: nm = 2
     real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
@@ -928,7 +1039,7 @@ subroutine test_mp_pot
     ! For apple_potgrad
     integer, parameter :: nkmax = 10
     real(dp) rrh(3)
-    real(dp), dimension(pos_(nkmax+1)) :: dtrrr,  rrrh
+    real(dp), dimension(pos_(nkmax+1)) :: dtrrr,  rrrh, rrrnm, lin_df
     integer pq1,pq2
     
     
@@ -978,6 +1089,8 @@ subroutine test_mp_pot
     call  vector_powers(kmax,rr,rrr)
     
     call  vector_powers(nkmax,rrh,rrrh)
+    
+    call  vector_powers(nkmax,rr,rrrnm)
     
     
     
@@ -1061,6 +1174,15 @@ subroutine test_mp_pot
             
     dtrrr = polydet(rrrh,nkmax) !!!!!! måste ha den låååååånga!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
+    call dejun_df(nkmax,rrrnm,lin_df)
+    
+    
+    print*
+    print*, "df comparison"
+    print'(a,*(g30.15))','dtrrr', dtrrr
+    print'(a,*(g30.15))','lin_df', lin_df
+    
+    stop"just stop it!"
     
     
     phi=0
