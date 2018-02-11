@@ -50,7 +50,7 @@ function polyinner2(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrer
     real(dp), intent(in) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
     real(dp) :: marr(pos_(mm2+1))
     integer nn, mm
-    integer n1,n2,m1,m2,f1,f2 !remove unneeded
+    integer n1,m1,f1 !remove unneeded
     integer nle,mle
     integer mi,ni
     marr = 0
@@ -83,7 +83,7 @@ function polyinner_matrix(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank did
     real(dp), intent(in) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
     real(dp) :: marr(pos_(mm2+1))
     integer nn, mm
-    integer n1,n2,m1,m2,f1,f2
+    integer n1,m1,f1
     integer nle,mle
     integer mi,ni
     real(dp) :: matrix(pos_(mm2+1),pos_(nn2+1))
@@ -149,15 +149,12 @@ end
 
 
 
-subroutine dejun_df(nmax,rrr,df)
+subroutine lin_polydf(nmax,rrr,sss,df)
     integer n1,n2,n3,n, k1,k2,k3,k
     integer b1,b12,b123, i, in_2k, nmax
-    real(dp) su,r2, sss(0:nmax)
+    real(dp) su,sss(0:nmax)
     real(dp) df(pos_(nmax+1)), rrr(pos_(nmax+1))
     
-    r2=sum(rrr(2:4)**2)
-    print*, "rr dejun", rrr(2:4), r2
-    call dfdu_erf(r2,nmax,sss)
     
     n1=0;n2=0;n3=0
     do i = 1, pos_(nmax+1)
@@ -182,6 +179,89 @@ subroutine dejun_df(nmax,rrr,df)
     enddo    
 end
 
+
+subroutine test_df_matrix
+end    
+    
+    
+
+
+subroutine create_df_matrix(mmax,grad,nmax,rrr,a_mat,df_matrix)
+    
+    integer, intent(in) :: mmax, grad, nmax
+    real(dp), intent(in) :: a_mat(0:mmax,0:nmax) !damping factors matrix
+    real(dp), intent(in) :: rrr(pos_(mmax+nmax+grad+1))
+    real(dp), intent(out) :: df_matrix(pos_(mmax+grad+1),pos_(nmax+1))
+    
+    integer mm, mmg, mgi, mg0,  nn, n0, ni
+    real(dp) r2, aa, sss(0:mmax+nmax)
+    real(dp) df_temp(len_(mmax+nmax+grad)) !non-poly tensor
+    
+    r2=sum(rrr(2:4)**2)
+    
+    df_matrix = 0 !must zeroize at least the first rectangle when using the grad parameter. 
+    
+    do mm = 0,mmax ! no grad here 
+        mmg = mm+grad
+        do nn = 0,nmax
+            
+            aa = a_mat(mm,nn)  ! no grad here because mm defines what potential to use grad only says how much to differentiate it
+            call dfdu_erf(aa,r2,nn+mmg,sss) 
+            
+            call lin_df(nn+mmg,rrr,sss,df_temp)
+            
+            mg0=pos_(mmg)
+            n0=pos_(nn)
+            
+            do mgi = 1,len_(mmg) ! reshape into large matrix
+                do ni = 1, len_(nn)
+                    
+                    
+                    df_matrix(mg0+mgi,n0+ni) = df_temp(mm_(mgi,ni))
+                enddo
+            enddo
+            
+        enddo
+    enddo
+    
+    
+    
+end
+
+subroutine lin_df(nn,rrr,sss,df)
+    integer, intent(in) :: nn
+    real(dp), intent(out) :: df(len_(nn))
+    real(dp), intent(in) ::  rrr(pos_(nn+1)), sss(0:nn)
+    
+    integer n1,n2,n3, k1,k2,k3,k
+    integer b1,b12,b123, i, in_2k
+    real(dp) su
+    
+    
+    
+    n1=nn;n2=0;n3=0
+    do i = 1, len_(nn) !create elements of df
+        if(i>1)call nextpow(n1,n2,n3)
+        su = 0 
+        do k1 = 0,n1/2
+            b1 = brakk(n1,k1)
+            do k2 = 0,n2/2
+                b12 = b1*brakk(n2,k2)
+                do k3 = 0,n3/2
+                    b123 = b12*brakk(n3,k3)
+                    k=k1+k2+k3
+                    
+                    in_2k = polyfinder(n1-2*k1,n2-2*k2,n3-2*k3)
+                    
+                    su = su + sss(nn-k) * b123 * rrr(in_2k)
+                enddo
+            enddo
+        enddo
+        df(i)=su
+    enddo    
+end
+
+
 subroutine dfdu(u,nmax,ders) 
     !Derivatives of the Coulomb potential w.r.t. r^2!
     integer,  intent(in) :: nmax
@@ -196,14 +276,13 @@ subroutine dfdu(u,nmax,ders)
     
 end
 
-subroutine dfdu_exp(u,nmax,ders) 
+subroutine dfdu_exp(a,u,nmax,ders) 
     !Derivatives of the (1-exp(-r/a))/r potential w.r.t. r^2!
     integer,  intent(in) :: nmax
     real(dp),intent(out) :: ders(0:nmax)
-    real(dp), intent(in) :: u !u=r^2
-    real(dp) r, a, exp_ra
-    integer n
-    a = 0.7d0 !adjustable parameter
+    real(dp), intent(in) :: u, a !u=r^2
+    real(dp) r, exp_ra
+    !a = 0.7d0 !adjustable parameter
     r = sqrt(u)
     exp_ra = exp(r/a)
     
@@ -224,15 +303,13 @@ subroutine dfdu_exp(u,nmax,ders)
     
 end
 
-subroutine dfdu_erf(u,nmax,ders) 
+subroutine dfdu_erf(a,u,nmax,ders) 
     !Derivatives of the (1-exp(-r/a))/r potential w.r.t. r^2!
     integer,  intent(in) :: nmax
     real(dp),intent(out) :: ders(0:nmax)
-    real(dp), intent(in) :: u !u=r^2
-    real(dp) r, a, exp_ra, erf_ra, exp_ua2
+    real(dp), intent(in) :: u, a !u=r^2
+    real(dp) r, exp_ra, erf_ra, exp_ua2
     real(dp), parameter :: sqpi = sqrt(acos(-1d0)) !sqrt(pi)
-    integer n
-    a = 1.6d0 !adjustable parameter
     r = sqrt(u)
     exp_ra = exp(r/a)
     erf_ra = erf(r/a)
@@ -269,7 +346,7 @@ subroutine apple1_df(nmax,rrr,rpow,df)
         n1 = pos_(n)+1
         n2 = pos_(n+1)
         df(n1:n2) = (-1)**n * rpow(2*n+1) * intff(2*n-1,1) * detracer(rrr(n1:n2),n)
-        print'(a,*(f10.5))','>> marr', df
+        !print'(a,*(f10.5))','>> marr', df
     enddo
     
 end
@@ -281,9 +358,6 @@ function apple_potgrad(qq,nn,kk,rpows,dtrrr) result(potgrad)
     integer, intent(in)  :: nn, kk
     real(dp), intent(in) :: qq(len_(nn)), dtrrr(len_(nn+kk)), rpows(:)
     real(dp)             ::  potgrad(len_(kk))
-    integer i!,j
-    !integer k1, k2, n1, n2, kni2, sig, k_i, n_i
-    
     
     potgrad = (-1)**(kk+1) * intff(2*(nn+kk)-1,2*nn-1) * rpows(nn+kk+1) * inner(nn+kk,nn,dtrrr,qq) !Kom ihåg att detracern är the shiiiiiit ohc inte har (2*n-1)!! i sig
     

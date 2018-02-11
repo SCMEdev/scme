@@ -14,6 +14,33 @@ subroutine main
 call print_trace_lengths    
 end subroutine
 
+subroutine inv_odd_powers(nkmax,rr,rinvv,r1)
+    integer, intent(in) :: nkmax
+    real(dp),intent(in) :: rr(3)
+    real(dp), intent(out) :: rinvv(2*nkmax+1)
+    real(dp), intent(out),optional :: r1 
+    real(dp) r2, or1, or2
+    integer i 
+    
+    rinvv=0
+    
+    r2  = sum(rr**2)!dsqrt(rsq)
+    or2 = 1d0/r2
+    
+    r1 = sqrt(r2)
+    or1 = 1d0/r1
+    
+    rinvv(1) = or1
+    rinvv(2) = or2
+    
+    
+    do i = 3, 2*(nkmax)+1,2
+      rinvv(i) = rinvv(i-2)*or2
+    enddo
+    !print'(a,*(g30.17))','rinvv', rinvv
+    
+end
+
 
 subroutine print_trace_lengths
     integer i , n, acc, vall, temp(0:100), n05

@@ -464,7 +464,7 @@ end
 ! TENSORS @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 subroutine test_detracers
     !integer, parameter :: n = 5
-    real(dp), dimension(len_(10)) ::  compvec, randv, newvec1, newvec2, newvec3
+    real(dp), dimension(len_(10)) ::  compvec, randv, newvec1
     real(dp) test
     integer n, nend
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34000])
@@ -921,63 +921,68 @@ end
 
 
 subroutine test_df
-    integer, parameter :: kmax=5, nmax=4, nkmax = kmax+nmax
+    integer, parameter :: kmax=5, nmax=4, nkmax = kmax+nmax, grad=0
     
-    real(dp), dimension(pos_(kmax+1)) :: phi_app, phi_lin
+    real(dp), dimension(pos_(kmax+1)) :: phi_app, phi_lin, phi_mat
     real(dp), dimension(pos_(nkmax+1)) :: df_lin, df_app, rrr 
     
     real(dp) qq(pos_(nmax+1))
-    real(dp) rinvv(2*nkmax+1) 
+    real(dp) rinvv(2*nkmax+1)
+    real(dp) sss(0:nkmax) 
     
-    real(dp) q1(3), q2(6), q3(10), q4(15)
     real(dp) rr(3), rnorm
-        
-    integer i
+    real(dp) r2
+    
+    real(dp) a_mat(0:kmax,0:nmax), aa
+    real(dp), dimension(pos_(kmax+1+grad),pos_(nmax+1)) :: df_matrix
+    
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34000])
+    
+    call  random_number(qq)
     
     rr = [3.4231, 2.74389, 1.54739]
-    
-    !rrh = rr/sqrt(sum(rr**2)) !apple
-    
-    
-    ! Define Multipoles
-    q1 = [2.345d0, -0.453245d0,0.6564256d0]
-    
-    q2 = [0.32534, 0.4352345, 1.5324, 1.2543, 1.35435, -1.57964]
-    
-    q3 = [0.4352345, 1.5324, 1.2543, 1.35435, -1.57964,0.32534, 0.4352345, 1.5324, 1.2543, 1.35435]
-    q3 = opdetr(q3,3)
-    
-    q4 = [2.341,3.52345,3.2465,8.978,6.4356,7.77745,6.43563,7.73094589,3.421,3.4526,2.4564257,9.893543,3.464236,8.979,5.3452]
-    q4 = opdetr(q4,4)
-        
-    qq = [0d0,q1,q2,q3,q4]
     
     
     
     call  vector_powers(nkmax,rr,rrr)
-    print'(a,*(g30.17))','rrr', rrr
+    !print'(a,*(g30.17))','rrr', rrr
     
     
-    call inv_odd_powers(nkmax,rr,rinvv,rnorm)
     
+    
+    aa = 1.6d0
     df_app=0
     df_lin=0
     
-    call dejun_df(nkmax,rrr,df_lin)
+    r2=sum(rr**2)
+    call dfdu_erf(aa,r2,nkmax,sss)
+    call lin_polydf(nkmax,rrr,sss,df_lin)
     
+    
+    call inv_odd_powers(nkmax,rr,rinvv,rnorm)
     call apple1_df(nkmax,rrr,rinvv,df_app)
     
-    print*;print'(a,*(g30.17))','df_app', df_app
-    print*;print'(a,*(g30.17))','df_lin', df_lin
-    print*;print'(a,*(g30.17))','diff  ', df_lin - df_app
+    a_mat = aa
+    call create_df_matrix(kmax,0,nmax,rrr,a_mat,df_matrix) !mmax,grad,nmax,rrr,a_mat,df_matrix)
+    !call printer(df_matrix,'s',1)
+    
+    
+    
+    !print*;print'(a,*(g30.17))','df_app', df_app
+    !print*;print'(a,*(g30.17))','df_lin', df_lin
+    !print*;print'(a,*(g30.17))','diff  ', df_lin - df_app
     
     phi_app = polyinner1(qq,df_app,0,nmax,0,kmax)
     phi_lin = polyinner1(qq,df_lin,0,nmax,0,kmax)
-    
+    phi_mat = matmul(df_matrix,qq*gg_(1:pos_(4+1)))
     
     print*;print'(a,*(g30.17))','phi_app', phi_app
     print*;print'(a,*(g30.17))','phi_lin', phi_lin
-    print*;print'(a,*(g30.17))','diff  ', phi_app-phi_lin
+    print*;print'(a,*(g30.17))','phi_mat', phi_mat
+    
+    print*;print'(a,*(g30.17))','phi_app-phi_lin', phi_app-phi_lin
+    print*;print'(a,*(g30.17))','phi_lin-phi_mat', phi_lin-phi_mat
                                           
     !(narr,dfarr,nn1,nn2,mm1,mm2)
     
@@ -985,32 +990,6 @@ subroutine test_df
     
 end
 
-subroutine inv_odd_powers(nkmax,rr,rinvv,r1)
-    integer, intent(in) :: nkmax
-    real(dp),intent(in) :: rr(3)
-    real(dp), intent(out) :: rinvv(2*nkmax+1)
-    real(dp), intent(out),optional :: r1 
-    real(dp) rnorm, r2, or1, or2
-    integer i 
-    
-    rinvv=0
-    
-    r2  = sum(rr**2)!dsqrt(rsq)
-    or2 = 1d0/r2
-    
-    r1 = sqrt(r2)
-    or1 = 1d0/r1
-    
-    rinvv(1) = or1
-    rinvv(2) = or2
-    
-    
-    do i = 3, 2*(nkmax)+1,2
-      rinvv(i) = rinvv(i-2)*or2
-    enddo
-    print'(a,*(g30.17))','rinvv', rinvv
-    
-end
 
 subroutine test_mp_pot
     integer, parameter :: nm = 2
@@ -1042,6 +1021,8 @@ subroutine test_mp_pot
     real(dp), dimension(pos_(nkmax+1)) :: dtrrr,  rrrh, rrrnm, lin_df
     integer pq1,pq2
     
+    real(dp) r2
+    real(dp) sss(0:nkmax) 
     
     
     print*, size(phi), sumfacfac(6), 3+6+10+21+15, size(qq), sumfacfac(5)
@@ -1174,7 +1155,10 @@ subroutine test_mp_pot
             
     dtrrr = polydet(rrrh,nkmax) !!!!!! måste ha den låååååånga!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
-    call dejun_df(nkmax,rrrnm,lin_df)
+    
+    r2=sum(rr**2)
+    call dfdu_erf(1.6d0,r2,nkmax,sss)
+    call lin_polydf(nkmax,rrrnm,sss,lin_df)
     
     
     print*
