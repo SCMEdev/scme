@@ -921,50 +921,42 @@ end
 
 
 subroutine test_df
-    integer, parameter :: kmax=5, nmax=4, nkmax = kmax+nmax, grad=0
+    integer, parameter :: kmax=4, nmax=4, grad=1, nkgmax = kmax+nmax+grad, kgmax=kmax+grad
     
-    real(dp), dimension(pos_(kmax+1)) :: phi_app, phi_lin, phi_mat
-    real(dp), dimension(pos_(nkmax+1)) :: df_lin, df_app, rrr 
+    real(dp), dimension(pos_(kgmax+1)) :: phi_app, phi_lin, phi_mat
+    real(dp), dimension(pos_(nkgmax+1)) :: df_lin, df_app, rrr 
     
     real(dp) qq(pos_(nmax+1))
-    real(dp) rinvv(2*nkmax+1)
-    real(dp) sss(0:nkmax) 
+    real(dp) rinvv(2*nkgmax+1)
+    real(dp) sss(0:nkgmax) 
     
-    real(dp) rr(3), rnorm
-    real(dp) r2
+    real(dp) rr(3), rnorm, r2 !make a vector with poers of r
     
     real(dp) a_mat(0:kmax,0:nmax), aa
-    real(dp), dimension(pos_(kmax+1+grad),pos_(nmax+1)) :: df_matrix
+    real(dp), dimension(pos_(kgmax+1),pos_(nmax+1)) :: df_matrix
     
     
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34000])
     
-    call  random_number(qq)
+    call  random_number(qq) !random multipoles
     
     rr = [3.4231, 2.74389, 1.54739]
     
-    
-    
-    call  vector_powers(nkmax,rr,rrr)
+    call  vector_powers(nkgmax,rr,rrr)
     !print'(a,*(g30.17))','rrr', rrr
     
-    
-    
-    
     aa = 1.6d0
-    df_app=0
-    df_lin=0
-    
     r2=sum(rr**2)
-    call dfdu_erf(aa,r2,nkmax,sss)
-    call lin_polydf(nkmax,rrr,sss,df_lin)
+    
+    call dfdu_erf(aa,r2,nkgmax,sss)
+    call lin_polydf(nkgmax,rrr,sss,df_lin)
     
     
-    call inv_odd_powers(nkmax,rr,rinvv,rnorm)
-    call apple1_df(nkmax,rrr,rinvv,df_app)
+    call inv_odd_powers(nkgmax,rr,rinvv,rnorm)
+    call apple1_df(nkgmax,rrr,rinvv,df_app)
     
     a_mat = aa
-    call create_df_matrix(kmax,0,nmax,rrr,a_mat,df_matrix) !mmax,grad,nmax,rrr,a_mat,df_matrix)
+    call create_df_matrix(kmax,grad,nmax,rrr,r2,a_mat,df_matrix) !mmax,grad,nmax,rrr,a_mat,df_matrix)
     !call printer(df_matrix,'s',1)
     
     
@@ -973,8 +965,8 @@ subroutine test_df
     !print*;print'(a,*(g30.17))','df_lin', df_lin
     !print*;print'(a,*(g30.17))','diff  ', df_lin - df_app
     
-    phi_app = polyinner1(qq,df_app,0,nmax,0,kmax)
-    phi_lin = polyinner1(qq,df_lin,0,nmax,0,kmax)
+    phi_app = polyinner1(qq,df_app,0,nmax,0,kgmax)
+    phi_lin = polyinner1(qq,df_lin,0,nmax,0,kgmax)
     phi_mat = matmul(df_matrix,qq*gg_(1:pos_(4+1)))
     
     print*;print'(a,*(g30.17))','phi_app', phi_app

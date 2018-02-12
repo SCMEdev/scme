@@ -186,20 +186,18 @@ end
     
 
 
-subroutine create_df_matrix(mmax,grad,nmax,rrr,a_mat,df_matrix)
+subroutine create_df_matrix(mmax,grad,nmax,rrr,r2,a_mat,df_matrix)
     
     integer, intent(in) :: mmax, grad, nmax
+    real(dp), intent(in) :: rrr(pos_(mmax+nmax+grad+1)), r2
     real(dp), intent(in) :: a_mat(0:mmax,0:nmax) !damping factors matrix
-    real(dp), intent(in) :: rrr(pos_(mmax+nmax+grad+1))
     real(dp), intent(out) :: df_matrix(pos_(mmax+grad+1),pos_(nmax+1))
     
     integer mm, mmg, mgi, mg0,  nn, n0, ni
-    real(dp) r2, aa, sss(0:mmax+nmax)
+    real(dp) aa, sss(0:mmax+nmax+grad)
     real(dp) df_temp(len_(mmax+nmax+grad)) !non-poly tensor
     
-    r2=sum(rrr(2:4)**2)
-    
-    df_matrix = 0 !must zeroize at least the first rectangle when using the grad parameter. 
+    df_matrix(1:pos_(grad+1),:) = 0 !must zeroize the first rectangle when using the grad parameter. 
     
     do mm = 0,mmax ! no grad here 
         mmg = mm+grad
@@ -298,7 +296,7 @@ subroutine dfdu_exp(a,u,nmax,ders)
     if(nmax.ge.7)ders(7) = 2**7 * (-135135*a**7*(-1 + exp_ra) + 135135*a**6*r + 62370*a**5*u + 17325*a**4*u**1.5d0 + 3150*a**3*u**2 + 378*a**2*u**2.5d0 + 28*a*u**3 + u**3.5d0)/(128*a**7*exp_ra*u**7.5d0)
     if(nmax.ge.8)ders(8) = 2**8 * (2027025*a**8*(-1 + exp_ra) - 2027025*a**7*r - 945945*a**6*u - 270270*a**5*u**1.5d0 - 51975*a**4*u**2 - 6930*a**3*u**2.5d0 - 630*a**2*u**3 - 36*a*u**3.5d0 - u**4)/(256*a**8*exp_ra*u**8.5d0)
     if(nmax.ge.9)ders(9) = 2**9 * (-34459425*a**9*(-1 + exp_ra) + 34459425*a**8*r + 16216200*a**7*u + 4729725*a**6*u**1.5d0 + 945945*a**5*u**2 + 135135*a**4*u**2.5d0 + 13860*a**3*u**3 + 990*a**2*u**3.5d0 + 45*a*u**4 + u**4.5d0)/(512*a**9*exp_ra*u**9.5d0)
-    
+    if(nmax.gt.9)stop"rank not implemented in dfdu_exp"
     
     
 end
@@ -325,6 +323,7 @@ subroutine dfdu_erf(a,u,nmax,ders)
     if(nmax.ge.7)ders(7) = 2**7 *( (135135*a**12 + 90090*a**10*u + 36036*a**8*u**2 + 10296*a**6*u**3 + 2288*a**4*u**4 + 416*a**2*u**5 + 64*u**6)/(64*a**13*exp_ua2*sqpi*u**7) - (135135*erf_ra)/(128*u**7.5d0)  )
     if(nmax.ge.8)ders(8) = 2**8 *( ((-2*r*(2027025*a**14 + 1351350*a**12*u + 540540*a**10*u**2 + 154440*a**8*u**3 + 34320*a**6*u**4 + 6240*a**4*u**5 + 960*a**2*u**6 + 128*u**7))/(a**15*exp_ua2*sqpi) + 2027025*erf_ra)/(256*u**8.5d0)  )
     if(nmax.ge.9)ders(9) = 2**9 *( ((2*r*(34459425*a**16 + 22972950*a**14*u + 9189180*a**12*u**2 + 2625480*a**10*u**3 + 583440*a**8*u**4 + 106080*a**6*u**5 + 16320*a**4*u**6 + 2176*a**2*u**7 + 256*u**8))/(a**17*exp_ua2*sqpi)- 34459425*erf_ra)/(512*u**9.5d0)  )
+    if(nmax.gt.9)stop"rank not implemented in dfdu_erf"
     
     
     
