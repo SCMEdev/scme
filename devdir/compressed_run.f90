@@ -10,8 +10,8 @@ contains !//////////////////////////////////////////////////////////////////////
 subroutine main
 call &
 !test_intfac_ff
-test_df
-
+!test_df
+test_polarize
 !test_polynextpow_n
 !test_mp_pot
 !test_polyinner

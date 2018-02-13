@@ -112,7 +112,7 @@ convert.x: $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(objects)
 fool.x: $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(objects) 
 	$(comp2)
 
-test_objects := $(objects) $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o 
+test_objects := $(objects) $(lb)/compressed_foolin.o $(lb)/compressed_tensors.o $(lb)/compressed_utils.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o $(lb)/data_types.o $(lb)/polariz_parameters.o
 # using 'test_objects':
 tests.x: $(lb)/compressed_tests.o $(test_objects)
 	$(comp2)
@@ -129,7 +129,7 @@ $(lb)/compressed_tensors.o: $(lb)/compressed_utils.o
 
 $(lb)/compressed_foolin.o: $(lb)/compressed_tensors.o 
 
-$(lb)/compressed_tests.o: $(lb)/compressed_tensors.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o 
+$(lb)/compressed_tests.o: $(lb)/compressed_tensors.o $(lb)/detrace_apple.o $(lb)/calc_derivs.o $(lb)/polariz_parameters.o
 
 $(lb)/compressed_run.o: $(lb)/compressed_tests.o 
 

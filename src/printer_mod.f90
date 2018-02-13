@@ -16,7 +16,7 @@ module printer_mod
     
     ! Interface for tensor printed in given order
     interface printo !cat_tens
-        module procedure print_order1, print_order2, print_order3, print_order4, print_integer_matrix, print_integer_vector
+        module procedure print_order1, print_order2, print_order3, print_order4, print_integer_matrix, print_integer_vector, print_real_matrix, print_real_vector
     end interface
     
     ! Interface for an str() funciton like in python
@@ -329,6 +329,61 @@ subroutine print_integer_matrix(matrix,space,copy)
 end subroutine 
 
 
+subroutine print_real_matrix(matrix,space,decs,copy)
+  integer, optional :: space, copy
+  real(dp) :: matrix(:,:)
+  integer :: imax, jmax, i, j, xspace, maxx(size(matrix,2)), decs, colspace
+  character(1) :: endsep ,midsep, sep
+  integer hej
+  logical info
+  
+  imax = size(matrix,1)
+  jmax = size(matrix,2)
+  
+  
+  xspace = 5
+  if(present(space)) xspace = space
+  
+  if(xspace==0)then
+    do j = 1,jmax
+      maxx(j) = maxval(int(matrix(:,j)))
+      
+    enddo
+    maxx = ceiling(log10(dble(maxx+1))+1d-16)
+  else
+    maxx = xspace
+  endif  
+  
+  info=.true.
+  midsep = " "
+  endsep = " "
+  if(present(copy)) then 
+    if (copy>0)then
+      midsep = ","
+      endsep = "&"
+      info=.false.
+    endif
+  endif
+  
+  if(info)then
+    print*, "____"
+    print*, ">>>>   Real Matrix: "//i2s(imax)//" x "//i2s(jmax)
+  endif
+  
+  colspace=1
+  do i = 1,imax 
+    sep = midsep
+    write(*,'(a)',advance="no") " "
+    do j = 1, jmax
+      if(j==jmax.and.i==imax) sep = " "
+      write(*,'(f'//i2s(maxx(j)+decs+colspace)//'.'//i2s(decs)//',a)',advance="no") matrix(i,j),sep 
+    enddo
+    write(*,'(a)') endsep
+  enddo
+  
+end subroutine 
+
+
 subroutine print_integer_vector(vector,space,copy)
   integer, optional :: space, copy
   integer :: vector(:),jmax, j, xspace, maxx(size(vector))
@@ -365,6 +420,48 @@ subroutine print_integer_vector(vector,space,copy)
     if(j==jmax)sep=" "
     write(*,'(I'//i2s(maxx(j))//',a)',advance="no") vector(j),sep 
   enddo
+  print*
+end subroutine 
+
+subroutine print_real_vector(vector,space,decs,copy)
+  integer, optional :: space, copy
+  real(dp) :: vector(:)
+  integer :: jmax, j, xspace, maxx(size(vector)),decs
+  character(1) :: sep
+  logical info
+  
+  jmax = size(vector)
+  
+  
+  xspace = 5
+  if(present(space)) xspace = space
+  
+  if(xspace==0)then
+    maxx = ceiling(log10(dble(vector+1))+1e-16)
+  else
+    maxx = xspace
+  endif  
+  
+  info=.true.
+  sep = " "
+  if(present(copy)) then 
+    if (copy>0)then
+      sep = ","
+      info=.false.
+    endif
+  endif
+  
+  if (info)then  
+    print*, "____"
+    print*, ">>>>   Real vector, size: "//i2s(jmax)
+  endif
+  
+  
+  do j = 1, jmax
+    if(j==jmax)sep=" "
+    write(*,'(f'//i2s(maxx(j)+decs+1)//'.'//i2s(decs)//',a)',advance="no") vector(j),sep 
+  enddo
+  !(f'//i2s(maxx(j)+decs+colspace)//'.'//i2s(decs)//',a)
   print*
 end subroutine 
 

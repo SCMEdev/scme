@@ -15,6 +15,25 @@ subroutine main !Called by 'generic_program.f90'
 end subroutine
 
 
+    
+
+subroutine polarize(nx,mx,alp,phi,dq)
+    integer, intent(in) :: nx,mx
+    real(dp), intent(in) ::  alp(pos_(nx+1),pos_(mx+1))
+    real(dp), intent(in) ::  phi(pos_(mx+1))
+    real(dp), intent(out) ::  dq(pos_(nx+1))
+    
+    integer n1,n2,m1,m2
+    
+    n1=2
+    n2=pos_(nx+1)
+    m1=2
+    m2=pos_(mx+1)
+    dq(n1:n2) = matmul( alp(n1:n2,m1:m2), phi(m1:m2)*gg_(m1:m2) ) 
+    
+    
+            
+end 
 
 
 function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence

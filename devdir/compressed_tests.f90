@@ -6,6 +6,8 @@ use compressed_utils, bad=>main
 
 use detrace_apple, bad=>main
 
+use polariz_parameters
+
 use calc_derivs, only:calcDv
 
 
@@ -79,6 +81,149 @@ subroutine suit
 
 end subroutine
     
+subroutine test_polarize
+    integer, parameter :: nx=2,mx=2
+    real(dp),dimension(pos_(nx+1),pos_(mx+1)) :: alp
+    real(dp) :: phi(pos_(5+1))
+    real(dp) :: dq(pos_(nx+1))
+    real(dp) BB(6,6), AA1(3,6),AA2(6,3), alpha(3,3)
+    
+    integer i1,i2,i3,i4, j1,j2
+    integer s1,f1,s2,f2
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,3400])
+    
+    call  random_number(alp)
+    call  random_number(phi)
+    
+    !symmetrize polarizability
+    alp = (alp+transpose(alp))*0.5d0
+    alp(1,:) = 0
+    alp(:,1) = 0
+    
+    !call printo(alp*1,0,4,0)
+    !call printo(alp*9,0,4,0)
+    !call printo(alp*10,0,4,0)
+    !call printo(alp*100,0,4,0)
+    !call printo(alp*1000,0,4,0)
+    call printo(alp,0,4,0)
+    
+    
+    call polarize(2,2,alp,phi,dq)
+    
+    call printo(dq,0,4,0)
+    
+    call printo(qq0)
+    
+    BB=3d3
+    
+    j1 = 0
+    do i1 = 1,3
+        do i2 = 1,i1
+            j1=j1+1
+            j2 = 0
+            !print*, j1,j2
+            do i3 = 1,3
+                do i4 = 1,i3
+                    j2=j2+1
+                    !print*, j1,j2
+                    BB(j1,j2) = qq0(i1,i2,i3,i4)
+                enddo
+            enddo
+        enddo
+    enddo
+    call printo(BB,0,4,0)
+    
+    AA1=3d3
+    AA2=3d3
+    
+    j1 = 0
+    do i1 = 1,3
+        j1=j1+1
+        j2 = 0
+        do i2 = 1,3
+            do i3 = 1,i2
+                j2=j2+1
+                AA1(j1,j2) = dq0(i1,i2,i3)
+            enddo
+        enddo
+    enddo
+    call printo(AA1,0,4,0)
+    
+    j1 = 0
+    do i1 = 1,3
+        j1=j1+1
+        j2 = 0
+        do i2 = 1,3
+            do i3 = 1,i2
+                j2=j2+1
+                AA1(j1,j2) = dq0(i1,i3,i2)
+            enddo
+        enddo
+    enddo
+    print*, "the same as above:"
+    call printo(AA1,0,4,0)
+    
+    
+    j1 = 0
+    do i1 = 1,3
+        do i2 = 1,i1
+            j1=j1+1
+            j2 = 0
+            do i3 = 1,3
+                j2=j2+1
+                AA2(j1,j2) = dq0(i3,i1,i2)
+            enddo
+        enddo
+    enddo
+    call printo(AA2,0,4,0)
+    
+    j1 = 0
+    do i1 = 1,3
+        do i2 = 1,i1
+            j1=j1+1
+            j2 = 0
+            do i3 = 1,3
+                j2=j2+1
+                AA2(j1,j2) = dq0(i3,i2,i1)
+            enddo
+        enddo
+    enddo
+    print*, "the same as above:"
+    call printo(AA2,0,4,0)
+    
+    alpha=3d3
+    
+    j1=0
+    do i1=1,3
+        j1=j1+1
+        j2 = 0
+        do i2=1,3
+            j2=j2+1
+            alpha(j1,j2) = dd0(i1,i2)
+        enddo
+    enddo
+    call printo(alpha,0,4,0)
+    
+    s1 = pos_(1)+1
+    f1 = pos_(2)
+    s2 = pos_(2)+1
+    f2 = pos_(3)
+    
+    alp(s1:f1,s1:f1)=alpha
+    alp(s1:f1,s2:f2)=AA1
+    alp(s2:f2,s1:f1)=AA2
+    alp(s2:f2,s2:f2)=BB
+    
+    call printo(alp,0,4,0)
+    call printo(alp-transpose(alp),0,4,0)
+    
+    
+    
+    
+    
+end 
+
 
 subroutine test_intfac_ff
     integer a, b
