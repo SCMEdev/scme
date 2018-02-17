@@ -91,8 +91,8 @@ contains
     real(dp), intent(out)  :: tau(:,:) 
 
 !JÖ internal
-    integer n, i, j, k, l, s
-    real(dp) t(3), asy
+    integer n, i, j, k!, l, s
+    real(dp) t(3)!, asy
 !-------------------------------
 !    real(dp) dpole(3,maxCoo/3), qpole(3,3,maxCoo/3)
 !    real(dp) opole(3,3,3,maxCoo/3), hpole(3,3,3,3,maxCoo/3)

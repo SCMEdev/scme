@@ -3,7 +3,7 @@ implicit none
 
 
 
-integer j1,j2, ii, matcol, matrow, icol, irow 
+integer ii!,j1,j2, !, matcol, matrow, icol, irow 
 integer, parameter :: matk = 15
 integer, parameter :: matsize = (matk+1)*(matk+2)/2
 integer, parameter :: tsize = (matk/2+1)*(matk/2+2)/2
@@ -11,9 +11,9 @@ integer, parameter :: maxk = 19
 !integer, parameter :: sumfacv(matk+1) = [(ii*(ii+1)/2, ii = 1,matk+1)]
 
 
-integer, parameter :: v2(matsize) = [((j1, j2=1,j1),j1 = 1,matk+1)]-1
-integer, parameter :: v3(matsize) = 2 *v2 !for trace matrix
-integer, parameter :: v4(matsize) = v2*v2 !for trace matrix
+!integer, parameter :: v2(matsize) = [((j1, j2=1,j1),j1 = 1,matk+1)]-1
+!integer, parameter :: v3(matsize) = 2 *v2 !for trace matrix
+!integer, parameter :: v4(matsize) = v2*v2 !for trace matrix
 
 
 integer, parameter :: pos_(0:maxk) =  [(ii*(ii+1)*(ii+2)/6,ii=0,maxk  )]

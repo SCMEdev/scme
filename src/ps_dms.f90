@@ -81,7 +81,7 @@ contains !//////////////////////////////////////////////////////////////
     real(dp), intent(out) :: dd(3)
     real(dp) :: efac, xpow(3,7) !,x1,x2,x3 !7 should be enough
     real(dp) :: p1, p2, pl1, pl2,x(3)
-    real(dp) :: v1(3), v2(3), vhh(3), r1, r2, rhh, costh, pc0
+    real(dp) :: v1(3), v2(3), r1, r2, costh, pc0!, rhh, vhh(3)
     integer inI, inJ, inK,j
       
       v1  = ( rr(:,1) - rr(:,3) )!*A2b !rr(i,2,:) - rr(i,1,:) !H1-O

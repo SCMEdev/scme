@@ -35,8 +35,8 @@ contains
     real(dp), save :: re(3), eD(3), eq(3), dr(3) !JÖ 3
 !JÖ    real(dp), save :: uDv(nM),uQv(nM)
     real(dp), save :: dEdr1(3,3) !JÖ 3,3
-    real(dp), save :: r1, r2, r3, r5, r7, u, swFunc, dSdr 
-    integer , save :: jj, kk, i, j, k, l, NCz, nx, ny, nz
+    real(dp), save :: r1, r2, r3, r5, r7, u, swFunc!, dSdr 
+    integer , save :: i, j, k, l, NCz, nx, ny, nz !jj, kk, 
     
 !, save
 !, save
@@ -147,8 +147,8 @@ contains
     integer , intent(in)  :: m
     
     !internal: 
-    real(dp) :: mDr, temp 
-    integer  :: i, j, k
+    real(dp) :: mDr!, temp 
+    integer  :: i, j!, k
 !JÖ    real(dp) mDr
 !, save  
 !, save      
@@ -201,7 +201,7 @@ contains
 
 !JÖ internal: 
     integer  :: i, j
-    real(dp) :: v(3), rQr, temp 
+    real(dp) :: v(3), rQr!, temp 
 !, save
 !, save
     

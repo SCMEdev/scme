@@ -32,19 +32,19 @@ contains
     implicit none
 !JÖ    implicit real(dp) (a-h,o-z)
     
-    real(dp), 	intent(in)	:: raOri(:), a(:), a2(:)
-    integer, 	intent(in) 	:: nH, nO
-    real(dp), 	intent(out) :: ra(:)
+    real(dp),   intent(in)  :: raOri(:), a(:), a2(:)
+    integer,    intent(in)  :: nH, nO
+    real(dp),   intent(out) :: ra(:)
     !type(h2o),  intent(out) :: rw(:)
 
-	! Internal
+    ! Internal
     integer  :: i,l,n, index
     real(dp) :: dist
 
 !JÖ    real(dp) raOri(maxCoo), a(3), a2(3), ra(maxCoo), dist
 !JÖ    integer nH,nO
     !HH HH HH HH O O O O is the order expected from raOri
-	!JÖ change 1 = 0,nO-1 and n = 0,2 to make reindexing more straightforward in loop 
+    !JÖ change 1 = 0,nO-1 and n = 0,2 to make reindexing more straightforward in loop 
     do i = 0, nO-1 !JÖ oxygen nr i
        do l = 1, 3 !JÖ the x,y,z directions of atom coordinates and box size a(l)
           do n = 0, 1 !JÖ which hydrogen 
@@ -67,12 +67,12 @@ contains
   
   subroutine recoverMolecules_new(coord, ra, nM, a, a2)
     implicit none
-    real(dp), 	intent(in)	:: coord(:,:) !j hho
-    real(dp), 	intent(out) :: ra(:,:)    !j hho
-    integer, 	intent(in) 	:: nM
-    real(dp), 	intent(in)	:: a(:), a2(:)
+    real(dp),   intent(in)  :: coord(:,:) !j hho
+    real(dp),   intent(out) :: ra(:,:)    !j hho
+    integer,    intent(in)  :: nM
+    real(dp),   intent(in)  :: a(:), a2(:)
 
-	! Internal
+    ! Internal
     integer  :: m,q,h, ih, io
     real(dp) :: dist
 
@@ -253,7 +253,7 @@ contains
     real(dp), intent(in)  :: dEhdr(3,3,nM)
     real(dp), intent(in)  :: dEddr(3,3,nM)
 
-    integer i, j, k !JÖ, nM
+    integer j, k !i, !JÖ, nM
     
     !JÖ:
     dEtdr = dEhdr + dEddr !half filled, above and on diagonal

@@ -22,12 +22,12 @@ contains
     real(dp), intent(in)  :: a(3), a2(3) 
 
 !JÖ internal    
-    real(dp) t1, t2, df, r
+    real(dp) df, r!t1, t2, 
     real(dp) r2, r6, r7, r8, r9, r10, r11
     real(dp) f6, df6, f8, df8, f10, df10
     
-    integer n, m, iOn, iOm, i
-    real(dp) dr(3), sc
+    integer n, m, i!iOn, iOm, 
+    real(dp) dr(3)!, sc
     real(dp), parameter :: C6 = 46.4430d0 * 0.597527378d0
     real(dp), parameter :: C8  = 1141.7000d0 * 0.167324732d0
     real(dp), parameter :: C10 = 33441.0000d0 * 0.046855703d0
@@ -91,12 +91,12 @@ contains
     real(dp), intent(in) :: a(3), a2(3)
 
 !JÖ internal    
-    real(dp) t1, t2, df, r
+    real(dp) df, r!t1, t2, 
     real(dp) r2, r6, r7, r8, r9, r10, r11
     real(dp) f6, df6, f8, df8, f10, df10
     
     integer n, m, iOn, iOm, i
-    real(dp) dr(3), sc
+    real(dp) dr(3)!, sc
     real(dp), parameter :: C6 = 46.4430d0 * 0.597527378d0
     real(dp), parameter :: C8  = 1141.7000d0 * 0.167324732d0
     real(dp), parameter :: C10 = 33441.0000d0 * 0.046855703d0
@@ -172,10 +172,10 @@ contains
     
     implicit none
     real(dp) b, r, f6, df6, f8, df8, f10, df10
-    real(dp) ff6, ff8, ff10, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
-    real(dp) x12, x13, x14
+    !real(dp) ff6, ff8, ff10, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11
+    !real(dp) x12, x13, x14
     
-    integer k, fact
+    integer k!, fact
     real(dp) x, t
     !      parameter (b = 2.48d0)
     parameter (b = 4.4_dp)
@@ -218,7 +218,7 @@ contains
     implicit none
     real(dp), intent(in) :: r !JÖ
     real(dp), intent(out) :: swFunc !JÖ
-    real(dp) x, x2, x3, rSW, rCut, dr     !JÖ r, swFunc, 
+    real(dp) x, x2, x3!, rSW, rCut, dr     !JÖ r, swFunc, 
     !JÖ , save ::
 !JÖ    real(dp), save :: rL1, rL2, rH1, rH2
     real(dp), parameter :: rL1 = 0.0_dp
@@ -279,7 +279,7 @@ contains
     implicit none
     real(dp), intent(in) :: r !JÖ stated intents
     real(dp), intent(out) :: swFunc, dSdr !JÖ
-    real(dp) :: x, x2, x3, rSW, rCut, dr
+    real(dp) :: x, x2, x3, dr!rSW, rCut, 
 !JÖ pure    real(dp) :: rL1, rL2, rH1, rH2  !JÖ pure: ^, dr
     
     real(dp), parameter :: rL1 = 0.0_dp   !JÖ pure

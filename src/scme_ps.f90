@@ -65,8 +65,8 @@ module scme
   
   use opole, only: get_octupoles
   
-  use compressed_utils,only: compress, expand
-  use detrace_apple, only: detrace_a, ff
+  !use compressed_utils,only: compress, expand
+  !use detrace_apple, only: detrace_a, ff
   
   implicit none
   private
@@ -111,7 +111,7 @@ contains !//////////////////////////////////////////////////////////////
     
 
     ! Local variables for energies.
-    real(dp), save :: uQ, uH, uES, uDisp, uD, uCore
+    real(dp), save :: uQ, uH, uDisp, uD!, uES, uCore
 
     ! Local arrays for lattice and half lattice.
     real(dp), save :: a(3)
@@ -130,13 +130,13 @@ contains !//////////////////////////////////////////////////////////////
 
     ! Electric fields.
     real(dp) :: eD(3,n_atoms/3) !
-    real(dp) :: eQ(3,n_atoms/3)
+    !real(dp) :: eQ(3,n_atoms/3)
     real(dp) :: eH(3,n_atoms/3)
     real(dp) :: eT(3,n_atoms/3)
 
     ! Derivatives of E.
     real(dp) :: dEddr(3,3,n_atoms/3)
-    real(dp) :: dEqdr(3,3,n_atoms/3)
+    !real(dp) :: dEqdr(3,3,n_atoms/3)
     real(dp) :: dEhdr(3,3,n_atoms/3)
     real(dp) :: dEtdr(3,3,n_atoms/3)
 
@@ -160,15 +160,15 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) :: qq(3,3,3,3,n_atoms/3)
 
     ! Local integers.
-    integer, save :: nM, nO, nH, i, p
-    integer, save :: indO, indH1, indH2
+    integer, save :: nM, nO, nH!, i, p
+    !integer, save :: indO, indH1, indH2
     
     real(dp) ps_grad(3,3)!ps_grad(9)!
     real(dp) ps_pes
     real(dp) :: dms(3)
     integer iteration
     integer m
-    real(dp) :: fa_test(n_atoms*3)
+    !real(dp) :: fa_test(n_atoms*3)
     real(dp) :: u_multipole, u_ps
     real(dp) :: xyz_hho(3,3,n_atoms/3) !xyz,hho,nM
     real(dp) :: xa_forces(3,3,n_atoms/3) !xyz,hho,nM
@@ -271,7 +271,7 @@ tprint(rCM, 'rCM',s)
     
     !dip_perm=dpole0 !/output
     
-    !/ Let PSD define the molecular (local) axes by the rotation matrix "x" 
+    ! Define local axes according to some rule
     do m = 1,nM
 !       call localAxes(dpole0(:,m),rw(m),x(:,:,m))
        !call dipoleAxes(dpole0(:,m),xyz_hho(:,:,m),x(:,:,m))
@@ -281,6 +281,7 @@ tprint(rCM, 'rCM',s)
 tprint(x,'x',s)    
 
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
+    
     !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
     call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
     !opole_orig = opole
@@ -305,7 +306,7 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
     !/ Rotate polarizability tensors into local coordinate systems
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     
-     !/ Compute the electric field (F) and gradient (dF) for the static octupole and hexadecapole
+     !/ Compute the electric field (F) and gradient (dF) for the permanent octupole and hexadecapole
      ! why dont we induce those, we have the polarizabilities!?
      call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
      ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
@@ -337,54 +338,54 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
     
-    if(.true.)then
-      do m = 1,nM
-        rank=2
-        !print *, d2v(1,1,m)+d2v(2,2,m)+d2v(3,3,m)
-        !m=1
-        d2v(:,:,m) = &
-          reshape(&
-             expand(1_dp/ff(2*rank-1)&
-             *detrace_a(compress(&
-                 reshape(d2v(:,:,m),[3**rank]),&
-             rank),rank),rank),&
-          [3,3] ) 
-        !print *, d2v(1,1,m)+d2v(2,2,m)+d2v(3,3,m)
-        enddo
-        
-        do m = 1,nM
-        rank=3
-        d3v(:,:,:,m) = &
-          reshape(&
-             expand(1_dp/ff(2*rank-1)&
-             *detrace_a(compress(&
-                reshape(d3v(:,:,:,m),[3**rank]),&
-             rank),rank),rank) ,&
-          [3,3,3] ) 
-        enddo
-        
-        do m = 1,nM
-        rank=4
-        d4v(:,:,:,:,m) = &
-          reshape(&
-             expand(1_dp/ff(2*rank-1)&
-             *detrace_a(compress(&
-                reshape(d4v(:,:,:,:,m),[3**rank]),&
-             rank),rank),rank) ,&
-          [3,3,3,3] ) 
-        enddo
-        
-        do m = 1,nM
-        rank=5
-        d5v(:,:,:,:,:,m) = &
-          reshape(&
-             expand(1_dp/ff(2*rank-1)&
-             *detrace_a(compress(&
-                reshape(d5v(:,:,:,:,:,m),[3**rank]),&
-             rank),rank),rank) ,&
-          [3,3,3,3,3] ) 
-      enddo
-    endif
+    !if(.false.)then
+    !  do m = 1,nM
+    !    rank=2
+    !    !print *, d2v(1,1,m)+d2v(2,2,m)+d2v(3,3,m)
+    !    !m=1
+    !    d2v(:,:,m) = &
+    !      reshape(&
+    !         expand(1_dp/ff(2*rank-1)&
+    !         *detrace_a(compress(&
+    !             reshape(d2v(:,:,m),[3**rank]),&
+    !         rank),rank),rank),&
+    !      [3,3] ) 
+    !    !print *, d2v(1,1,m)+d2v(2,2,m)+d2v(3,3,m)
+    !    enddo
+    !    
+    !    do m = 1,nM
+    !    rank=3
+    !    d3v(:,:,:,m) = &
+    !      reshape(&
+    !         expand(1_dp/ff(2*rank-1)&
+    !         *detrace_a(compress(&
+    !            reshape(d3v(:,:,:,m),[3**rank]),&
+    !         rank),rank),rank) ,&
+    !      [3,3,3] ) 
+    !    enddo
+    !    
+    !    do m = 1,nM
+    !    rank=4
+    !    d4v(:,:,:,:,m) = &
+    !      reshape(&
+    !         expand(1_dp/ff(2*rank-1)&
+    !         *detrace_a(compress(&
+    !            reshape(d4v(:,:,:,:,m),[3**rank]),&
+    !         rank),rank),rank) ,&
+    !      [3,3,3,3] ) 
+    !    enddo
+    !    
+    !    do m = 1,nM
+    !    rank=5
+    !    d5v(:,:,:,:,:,m) = &
+    !      reshape(&
+    !         expand(1_dp/ff(2*rank-1)&
+    !         *detrace_a(compress(&
+    !            reshape(d5v(:,:,:,:,:,m),[3**rank]),&
+    !         rank),rank),rank) ,&
+    !      [3,3,3,3,3] ) 
+    !  enddo
+    !endif
     
     !stop"hej"
 !tprint(d1v, 'd1v',s)

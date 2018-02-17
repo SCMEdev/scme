@@ -15,7 +15,7 @@ subroutine create_xyz_hho_new(ra,xyz_hho,nM)
     real(dp), intent(in)   :: ra(3,3*nM) !j  (xyz,hho.nM) ...
     real(dp), intent(out) :: xyz_hho(3,3,nM)!xyz,hho,nM
     integer, intent(in)    :: nM
-    integer io,ih1, ih2, m, j, posi
+    integer io,ih1, ih2, m, j!, posi
     real(dp), parameter :: oh_max_A = 2.0_dp !Angstrom
     
     do m = 1,nM !molecules
@@ -74,7 +74,7 @@ subroutine create_xyz_hho_new(ra,xyz_hho,nM)
 subroutine gs(s,g)
  real(dp), intent(in) :: s
  real(dp), intent(out) :: g(5)
- real(dp) eee, pi, prefac
+ real(dp) eee, prefac!pi, 
  integer k
  real(dp), parameter :: two_sqrt_pi = 2.0_dp/dsqrt(3.1415926535_dp)
  
@@ -209,7 +209,7 @@ end subroutine
 subroutine plusAxes(w,rot)
  real(dp), intent(in)  :: w(3,3) !xyz,hho !generalize with xyz,aim (aim=number of atoms in molecule)
  real(dp),  intent(out) :: rot(3,3)
- real(dp) r1(3),r2(3), n(3), bis(3), x(3), y(3), z(3)
+ real(dp) r1(3),r2(3), x(3), y(3), z(3)!n(3), bis(3), 
 
    r1 = w(:,1) - w(:,3)!w%h1 - w%o    ! O--H1 and O--H2 vectors
    r2 = w(:,2) - w(:,3)!w%h2 - w%o

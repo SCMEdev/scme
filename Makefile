@@ -13,7 +13,7 @@ FC:=gfortran
 opti:= -O0
 #opti = -Ofast -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -march=native -finline-functions -fopenmp 
 
-FFLAGS:= $(opti) -pg -I$b -J$b -cpp -D'DEBUG_PRINTING' 
+FFLAGS:= $(opti) -pg -I$b -J$b -cpp -D'DEBUG_PRINTING' -ffree-line-length-0 -Wall
 #-Wall
 #CFLAGS:= $(opti) -I$b -J$b -lstdc++
 
