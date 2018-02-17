@@ -9,9 +9,11 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
+!geom2xyz
 !test_intfac_ff
 !test_df
-test_polarize
+test_polarize2
+
 !test_polynextpow_n
 !test_mp_pot
 !test_polyinner

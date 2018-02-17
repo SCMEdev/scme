@@ -21,12 +21,16 @@ SUBROUTINE main()
     real(dp) dQ(xyz,xyz,dxyz,hho)
     real(dp) dQ1(xyz,xyz,dxyz),dQ2(xyz,xyz,dxyz),dQo(xyz,xyz,dxyz)
     integer a,c
+    
+    real(dp) ang_diff, ang_orig
 
     
     m = [1d0,1d0,16d0]
     
+    ang_orig = 104.3475_dp
+    ang_diff = -20_dp
     
-    ang = 104.3475_dp
+    ang = ang_orig + ang_diff
     rad = ang/180d0*pi
     rh = 0.958649_dp
     
@@ -56,19 +60,19 @@ SUBROUTINE main()
     dQ(:,:,:,3)=dqo
     
     
-    do a = 1,hho
-    do c = 1,xyz
-    print*, 'dQ traces', matrix_trace(dQ(:,:,c,a))
-    enddo
-    enddo
+!    do a = 1,hho
+!    do c = 1,xyz
+!    print*, 'dQ traces', matrix_trace(dQ(:,:,c,a))
+!    enddo
+!    enddo
     
 call printer(cec,'cec',2)
 call printer(cer2,'cer2',2)
     
 call printer(p,'p',2)
-call printer(dQ,'dQ',2)
+!call printer(dQ,'dQ',2)
 call printer(quadrupole,'quadrupole',2)
-print*, 'trace', matrix_trace(quadrupole)
+print*, 'trace quad', matrix_trace(quadrupole)
     
 call printer(q0,'q0',2)
 print*, 'trace', matrix_trace(q0)

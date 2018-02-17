@@ -81,148 +81,210 @@ subroutine suit
 
 end subroutine
     
-subroutine test_polarize
-    integer, parameter :: nx=2,mx=2
-    real(dp),dimension(pos_(nx+1),pos_(mx+1)) :: alp
-    real(dp) :: phi(pos_(5+1))
-    real(dp) :: dq(pos_(nx+1))
-    real(dp) BB(6,6), AA1(3,6),AA2(6,3), alpha(3,3)
-    
-    integer i1,i2,i3,i4, j1,j2
+
+subroutine test_polarize2
+    !compressed
+    real(dp) p12c(3,6),p21c(6,3), p22c(6,6)
+    real(dp) v2c(6)
+    real(dp) alp(pos_(2+1),pos_(2+1))
+    real(dp), dimension(pos_(2+1)) :: poly_qc, poly_vc 
     integer s1,f1,s2,f2
     
-    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,3400])
     
-    call  random_number(alp)
-    call  random_number(phi)
+    !full
+    real(dp) q1f(3), q2f(3,3) 
+    real(dp) v1f(3), v2f(3,3)
+    real(dp) p11f(3,3), p12f(3,3,3),p22f(3,3,3,3)
     
-    !symmetrize polarizability
-    alp = (alp+transpose(alp))*0.5d0
-    alp(1,:) = 0
-    alp(:,1) = 0
-    
-    !call printo(alp*1,0,4,0)
-    !call printo(alp*9,0,4,0)
-    !call printo(alp*10,0,4,0)
-    !call printo(alp*100,0,4,0)
-    !call printo(alp*1000,0,4,0)
-    call printo(alp,0,4,0)
+    real(dp) q1c_f(3), q2c_f(6)
     
     
-    call polarize(2,2,alp,phi,dq)
+    !POLARIZABILITIES
+    call random_number(p11f)
+    call random_number(p12f)
+    call random_number(p22f)
+
     
-    call printo(dq,0,4,0)
+    call symmetrize_p(p11f,p12f,p22f)
+    print*, "nonsymmetry of polarizations:", test_polz_symmetry(p11f,p12f,p22f)
     
-    call printo(qq0)
+    call compress_p(p22f,p12f, p22c,p12c,p21c)
     
-    BB=3d3
+    !POTENTIAL
+    call random_number(v1f)
+    call random_number(v2f)
+    v2f = (v2f + transpose(v2f) )/2d0
+    v2c = compress(reshape(v2f,[3**2]),2)
     
-    j1 = 0
-    do i1 = 1,3
-        do i2 = 1,i1
-            j1=j1+1
-            j2 = 0
-            !print*, j1,j2
-            do i3 = 1,3
-                do i4 = 1,i3
-                    j2=j2+1
-                    !print*, j1,j2
-                    BB(j1,j2) = qq0(i1,i2,i3,i4)
+    !POLARIZE
+    call polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
+    
+    q1c_f=q1f
+    q2c_f=compress(reshape(q2f,[3**2]),2)
+    call printer(q2f,'q2f',0)
+    
+    !POLYTENSOR FORMALISM
+    s1 = pos_(1)+1
+    f1 = pos_(1+1)
+    s2 = pos_(2)+1
+    f2 = pos_(2+1)
+    
+    alp=0
+    alp(s1:f1,s1:f1)=p11f
+    alp(s1:f1,s2:f2)=p12c
+    alp(s2:f2,s1:f1)=p21c
+    alp(s2:f2,s2:f2)=p22c
+    
+    poly_vc = [0d0,v1f,v2c]
+    
+    poly_qc = matmul(alp,poly_vc*gg_(1:f2))
+    
+    
+    call printo([0d0,q1c_f,q2c_f],0,5,0)
+    
+    call printo(poly_qc,0,5,0)
+    
+    
+end
+
+subroutine polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
+    real(dp), intent(in) :: p11f(3,3), p12f(3,3,3),p22f(3,3,3,3)
+    real(dp), intent(in) :: v1f(3), v2f(3,3)
+    real(dp) :: q11f(3),q12f(3),q21f(3,3),q22f(3,3)
+    real(dp), intent(out) ::  q1f(3),q2f(3,3)
+    integer i1,i2,i3,i4
+    
+    q11f = 0
+    q12f = 0
+    q21f = 0
+    q22f = 0
+    do i1=1,3
+        do i2=1,3
+            q11f(i1) = q11f(i1) + p11f(i1,i2)*v1f(i2)
+            do i3=1,3
+                q12f(i1) = q12f(i1) + p12f(i1,i2,i3)*v2f(i2,i3)
+                q21f(i2,i3) = q21f(i2,i3) + p12f(i1,i2,i3)*v1f(i1)
+                do i4=1,3
+                    q22f(i1,i2) = q22f(i1,i2) + p22f(i1,i2,i3,i4)*v2f(i3,i4)
                 enddo
             enddo
         enddo
     enddo
-    call printo(BB,0,4,0)
     
-    AA1=3d3
-    AA2=3d3
+    q1f=q11f+q12f
+    q2f=q21f+q22f
+end
+
+
+subroutine symmetrize_p(p11f, p12f,p22f)
+    real(dp), intent(inout) :: p11f(3,3), p12f(3,3,3),p22f(3,3,3,3)
+    real(dp)                :: p11f_d(3,3), p12f_d(3,3,3),p22f_d(3,3,3,3)
+    integer i1,i2,i3,i4
+    p11f_d=p11f; p12f_d=p12f; p22f_d=p22f
     
-    j1 = 0
-    do i1 = 1,3
-        j1=j1+1
-        j2 = 0
-        do i2 = 1,3
-            do i3 = 1,i2
-                j2=j2+1
-                AA1(j1,j2) = dq0(i1,i2,i3)
+    do i1=1,3 !symmetrize a,A,B
+        do i2=1,3
+            p11f(i1,i2) = ( p11f_d(i1,i2) + p11f_d(i2,i1) )/2d0
+            do i3=1,3
+                p12f(i1,i2,i3) = (p12f_d(i1,i2,i3)+p12f_d(i1,i3,i2))/2d0
+                do i4=1,3
+                    p22f(i1,i2,i3,i4) = ( p22f_d(i4,i3,i2,i1) + p22f_d(i3,i4,i2,i1) + p22f_d(i4,i3,i1,i2) + p22f_d(i3,i4,i1,i2)   +   p22f_d(i2,i1,i4,i3) + p22f_d(i2,i1,i3,i4) + p22f_d(i1,i2,i4,i3) + p22f_d(i1,i2,i3,i4) )/8d0
+                enddo
             enddo
         enddo
     enddo
-    call printo(AA1,0,4,0)
+end
+
+
+subroutine compress_p(p22f,p12f, p22c,p12c,p21c)
+    real(dp), intent(in) :: p22f(3,3,3,3), p12f(3,3,3)
+    real(dp), intent(out) :: p22c(6,6), p12c(3,6), p21c(6,3)
+    !real(dp) :: 
     
-    j1 = 0
-    do i1 = 1,3
-        j1=j1+1
-        j2 = 0
-        do i2 = 1,3
-            do i3 = 1,i2
+    integer i1,i2,i3,i4,  j1,j2
+    
+    p12c=10
+    do i1=1,3
+        j2=0
+        do i2=1,3
+            do i3=i2,3
                 j2=j2+1
-                AA1(j1,j2) = dq0(i1,i3,i2)
+                p12c(i1,j2) = p12f(i1,i3,i2)
             enddo
         enddo
     enddo
-    print*, "the same as above:"
-    call printo(AA1,0,4,0)
     
-    
-    j1 = 0
-    do i1 = 1,3
-        do i2 = 1,i1
-            j1=j1+1
-            j2 = 0
-            do i3 = 1,3
-                j2=j2+1
-                AA2(j1,j2) = dq0(i3,i1,i2)
-            enddo
-        enddo
-    enddo
-    call printo(AA2,0,4,0)
-    
-    j1 = 0
-    do i1 = 1,3
-        do i2 = 1,i1
-            j1=j1+1
-            j2 = 0
-            do i3 = 1,3
-                j2=j2+1
-                AA2(j1,j2) = dq0(i3,i2,i1)
-            enddo
-        enddo
-    enddo
-    print*, "the same as above:"
-    call printo(AA2,0,4,0)
-    
-    alpha=3d3
+    p21c=transpose(p12c)
+
     
     j1=0
     do i1=1,3
-        j1=j1+1
-        j2 = 0
-        do i2=1,3
-            j2=j2+1
-            alpha(j1,j2) = dd0(i1,i2)
+        do i2=i1,3
+            j1=j1+1
+            j2=0
+            do i3=1,3
+                do i4=i3,3
+                    j2=j2+1
+                    p22c(j1,j2) = p22f(i1,i2,i3,i4)
+                enddo
+            enddo
         enddo
     enddo
-    call printo(alpha,0,4,0)
     
-    s1 = pos_(1)+1
-    f1 = pos_(2)
-    s2 = pos_(2)+1
-    f2 = pos_(3)
+end
+
+function test_polz_symmetry(p11,p12,p22) result(su)
+    integer i1,i2,i3,i4
+    real(dp), dimension(3,3) :: p11b,p11
+    real(dp), dimension(3,3,3) :: p12,p12b
+    real(dp), dimension(3,3,3,3) :: p22,p22b1, p22b2, p22b3, p22b4, p22b5, p22b6, p22b7, p22b8
+    real(dp) su
+    ! test if htey have the right symmetry
+    do i1=1,3
+        do i2=1,3
+            p11b(i1,i2) = p11(i1,i2) - p11(i2,i1) 
+            do i3=1,3
+                p12b(i1,i2,i3) = p12(i1,i2,i3) - p12(i1,i3,i2) 
+                do i4=1,3
+                    p22b1(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i2,i1,i3,i4)
+                    p22b2(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i1,i2,i4,i3)
+                    p22b3(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i2,i1,i4,i3)
+                    p22b4(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i3,i4,i1,i2)
+                    p22b5(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i3,i4,i2,i1)
+                    p22b6(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i4,i3,i1,i2)
+                    p22b7(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i4,i3,i2,i1)
+                    p22b8(i1,i2,i3,i4) = p22(i1,i2,i3,i4) - p22(i1,i2,i3,i4)
+                enddo
+            enddo
+        enddo
+    enddo
     
-    alp(s1:f1,s1:f1)=alpha
-    alp(s1:f1,s2:f2)=AA1
-    alp(s2:f2,s1:f1)=AA2
-    alp(s2:f2,s2:f2)=BB
+    su = 0
+    do i1=1,3
+        do i2=1,3
+            su = su + p11b(i1,i2)**2
+            do i3=1,3
+                su = su + p12b(i1,i2,i3)**2
+                do i4=1,3
+                    su = su + p22b1(i1,i2,i3,i4)**2 
+                    su = su + p22b2(i1,i2,i3,i4)**2 
+                    su = su + p22b3(i1,i2,i3,i4)**2 
+                    su = su + p22b4(i1,i2,i3,i4)**2 
+                    su = su + p22b5(i1,i2,i3,i4)**2 
+                    su = su + p22b6(i1,i2,i3,i4)**2 
+                    su = su + p22b7(i1,i2,i3,i4)**2 
+                    su = su + p22b8(i1,i2,i3,i4)**2 
+                enddo
+            enddo
+        enddo
+    enddo
+end
+
+
+
+
     
-    call printo(alp,0,4,0)
-    call printo(alp-transpose(alp),0,4,0)
     
-    
-    
-    
-    
-end 
 
 
 subroutine test_intfac_ff
