@@ -1,6 +1,4 @@
 ### DIRECTORIES
-b:=../build
-ob := obuild
 lb := lbuild
 dodir=@mkdir -p $(@D)
 
@@ -10,14 +8,8 @@ all:
 	make -j4 run.x
 	make -j4 tests.x
 
-rrun:
-	make -j4 run.x && ./run.x
-
-ttests:
-	make -j4 tests.x && ./tests.x
-
 old: 
-	make -j4 prog.x stupid.x detraceo.x detraceh.x detraceg.x qpole.x opole.x
+	make -j4 pold.x detraceo.x detraceh.x detraceg.x qpole.x opole.x
 
 new: 
 	make -j4 apple.x utils.x convert.x fool.x tests.x run.x 
@@ -26,75 +18,88 @@ new:
 
 ### COMPILATION 
 fc := gfortran
-opti = 
+opti:= 
 #-Ofast -flto -march=native 
 # -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -finline-functions 
 err := -Wall -fmax-errors=3 -fcheck=all
-#-Wall -fmax-errors=3 -fcheck=all
-# -fcheck=all
-# $(err)
-lib_comp := $(fc) -I$(b) -J$(ob) $(err) $(opti) -ffree-line-length-0
-loc_comp := $(fc) -I$(lb) -J$(lb) $(err) $(opti) -ffree-line-length-0
+
+flags:= -I$(lb) -J$(lb) $(err) $(opti) -ffree-line-length-0
+
 # Must place main object first for generic program to call the correct module. 
 generic = $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) generic_program.f90
-comp1 = $(lib_comp) $(generic)
-comp2 = $(loc_comp) $(generic)
+
+comp2 = $(fc) $(flags) $(generic)
 
 vpath %.f90 ../src
 
-# -I = where to search! (for #/include and .mod)
-# -J = where to put!    (.mod)
+# -I = where to search! 
+# -J = where to put!    
 
 
 $(lb)/%.o:%.f90
 	$(dodir)
-	$(loc_comp) -c $< -o $@
-
-$(ob)/%.o:%.f90
-	$(dodir)
-	$(fc) -J$(ob) -I$(ob) -I$(b) -c $^ -o $@  -Wall
-
-$(lb)/detrace_apple.o:detrace_apple.f90
-	$(dodir)
-	$(fc) -I$(lb) -J$(lb) -c $< -o $@
+	$(fc) $(flags) -c $< -o $@
 
 
-$(lib-a):$(wildcard ../src/*.f90)
-	(cd .. && make)
+#$(lb)/detrace_apple.o:detrace_apple.f90
+#	$(dodir)
+#	$(fc) -I$(lb) -J$(lb) -c $< -o $@
+
+
+scme_objs0:=\
+$(lb)/localAxes_mod.o\
+$(lb)/opole.o\
+$(lb)/qpole.o\
+$(lb)/polariz_parameters.o\
+$(lb)/localAxes_mod.o\
+$(lb)/multipole_parameters.o\
+$(lb)/sf_disp_tangtoe.o\
+
+
+scme_objs:=\
+$(scme_objs0)\
+$(lb)/printer_mod.o\
+$(lb)/data_types.o\
+
+# SCME DEPENDENCIES
+
+$(lb)/qpole_dev.o\
+$(lb)/opole_dev.o\
+$(lb)/detrace_mod.o:\
+$(scme_objs)
+
+$(scme_objs0):$(lb)/printer_mod.o
+$(lb)/printer_mod.o:$(lb)/data_types.o
+$(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
+
+
+$(lb)/opole.o:$(lb)/printer_mod.o 
+
+
+detraceo.x: $(lb)/detrace_mod.o $(scme_objs)
+	$(comp2) -DSUB=io_octa
+
+
+detraceh.x: $(lb)/detrace_mod.o $(scme_objs)
+	$(comp2) -DSUB=io_hexa
+
+
+detraceg.x: $(lb)/detrace_mod.o $(scme_objs)
+	$(comp2) -DSUB=io_general
+
+
+pold.x: $(lb)/poldip.o  $(scme_objs) 
+	$(comp2)
+
+qpole.x: $(lb)/qpole_dev.o $(scme_objs) 
+	$(comp2)
+
+opole.x: $(lb)/opole_dev.o $(scme_objs) 
+	$(comp2)
 
 
 
 
-
-### OLDER
-
-print-o := $(ob)/printer_mod.o
-detr-o  := $(ob)/detrace_mod.o
-lib-a   := $(b)/libscme.a
-
-prog.x: $(ob)/poldip.o $(lib-a)
-	$(lib_comp) $^ -o $@
-
-stupid.x: generic_program.f90 $(lib-a)
-	$(lib_comp) $^ -o $@ -cpp -D'STUPID'
-
-
-detraceo.x: $(detr-o) $(lib-a)
-	$(comp1) -DSUB=io_octa
-
-
-detraceh.x: $(detr-o) $(lib-a)
-	$(comp1) -DSUB=io_hexa
-
-
-detraceg.x: $(detr-o) $(lib-a)
-	$(comp1) -DSUB=io_general
-
-qpole.x: $(ob)/qpole_dev.o $(lib-a)
-	$(comp1)
-
-opole.x: $(ob)/opole_dev.o $(lib-a)
-	$(comp1)
 
 
 
@@ -133,13 +138,12 @@ $(lb)/compressed_tests.o: $(lb)/compressed_tensors.o $(lb)/detrace_apple.o $(lb)
 
 $(lb)/compressed_run.o: $(lb)/compressed_tests.o 
 
-$(lb)/calc_derivs.o:$(lb)/sf_disp_tangtoe.o
-$(lb)/calc_derivs.o $(lb)/sf_disp_tangtoe.o: $(lb)/data_types.o
+
 
 
 ### CLEAN
 clean:
-	rm -f *.x *.mod *.o lbuild/* obuild/*
+	rm -rf *.x *.mod *.o lbuild/ obuild/
 
 comp-clean:
 	rm *.x lbuild/comp*

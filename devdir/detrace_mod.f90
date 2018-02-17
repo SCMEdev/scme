@@ -10,6 +10,10 @@ implicit none
 
 CONTAINS
 
+subroutine main
+    call io_general
+end
+
 subroutine io_general
     integer i
     integer, parameter :: maxl=16

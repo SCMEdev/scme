@@ -1,4 +1,4 @@
-program jkdls
+module poldip 
 use printer_mod, only:printer, str, printo
 !use localAxes_mod,only: norm, norm_square
 use data_types, only: dp, pi, au_to_debye, a0_A, A_a0, eA_to_debye
@@ -10,7 +10,7 @@ use qpole, only:matrix_trace
 use polariz_parameters, only: dd0, dq0, qq0
 implicit none
 
-call main()
+!call main()
 
 contains !/////////////////
 
@@ -420,7 +420,7 @@ do i = 1,3
 enddo
 endsubroutine
 
-end program
+end !module
 
 
 !    
