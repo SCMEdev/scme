@@ -15,6 +15,8 @@ FFLAGS = -O0 -cpp -I$(scme_build) -J$b $(comline)
 #-Ofast -cpp -pg -I$(scme_build) -fopenmp
 #-fopenmp 
 
+scme_obj=$(wildcard ../build/*.o)
+#$(scme_obj)
 #default
 all: $b
 	make scme 
@@ -42,10 +44,11 @@ clean:
 #executables:
 common_obj=$(addprefix $b/, mifu_asserts.o test_scme.o ) 
 
-run.x: $b/run_tests.o $(common_obj) $(scme_build)/libscme.a
+run.x: $b/run_tests.o $(common_obj) $(scme_obj)
+#$(scme_build)/libscme.a
 
 
-2run.x: $b/run_tests2.o $(common_obj) $(scme_build)/libscme.a
+2run.x: $b/run_tests2.o $(common_obj) $(scme_obj)
 
 
 #rules:

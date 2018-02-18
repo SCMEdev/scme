@@ -21,7 +21,7 @@ all:
 
 
 $(target): $(objects)
-	ar rcs $@ $^
+	@echo "objects are in $(bd) !!!"
 
 $(bd)/%.o: %.f90
 	@mkdir -p $(bd)

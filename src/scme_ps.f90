@@ -1,3 +1,4 @@
+
 ! Copyright (c)  2015-2016  SCMEdev.
 ! Licenced under the LGPLv3 license. See LICENSE for details.
 
@@ -39,11 +40,11 @@ module scme
 
   ! Parameters:
   use data_types, only:A_a0,dp, num_cells, coulomb_k !, ea0_Deb, eA_Deb,kk1,kk2    !,h2o
-  use multipole_parameters, only: q0, o0, h0 !d0, 
+  use multipole_parameters, only: d0, q0, o0, h0 !d0, 
   use polariz_parameters, only: dd0, dq0, hp0, qq0
   
   ! Routines:
-  use molecProperties, only: recoverMolecules, rotatePolariz,add_field_gradients, rotate_qoh_poles,recoverMolecules_new !rotatePoles,setUnpolPoles,findPpalAxes, calcCentersOfMass,addFields, 
+  use molecProperties, only: recoverMolecules, rotatePolariz,add_field_gradients, recoverMolecules_new, rotatePoles!rotate_qoh_poles,,setUnpolPoles,findPpalAxes, calcCentersOfMass,addFields, 
   use calc_lower_order, only: dip_quadField
   use calc_higher_order, only: octu_hexaField
   use calc_derivs, only: calcDv
@@ -65,8 +66,10 @@ module scme
   
   use opole, only: get_octupoles
   
-  !use compressed_utils,only: compress, expand
+  use compressed_utils,only: compress, expand
+  use compressed_tensors, only:lin_df, lin_polydf, vector_powers
   !use detrace_apple, only: detrace_a, ff
+  !use comressed_arrays
   
   implicit none
   private
@@ -262,12 +265,6 @@ tprint(rCM, 'rCM',s)
 
     !// Multipole Interaction //////////////////////////////////////////
     
-    !/ Partridge-Schwenke Dipoles (PSD)
-    do m = 1,nM
-       dms = 0
-       call vibdms(xyz_hho(:,:,m),dms) 
-       dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
-    end do
     
     !dip_perm=dpole0 !/output
     
@@ -282,14 +279,27 @@ tprint(x,'x',s)
 
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     
-    !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
-    call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
+    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
+    !call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
     !opole_orig = opole
+    
+    !/ Partridge-Schwenke Dipoles (PSD)
+    do m = 1,nM
+       dms = 0
+       call vibdms(xyz_hho(:,:,m),dms) 
+       dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
+    end do
     
     !if(VAR_QUAD) 
     if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
     if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
     
+tprint(dpole0,'dpole0',s)    
+tprint(qpole0,'qpole0',s)    
+tprint(opole,'opole',s)    
+tprint(hpole,'hpole',s)    
+
+
     !opole = opole_orig
 
 !tprint(qpole0,'qpole0 old',s)    

@@ -1,5 +1,6 @@
 
-# DEPENDENCIES______________________________
+### DEPENDENCIES______________________________
+
 
 build/calc_derivs.o:\
 build/data_types.o\
@@ -24,7 +25,57 @@ build/sf_disp_tangtoe.o\
 
 
 
+build/compressed_arrays.o:\
+
+
+
+build/compressed_foolin.o:\
+build/printer_mod.o\
+build/compressed_arrays.o\
+build/compressed_tensors.o\
+build/compressed_utils.o\
+
+
+
+build/compressed_run.o:\
+build/compressed_tests.o\
+
+
+
+build/compressed_tensors.o:\
+build/printer_mod.o\
+build/compressed_utils.o\
+build/compressed_arrays.o\
+
+
+
+build/compressed_tests.o:\
+build/compressed_arrays.o\
+build/compressed_tensors.o\
+build/compressed_utils.o\
+build/detrace_apple.o\
+build/polariz_parameters.o\
+build/calc_derivs.o\
+
+
+
+build/compressed_utils.o:\
+build/printer_mod.o\
+build/compressed_arrays.o\
+
+
+
 build/data_types.o:\
+
+
+
+build/detrace_apple.o:\
+
+
+
+build/detrace_mod.o:\
+build/printer_mod.o\
+build/data_types.o\
 
 
 
@@ -54,6 +105,16 @@ build/data_types.o\
 
 
 
+build/opole_dev.o:\
+build/localAxes_mod.o\
+build/data_types.o\
+build/printer_mod.o\
+build/multipole_parameters.o\
+build/qpole.o\
+build/opole.o\
+
+
+
 build/opole.o:\
 build/printer_mod.o\
 build/data_types.o\
@@ -62,6 +123,18 @@ build/data_types.o\
 
 build/polariz_parameters.o:\
 build/data_types.o\
+
+
+
+build/poldip.o:\
+build/printer_mod.o\
+build/data_types.o\
+build/qpole.o\
+build/multipole_parameters.o\
+build/localAxes_mod.o\
+build/opole.o\
+build/qpole.o\
+build/polariz_parameters.o\
 
 
 
@@ -76,6 +149,14 @@ build/data_types.o\
 
 build/ps_pes.o:\
 build/data_types.o\
+
+
+
+build/qpole_dev.o:\
+build/printer_mod.o\
+build/localAxes_mod.o\
+build/data_types.o\
+build/multipole_parameters.o\
 
 
 
@@ -102,6 +183,8 @@ build/printer_mod.o\
 build/localAxes_mod.o\
 build/qpole.o\
 build/opole.o\
+build/compressed_utils.o\
+build/compressed_tensors.o\
 
 
 
