@@ -4,23 +4,27 @@
 #  It is probably not very robust or portable. Works on Ubuntu 16. Probably only works when there is one module per file, but could work with any number. 
 ######################################################################################################
 
-instructions="  
-  << INSTRUCTIONS >>
+instructions="
+<< INSTRUCTIONS >>
   
-  This script creates the dependencies for a fortran makefile.
-  If the Makefile containts the statement 'srcdirs:=dir1 dir2' then those directories are used.
-  Else give the directories as command line arguments.
+  This script creates the dependencies for a fortran makefile and writes then to 'prerequisites.makefile'
+  The Makefile should contain the statement
   
-  Example with command line directories:
+srcdirs:=dir1 dir2
+  
+  somewhere, and
+  
+include prerequisites.makefile
 
-./prescan.sh src src2
-
-  Example getting them from makefile:
+  at the end. Running
 
 ./prescan.sh 
   
-  Makefile dependencies are written to  'prerequisites.makefile' 
-  Include it in the makefile with the statement 'include prerequisites.makefile' "
+  creates the file 'prerequisites.makefile'. Alternatively the statement 'srcdirs:=dir1 dir2 ...' can be left out
+  and dependency bewteen any sources in directories dir1, dir2, etc. can be created with:
+
+./prescan.sh dir1 dir2
+"
 
 ##########################################################################################################
 # Input and input error handling
@@ -53,6 +57,7 @@ elif ! [[ -d "$1" ]] # if argument not a directory give instructions
 then 
     echo -e "\nERROR Non-directory argument given."
     echo "$instructions"
+    exit
 else
     source_places=("$@") #to avoid command line arguments, write directories in the parethesis
 fi
