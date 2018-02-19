@@ -1,9 +1,11 @@
-fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp -D'DEBUG_PRINTING' -ffree-line-length-0 -Wall
-fc:=gfortran
 
 bd:=build
 srcdirs:=src devdir
 ext:=f90
+
+fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp  -ffree-line-length-0 -Wall -fcheck=all
+#-D'DEBUG_PRINTING'
+fc:=gfortran
 
 
 #Settings above. Furst run './prescan src devdir' to create the dependency file 'prerequisites.makefile'

@@ -87,8 +87,8 @@ subroutine test_polarize2
     real(dp) p12c(3,6),p21c(6,3), p22c(6,6)
     real(dp) v2c(6)
     real(dp) alp(pos_(2+1),pos_(2+1))
-    real(dp), dimension(pos_(2+1)) :: poly_qc, poly_vc 
-    integer s1,f1,s2,f2
+    real(dp), dimension(pos_(2+1)) :: poly_mp, poly_pot 
+    !integer s1,f1,s2,f2
     
     
     !full
@@ -99,7 +99,7 @@ subroutine test_polarize2
     real(dp) q1c_f(3), q2c_f(6)
     
     
-    !POLARIZABILITIES
+    ! CREATE POLARIZABILITIES
     call random_number(p11f)
     call random_number(p12f)
     call random_number(p22f)
@@ -109,43 +109,99 @@ subroutine test_polarize2
     print*, "nonsymmetry of polarizations:", test_polz_symmetry(p11f,p12f,p22f)
     
     call compress_p(p22f,p12f, p22c,p12c,p21c)
+    call polycompress_p(p11f, p12f,p22f,alp)
     
-    !POTENTIAL
+    
+    ! CREATE POTENTIAL
     call random_number(v1f)
     call random_number(v2f)
     v2f = (v2f + transpose(v2f) )/2d0
     v2c = compress(reshape(v2f,[3**2]),2)
+    poly_pot = [0d0,v1f,v2c]
     
-    !POLARIZE
+    
+    
+    !POLARIZE FULL
     call polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
     
     q1c_f=q1f
     q2c_f=compress(reshape(q2f,[3**2]),2)
-    call printer(q2f,'q2f',0)
-    
-    !POLYTENSOR FORMALISM
-    s1 = pos_(1)+1
-    f1 = pos_(1+1)
-    s2 = pos_(2)+1
-    f2 = pos_(2+1)
-    
-    alp=0
-    alp(s1:f1,s1:f1)=p11f
-    alp(s1:f1,s2:f2)=p12c
-    alp(s2:f2,s1:f1)=p21c
-    alp(s2:f2,s2:f2)=p22c
-    
-    poly_vc = [0d0,v1f,v2c]
-    
-    poly_qc = matmul(alp,poly_vc*gg_(1:f2))
     
     
+    
+    !POLARIZE COMRESSED
+    poly_mp = matmul(alp,poly_pot*gg_(1:10))
+    
+    
+    !print induced poles:
     call printo([0d0,q1c_f,q2c_f],0,5,0)
     
-    call printo(poly_qc,0,5,0)
+    call printo(poly_mp,0,5,0)
     
     
 end
+
+subroutine polycompress_p(p11f,p12f,p22f,alp)
+    real(dp), intent(in) :: p22f(3,3,3,3), p12f(3,3,3),p11f(3,3)
+    real(dp), intent(out) ::  alp(10,10)!
+    real(dp) p22c(6,6), p12c(3,6), p21c(6,3)
+    !real(dp) :: 
+    
+    integer i1,i2,i3,i4,  j1,j2
+    !integer s1,f1,s2,f2
+    
+    p12c=10
+    do i1=1,3
+        j2=0
+        do i2=1,3
+            do i3=i2,3
+                j2=j2+1
+                p12c(i1,j2) = p12f(i1,i3,i2)
+            enddo
+        enddo
+    enddo
+    
+    p21c=transpose(p12c)
+
+    
+    j1=0
+    do i1=1,3
+        do i2=i1,3
+            j1=j1+1
+            j2=0
+            do i3=1,3
+                do i4=i3,3
+                    j2=j2+1
+                    p22c(j1,j2) = p22f(i1,i2,i3,i4)
+                enddo
+            enddo
+        enddo
+    enddo
+    
+    alp(:,1)=0
+    alp(1,:)=0
+    alp(2:4,2:4)=p11f
+    alp(2:4,5:10)=p12c
+    alp(5:10,2:4)=p21c
+    alp(5:10,5:10)=p22c
+    
+    !s1 = pos_(1)+1
+    !f1 = pos_(1+1)
+    !s2 = pos_(2)+1
+    !f2 = pos_(2+1)
+    !
+    !alp=0
+    !alp(s1:f1,s1:f1)=p11f
+    !alp(s1:f1,s2:f2)=p12c
+    !alp(s2:f2,s1:f1)=p21c
+    !alp(s2:f2,s2:f2)=p22c
+    
+    
+    
+    
+end
+
+
 
 subroutine polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
     real(dp), intent(in) :: p11f(3,3), p12f(3,3,3),p22f(3,3,3,3)

@@ -56,7 +56,7 @@ module scme
   
   use ps_dms, only: vibdms
   use ps_pes, only: vibpes
-  use printer_mod, only: printer, xyz_hho_to_linear !printer_h2o_linear, !, h2o_to_linear
+  use printer_mod, only: printer, xyz_hho_to_linear,str !printer_h2o_linear, !, h2o_to_linear
   
   use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, &
                           get_cm,force_and_torque_on_atoms,create_xyz_hho_new 
@@ -67,7 +67,9 @@ module scme
   use opole, only: get_octupoles
   
   use compressed_utils,only: compress, expand
-  use compressed_tensors, only:lin_df, lin_polydf, vector_powers
+  use compressed_tensors, only:lin_df, lin_polydf, vector_powers, polyinner1, dfdu_erf
+  use compressed_arrays
+  use compressed_tests, only:polycompress_p
   !use detrace_apple, only: detrace_a, ff
   !use comressed_arrays
   
@@ -188,12 +190,35 @@ contains !//////////////////////////////////////////////////////////////
     real(dp) rr_oo(xyz), rr_oh(xyz,4), rr_hh(xyz,4), r_oo, r_oh, r_hh, aa_hh, aa_oh, aa_oo, A_oh, A_hh
     
     integer :: s !transposing
-    integer :: rank
+    !integer :: rank
     
     real(dp) :: cec(xyz,hho,n_atoms/3),cer2(hho,n_atoms/3), rCE(xyz,n_atoms/3)
     
     logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT
     logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD, VAR_OCT
+    
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !Compressed tensors
+    integer,parameter :: nx=4,kx=4, px=2, nkx=nx+kx, kpolx=2
+    integer nn, p1,p2
+    
+    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_perm, qn
+    
+    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi
+    real(dp), dimension(pos_(px+1),pos_(px+1),n_atoms/3) :: polz
+    real(dp) rr(3)
+    
+    real(dp), dimension(pos_(nkx+2)) :: rrr, df
+    real(dp) r2,sss(nkx+1)
+    
+    integer n1,n2,k1,k2
+    
+    real(dp) tol, polerr
+    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: dqn,qn_pol
+    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: phi_pol, phi_pol2, phi_induce
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
     
     !Default optional arguments
@@ -290,6 +315,8 @@ tprint(x,'x',s)
        dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
     end do
     
+    
+    
     !if(VAR_QUAD) 
     if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
     if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
@@ -308,40 +335,175 @@ tprint(opole,'opole',s)
 tprint(opole_orig,'opole_orig',s)    
 tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)    
     
+    !put the multipoles intocompressed form
+    
     !/ Save first reference value of dipole and quadrupole before the "induction loop"
     !call setUnpolPoles(dpole, qpole, dpole0, qpole0, nM)
+    
+    
     dPole = dpole0 !JÖ 
     qpole = qpole0 !JÖ
     
     !/ Rotate polarizability tensors into local coordinate systems
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     
-     !/ Compute the electric field (F) and gradient (dF) for the permanent octupole and hexadecapole
-     ! why dont we induce those, we have the polarizabilities!?
-     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
-     ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
-     
-     
-     !/ Induce dipole and quadrupole to self consistency
-     converged = .false.
-     iteration = 0
-     do while (.not. converged)
-     iteration = iteration + 1
-     
-        call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-        ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
+    print *, "size of qn",size(qn,1), size(qn,2),"sizes:", pos_(1),pos_(2),pos_(3),pos_(4),pos_(5), pos_(nx+1)
+    do m = 1,nM !convert multipoles to compressed form
+        nn=1
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        !print*,p1,p2
+        qn(p1:p2,m) = dpole(:,m) 
         
-        !call addFields(eH, eD, eT, nM)
-        eT = eH + eD !add fields
-        call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+        nn=2
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        !print*,p1,p2
+        qn(p1:p2,m) = compress(reshape(qpole(:,:,m),[3**nn]),nn)
         
-     
-        ! Induce dipoles and quadrupoles.
-        converged = .true.
-     
-        call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-        call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
-     end do
+        nn=3
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        qn(p1:p2,m) = compress(reshape(opole(:,:,:,m),[3**nn]),nn)
+        
+        nn=4
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        qn(p1:p2,m) = compress(reshape(hpole(:,:,:,:,m),[3**nn]),nn)
+        
+        !polycompress_p(p11f,p12f,p22f,alp)
+        call polycompress_p(dd(:,:,m),dq(:,:,:,m),qq(:,:,:,:,m),polz(:,:,m))
+        
+    enddo
+    
+    qn_perm=qn
+    
+    
+    phi_induce=0
+    do m1 = 1,nM
+        second:do m2 = 1,nM
+            if(m1==m2)cycle second
+            rr = rCM(:,m1)-rCM(:,m2)
+            r2 = sum(rr**2)
+            !print*, rr
+            
+            
+            
+            call vector_powers(nx+kpolx,rr,rrr)!(k,r,rr) 
+            call dfdu_erf(1.6_dp,r2,nx+kpolx,sss)!(a,u,nmax,ders) 
+            call lin_polydf(nx+kpolx,rrr,sss,df)!(nmax,rrr,sss,df)
+            
+            
+            !potential from all permanent moments
+            phi_induce(:,m1) = phi_induce(:,m1) + polyinner1(qn(:,m2),df,1,nx,1,kpolx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+            
+            
+            
+        enddo second
+    enddo
+    print*, phi_induce(:,1)
+    !stop
+    
+    
+    p2 = pos_(kpolx+1)
+    
+    tol = 1e-8*sum(abs( qn(:p2,:) ))
+    print*,"tol=",tol
+    
+    !first iteration: induction fron permanent poles
+    
+    
+    qn_pol=0
+    
+    iteration=0
+    scf:do !while (polerr>tol)
+        iteration = iteration + 1
+        
+        
+        
+        !polarize
+        do m = 1, nM
+            dqn(:,m) = matmul(polz(:,:,m),phi_induce(:,m)*gg_(:p2))
+        enddo
+        
+        qn_pol = qn_pol + dqn
+        
+        
+        m=4
+        !print*
+        !print*, "perm+ind pole", qn_pol(:4,1)+qn(:4,m)
+        !print*, "induced pole ", qn_pol(:4,m)
+        print*, "marginal pole", dqn(:4,m)
+        !print*
+        
+        if (sum(abs(dqn))<tol) exit scf
+        
+        if (iteration>100) exit scf
+        
+        
+        
+        
+        phi_induce=0
+        !compute field form polarized multipoles
+        do m1 = 1,nM
+            secondo:do m2 = 1,nM
+                if(m1==m2)cycle secondo
+                rr = rCM(:,m1)-rCM(:,m2)
+                r2 = sum(rr**2)
+                !print*, rr
+                
+                
+                
+                
+                call vector_powers(2*kpolx,rr,rrr)!(k,r,rr) 
+                call dfdu_erf(1.6_dp,r2,2*kpolx,sss)!(a,u,nmax,ders) 
+                call lin_polydf(2*kpolx,rrr,sss,df)!(nmax,rrr,sss,df)
+                
+                
+                
+                
+                phi_induce(:,m1) = phi_induce(:,m1) + 0.5d0*polyinner1(dqn(:,m2),df,1,kpolx,1,kpolx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+                
+                
+                
+            enddo secondo
+        enddo
+        
+    enddo scf
+    
+    
+    
+    print*, "it took "//str(iteration)//" iterations"
+    
+    
+    
+    
+    !/ Compute the electric field (F) and gradient (dF) for the permanent octupole and hexadecapole
+    ! why dont we induce those, we have the polarizabilities!?
+    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
+    ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
+    
+    
+    !/ Induce dipole and quadrupole to self consistency
+    converged = .false.
+    iteration = 0
+    do while (.not. converged)
+    iteration = iteration + 1
+    
+       call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+       ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
+       
+       !call addFields(eH, eD, eT, nM)
+       eT = eH + eD !add fields
+       call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+       
+    
+       ! Induce dipoles and quadrupoles.
+       converged = .true.
+    
+       call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+       call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+    end do
     
     !dip_ind=dpole
     

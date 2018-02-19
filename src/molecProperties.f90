@@ -106,7 +106,7 @@ contains
     implicit none
     !jö nodip! real(dp), intent(in) :: d0(3) 
     real(dp), intent(in) :: d0(3) 
-    real(dp), intent(in) :: q0(3,3), o0(3,3,3), h0(3,3,3,3), x(3,3,3)
+    real(dp), intent(in) :: q0(3,3), o0(3,3,3), h0(3,3,3,3), x(3,3,nM)
     integer, intent(in) :: nM
 
     !jö nodip! real(dp), intent(out) :: dpole(:,:)

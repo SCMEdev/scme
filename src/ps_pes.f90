@@ -451,7 +451,7 @@ contains !//////////////////////////////////////////////////////////////
      
    !internal variables       
      real(dp) :: x1,x2,x3,xx(3)  
-     real(dp) :: xpow(15,3),cos_hoh
+     real(dp) :: xpow(0:15,3),cos_hoh
      real(dp) :: rr1(3),rr2(3),rr12(3), r1,r2,rhh
      real(dp) :: sum0,sum3,sum1,sum2
      real(dp) :: efac,exp1,exp2
@@ -492,6 +492,8 @@ contains !//////////////////////////////////////////////////////////////
      efac = dexp(-b1*(  (r1-reoh)**2 + (r2-reoh)**2  ))
      
      xpow(1,:)=1.0_dp !fmat in vibpot & potnasa
+     xpow(0,:)=0.0_dp !fmat in vibpot & potnasa
+     
      do j=2,15
         xpow(j,:)=xpow(j-1,:)*xx(:)
      enddo
