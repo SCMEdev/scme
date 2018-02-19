@@ -4,21 +4,63 @@
 #  It is probably not very robust or portable. Works on Ubuntu 16. Probably only works when there is one module per file, but could work with any number. 
 ######################################################################################################
 
-instructions="  Usage:
+instructions="  
+  << INSTRUCTIONS >>
+  
+  This script creates the dependencies for a fortran makefile.
+  If the Makefile containts the statement 'srcdirs:=dir1 dir2' then those directories are used.
+  Else give the directories as command line arguments.
+  
+  Example with command line directories:
 
 ./prescan.sh src src2
+
+  Example getting them from makefile:
+
+./prescan.sh 
   
-  Makefile dependencies from fortran sources in given directories are written to  'prerequisites.makefile' 
+  Makefile dependencies are written to  'prerequisites.makefile' 
   Include it in the makefile with the statement 'include prerequisites.makefile' "
-# If run with anything else than a directory argument, instructions are given. 
-if ! [[ -d "$1" ]]
-then echo "$instructions"
-exit
+
+##########################################################################################################
+# Input and input error handling
+if [[ "$#" == "0" ]] # if no arguments use directories in makefile
+    then 
+    echo -e "\n-no arguments given, getting directories from makefile ..."
+    source_places=$(grep -i '^srcdirs' Makefile |cut -d'=' -f 2)
+    
+    if [[ "$source_places" == "" ]]
+    then 
+        echo -e "\n << ERROR >> Directory list from makefile empty"
+        echo -e " - No makefile?"
+        echo -e " - No 'srcdirs:=dir1 dir2 dir3' statement?"
+        exit
+    fi
+    echo -e "\n-directories from makefile: '$source_places', checking validity ... "
+        
+    for word in $source_places
+    do
+        if [[ -d $word ]]
+        then 
+            echo -e "\e[1m$word\e[0m is a directory"
+        else 
+            echo -e "\n\e[31mERROR\e[0m \e[1m$word\e[0m is \e[1mNOT\e[0m a directory"
+            echo -e "\n$instrucitons"
+            exit
+        fi
+    done
+elif ! [[ -d "$1" ]] # if argument not a directory give instructions
+then 
+    echo -e "\nERROR Non-directory argument given."
+    echo "$instructions"
+else
+    source_places=("$@") #to avoid command line arguments, write directories in the parethesis
 fi
 
-######################################################################################################
+#exit
+################################################################################################################################
 
-source_places=("$@") #to avoid command line arguments, write directories in the parethesis
+#source_places=("$@") #to avoid command line arguments, write directories in the parethesis
 ext=".f90"
 filename="prerequisites.makefile"
 bd=build
@@ -28,8 +70,9 @@ echo -e "\n-listing $ext files ..."
 # create which[] array of all files for each place
 i=0 
 for place in ${source_places[*]}
-do which[$i]="$place/*$ext"
-i=$[$i+1]
+do 
+    which[$i]="$place/*$ext"
+    i=$[$i+1]
 done
 echo -e "\n << \e[32mFILES\e[0m >>" ${which[*]}
 
@@ -39,8 +82,8 @@ echo -e "\n-scanning files for modules..."
 i=0
 for var in $(grep -i '^module' ${which[*]} | cut -d' ' -f 2 | cut -d! -f 1) #get word after "module" statement (file.f90:module hej!lol)
 do 
-mod_arr[$i]=$var
-i=$[$i+1]
+    mod_arr[$i]=$var
+    i=$[$i+1]
 done
 echo -e "\n << \e[32mMODULES\e[0m >>" ${mod_arr[*]}
 
@@ -50,9 +93,9 @@ echo -e "\n-creating source- and object-lists for found modules ..."
 i=0
 for var in $(grep -i '^module' ${which[*]} | cut -d: -f 1 ) #get filename from grep output (file.f90:module hej!lol)
 do 
-fil_arr[$i]=$var
-obj_arr[$i]="${var%.f90}.o"
-i=$[$i+1]
+    fil_arr[$i]=$var
+    obj_arr[$i]="${var%.f90}.o"
+    i=$[$i+1]
 done
 
 echo -e "\n << \e[32mFILES ORDERED\e[0m >>" ${fil_arr[*]}

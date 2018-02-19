@@ -1,26 +1,27 @@
-#####################################################################
-bd=build
-srcdirs=src 
-
-
-vpath %.f90 $(srcdirs) 
-
-sourcenames:= $(notdir $(wildcard $(srcdirs:=/*.f90)))
-
-objects:= $(addprefix $(bd)/, $(sourcenames:%.f90=%.o))
-
-target=$(bd)/libscme.a
-
-#####################################################################
-
 fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp -D'DEBUG_PRINTING' -ffree-line-length-0 -Wall
 fc:=gfortran
 
+bd:=build
+srcdirs:=src devdir
+ext:=f90
+
+
+#Settings above. Furst run './prescan src devdir' to create the dependency file 'prerequisites.makefile'
+#####################################################################
+#####################################################################
+vpath %.f90 $(srcdirs) 
+
+srcs:= $(notdir $(wildcard $(srcdirs:=/*.$(ext))))
+
+objects:= $(addprefix $(bd)/, $(srcs:%.$(ext)=%.o))
+
+#####################################################################
+
 all:
-	make -j4 $(target)
+	make -j4 target
 
 
-$(target): $(objects)
+target: $(objects)
 	@echo "objects are in $(bd) !!!"
 
 $(bd)/%.o: %.f90
@@ -28,9 +29,10 @@ $(bd)/%.o: %.f90
 	$(fc) $(fflags) -o $@ -c $<
 
 clean:
-	@rm -rf $(bd)
+	rm -rf $(bd)
 
 #####################################################################
+
 include prerequisites.makefile
 
 
