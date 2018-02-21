@@ -56,7 +56,7 @@ module scme
   
   use ps_dms, only: vibdms
   use ps_pes, only: vibpes
-  use printer_mod, only: printer, xyz_hho_to_linear,str !printer_h2o_linear, !, h2o_to_linear
+  use printer_mod, only: printer, xyz_hho_to_linear,str,printo !printer_h2o_linear, !, h2o_to_linear
   
   use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, &
                           get_cm,force_and_torque_on_atoms,create_xyz_hho_new 
@@ -67,7 +67,7 @@ module scme
   use opole, only: get_octupoles
   
   use compressed_utils,only: compress, expand
-  use compressed_tensors, only:lin_df, lin_polydf, vector_powers, polyinner1, dfdu_erf
+  use compressed_tensors, only:lin_df, lin_polydf, apple1_df, vector_powers, dfdu_erf, polyinner1, polyinner2, polyinner_matrix, get_stone_field, dfdu
   use compressed_arrays
   use compressed_tests, only:polycompress_p
   !use detrace_apple, only: detrace_a, ff
@@ -200,12 +200,12 @@ contains !//////////////////////////////////////////////////////////////
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !Compressed tensors
-    integer,parameter :: nx=4,kx=4, px=2, nkx=nx+kx, kpolx=2
-    integer nn, p1,p2
+    integer,parameter :: nx=4,kx=4, px=2, nkx=nx+kx, kpolx=2, pkx=pos_(kx+1), pnx=pos_(nx+1)
+    integer nn, p1,p2,pox
     
-    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_perm, qn
+    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_perm, qn_tot
     
-    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi
+    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi_perm, phi_tot, phi_scme
     real(dp), dimension(pos_(px+1),pos_(px+1),n_atoms/3) :: polz
     real(dp) rr(3)
     
@@ -214,9 +214,9 @@ contains !//////////////////////////////////////////////////////////////
     
     integer n1,n2,k1,k2
     
-    real(dp) tol, polerr
+    real(dp) tol, u_mult1,u_mult2, u_perm1,u_perm2
     real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: dqn,qn_pol
-    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: phi_pol, phi_pol2, phi_induce
+    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: phi_pol, phi_pol2, dphi
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     
@@ -309,17 +309,17 @@ tprint(x,'x',s)
     !opole_orig = opole
     
     !/ Partridge-Schwenke Dipoles (PSD)
-    do m = 1,nM
-       dms = 0
-       call vibdms(xyz_hho(:,:,m),dms) 
-       dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
-    end do
+    !do m = 1,nM
+    !   dms = 0
+    !   call vibdms(xyz_hho(:,:,m),dms) 
+    !   dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
+    !end do
     
     
     
     !if(VAR_QUAD) 
-    if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
-    if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
+    !if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
+    !if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
     
 tprint(dpole0,'dpole0',s)    
 tprint(qpole0,'qpole0',s)    
@@ -344,42 +344,60 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
     dPole = dpole0 !JÖ 
     qpole = qpole0 !JÖ
     
+    !dpole= 0
+    !qpole= 0
+    !opole= 0
+    !hpole= 0
+    
+    
+    
+    
     !/ Rotate polarizability tensors into local coordinate systems
     call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     
-    print *, "size of qn",size(qn,1), size(qn,2),"sizes:", pos_(1),pos_(2),pos_(3),pos_(4),pos_(5), pos_(nx+1)
+    print *, "size of qn",size(qn_perm,1), size(qn_perm,2),"sizes:", pos_(1),pos_(2),pos_(3),pos_(4),pos_(5), pos_(nx+1)
     do m = 1,nM !convert multipoles to compressed form
         nn=1
         p1=pos_(nn)+1
         p2=pos_(nn+1)
         !print*,p1,p2
-        qn(p1:p2,m) = dpole(:,m) 
+        qn_perm(p1:p2,m) = dpole(:,m) 
         
         nn=2
         p1=pos_(nn)+1
         p2=pos_(nn+1)
         !print*,p1,p2
-        qn(p1:p2,m) = compress(reshape(qpole(:,:,m),[3**nn]),nn)
+        qn_perm(p1:p2,m) = compress(reshape(qpole(:,:,m),[3**nn]),nn)!1d0/3d0*
         
         nn=3
         p1=pos_(nn)+1
         p2=pos_(nn+1)
-        qn(p1:p2,m) = compress(reshape(opole(:,:,:,m),[3**nn]),nn)
+        qn_perm(p1:p2,m) = compress(reshape(opole(:,:,:,m),[3**nn]),nn)!1d0/15d0*
         
         nn=4
         p1=pos_(nn)+1
         p2=pos_(nn+1)
-        qn(p1:p2,m) = compress(reshape(hpole(:,:,:,:,m),[3**nn]),nn)
+        qn_perm(p1:p2,m) = compress(reshape(hpole(:,:,:,:,m),[3**nn]),nn)!1d0/105d0*
         
         !polycompress_p(p11f,p12f,p22f,alp)
         call polycompress_p(dd(:,:,m),dq(:,:,:,m),qq(:,:,:,:,m),polz(:,:,m))
         
     enddo
     
-    qn_perm=qn
     
     
-    phi_induce=0
+    m=3
+    !call printo(qpole(:,:,m))
+    !call printo(opole(:,:,:,m))
+    !call printo(hpole(:,:,:,:,m))
+    
+    call printo(dpole(:,:),0,5,0)
+    call printo(qn_perm,0,5,0)
+    !qn_perm=qn
+    
+    
+    phi_perm=0
+    
     do m1 = 1,nM
         second:do m2 = 1,nM
             if(m1==m2)cycle second
@@ -389,88 +407,103 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
             
             
             
-            call vector_powers(nx+kpolx,rr,rrr)!(k,r,rr) 
-            call dfdu_erf(1.6_dp,r2,nx+kpolx,sss)!(a,u,nmax,ders) 
-            call lin_polydf(nx+kpolx,rrr,sss,df)!(nmax,rrr,sss,df)
+            call vector_powers(nkx,rr,rrr)!(k,r,rr) 
+            !call dfdu_erf(1.6_dp,r2,nkx,sss)!(a,u,nmax,ders) 
+            call dfdu(r2,nkx,sss) 
+            call lin_polydf(nkx,rrr,sss,df)!(nmax,rrr,sss,df)
             
             
-            !potential from all permanent moments
-            phi_induce(:,m1) = phi_induce(:,m1) + polyinner1(qn(:,m2),df,1,nx,1,kpolx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+            !full potential from all moments
+            phi_perm(:,m1) = phi_perm(:,m1) + get_stone_field(qn_perm(:,m2),df,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
             
             
             
         enddo second
     enddo
-    print*, phi_induce(:,1)
+    !print*, 'phi_perm(:,1) :', phi_perm(:,1)
     !stop
     
+    print*, "phi COMPRESSED:"
+    call printo(phi_perm,2,5,0) 
     
     p2 = pos_(kpolx+1)
     
-    tol = 1e-8*sum(abs( qn(:p2,:) ))
+    dphi=phi_perm(:p2,:) !copy the first 2 potenital gradients as the first iteration field in the polarization loop
+    dqn =qn_perm(:p2,:) !to get the phi_pol right
+    
+    tol = 1e-8*sum(abs( qn_perm(:p2,:) ))
     print*,"tol=",tol
     
     !first iteration: induction fron permanent poles
     
     
     qn_pol=0
+    phi_pol=0
     
     iteration=0
-    scf:do !while (polerr>tol)
-        iteration = iteration + 1
-        
-        
-        
-        !polarize
-        do m = 1, nM
-            dqn(:,m) = matmul(polz(:,:,m),phi_induce(:,m)*gg_(:p2))
-        enddo
-        
-        qn_pol = qn_pol + dqn
-        
-        
-        m=4
-        !print*
-        !print*, "perm+ind pole", qn_pol(:4,1)+qn(:4,m)
-        !print*, "induced pole ", qn_pol(:4,m)
-        print*, "marginal pole", dqn(:4,m)
-        !print*
-        
-        if (sum(abs(dqn))<tol) exit scf
-        
-        if (iteration>100) exit scf
-        
-        
-        
-        
-        phi_induce=0
-        !compute field form polarized multipoles
-        do m1 = 1,nM
-            secondo:do m2 = 1,nM
-                if(m1==m2)cycle secondo
-                rr = rCM(:,m1)-rCM(:,m2)
-                r2 = sum(rr**2)
-                !print*, rr
-                
-                
-                
-                
-                call vector_powers(2*kpolx,rr,rrr)!(k,r,rr) 
-                call dfdu_erf(1.6_dp,r2,2*kpolx,sss)!(a,u,nmax,ders) 
-                call lin_polydf(2*kpolx,rrr,sss,df)!(nmax,rrr,sss,df)
-                
-                
-                
-                
-                phi_induce(:,m1) = phi_induce(:,m1) + 0.5d0*polyinner1(dqn(:,m2),df,1,kpolx,1,kpolx)!(narr,dfarr,nn1,nn2,mm1,mm2)
-                
-                
-                
-            enddo secondo
-        enddo
-        
-    enddo scf
     
+    !scf:do
+    !    iteration = iteration + 1
+    !    
+    !    m=4
+    !    print*, "marginal pole", dqn(:4,m)
+    !    
+    !    qn_pol  = qn_pol  + dqn !save the total polarization (needed in computing energy like qn_tot*phi_perm
+    !    
+    !    !polarize all atoms (linear in N)
+    !    do m = 1, nM
+    !        dqn(:,m) = matmul(polz(:,:,m),(1)*dphi(:,m)*gg_(:p2))
+    !    enddo
+    !    
+    !    phi_pol = phi_pol + dphi !save total filed to compute energy like qn_perm*phi_tot
+    !    
+    !    
+    !    !print*
+    !    !print*, "perm+ind pole", qn_pol(:4,1)+qn(:4,m)
+    !    !print*, "induced pole ", qn_pol(:4,m)
+    !    !print*
+    !    
+    !    if (sum(abs(dqn))<tol) exit scf
+    !    
+    !    if (iteration>100) exit scf
+    !    
+    !    
+    !    
+    !    
+    !    dphi=0
+    !    !compute field form polarized multipoles
+    !    do m1 = 1,nM
+    !        secondo:do m2 = 1,nM
+    !            if(m1==m2)cycle secondo
+    !            rr = rCM(:,m1)-rCM(:,m2)
+    !            r2 = sum(rr**2)
+    !            !print*, rr
+    !            
+    !            
+    !            
+    !            
+    !            call vector_powers(2*kpolx,rr,rrr)!(k,r,rr) 
+    !            call dfdu_erf(1.6_dp,r2,2*kpolx,sss)!(a,u,nmax,ders) 
+    !            call lin_polydf(2*kpolx,rrr,sss,df)!(nmax,rrr,sss,df)
+    !            
+    !            
+    !            
+    !            
+    !            dphi(:,m1) = dphi(:,m1) + get_phi1(dqn(:,m2),df,1,kpolx,1,kpolx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    !            
+    !            
+    !            
+    !        enddo secondo
+    !    enddo
+    !    
+    !enddo scf
+    !
+    !
+    !qn_tot = qn_perm
+    !qn_tot(:p2,:) = qn_pol 
+    !
+    !phi_tot = phi_perm
+    !phi_tot(:p2,:) = phi_pol
     
     
     print*, "it took "//str(iteration)//" iterations"
@@ -480,35 +513,75 @@ tprint((opole-opole_orig)/opole*100,'new-orig as %of new ',s)
     
     !/ Compute the electric field (F) and gradient (dF) for the permanent octupole and hexadecapole
     ! why dont we induce those, we have the polarizabilities!?
-    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
-    ! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
+    !call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
+    !! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
+    !call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
     
     
     !/ Induce dipole and quadrupole to self consistency
-    converged = .false.
-    iteration = 0
-    do while (.not. converged)
-    iteration = iteration + 1
+    !converged = .false.
+    !iteration = 0
+    !do while (.not. converged)
+    !iteration = iteration + 1
+    !
+    !   call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+    !   ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
+    !   
+    !   !call addFields(eH, eD, eT, nM)
+    !   eT = eH + eD !add fields
+    !   call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+    !   
+    !
+    !   ! Induce dipoles and quadrupoles.
+    !   converged = .true.
+    !
+    !   call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+    !   call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+    !end do
     
-       call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-       ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
-       
-       !call addFields(eH, eD, eT, nM)
-       eT = eH + eD !add fields
-       call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
-       
     
-       ! Induce dipoles and quadrupoles.
-       converged = .true.
-    
-       call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-       call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
-    end do
     
     !dip_ind=dpole
     
     !/ Compute filed gradients of the electric fields, to 5th order
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+    do m = 1,nM !convert field to compressed form
+        nn=1
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        !print*,p1,p2
+        phi_scme(p1:p2,m) = d1v(:,m) 
+        
+        nn=2
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        !print*,p1,p2
+        phi_scme(p1:p2,m) = compress(reshape(d2v(:,:,m),[3**nn]),nn)
+        
+        nn=3
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        phi_scme(p1:p2,m) = compress(reshape(d3v(:,:,:,m),[3**nn]),nn)
+        
+        nn=4
+        p1=pos_(nn)+1
+        p2=pos_(nn+1)
+        phi_scme(p1:p2,m) = compress(reshape(d4v(:,:,:,:,m),[3**nn]),nn)
+        
+        !polycompress_p(p11f,p12f,p22f,alp)
+        call polycompress_p(dd(:,:,m),dq(:,:,:,m),qq(:,:,:,:,m),polz(:,:,m))
+        
+    enddo
+    print*, "phi SCME:"
+    call printo(phi_scme,2,5,0)
+    
+    !call printo(phi_perm,2,5,0)
+    call printo(phi_scme/phi_perm,2,5,0)
+    
+    print'(*(f10.5))', 1d0/3d0, 1d0/15d0, 1d0/105d0, 1d0/945d0
+    stop
+    
     
     !if(.false.)then
     !  do m = 1,nM
@@ -594,11 +667,39 @@ tprint(tau, 'tauu',s)
     !/           torqueCM(dpole, qpole, ... 
     !/           forceCM(dpole, qpole, ... unchanged syntax      (i.e. total pole in static field)
     !/           multipole_energy(dpole, qpole....            (i.e. total pole in static field)
+    m=4
+    !print*, "hpole:"
+    !call printo(hpole(:,:,:,:,m))
+    !print*, "d4v:"
+    !call printo(d4v(:,:,:,:,m))
+    
+    
+    u_mult1=0
+    u_mult2=0
+    u_perm1 =0
+    u_perm2 =0
+    do m=1,nM
+        u_mult1 = u_mult1 + sum( qn_perm(:pkx,m)* phi_tot(:pkx,m)*gg_(:pkx) )
+        u_mult2 = u_mult2 + sum(  qn_tot(:pkx,m)*phi_perm(:pkx,m)*gg_(:pkx) )
+        u_perm1 = u_perm1 + sum( qn_perm(:,m)*phi_perm(:,m)*gg_(:pkx) )
+        u_perm2 = u_perm2 + sum( qn_perm(:,m)*phi_perm(:,m)*gg_(:pkx) ) 
+    enddo
+    
+    !u_multipole = u_multc
+    
+    
+    
     call multipole_energy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
     u_multipole = u_multipole * coulomb_k ! Coulomb force constant to get eV
     
     
+    print*, 'u_mult1    ', u_mult1* coulomb_k
+    print*, 'u_mult2    ', u_mult2* coulomb_k
     
+    print*, 'u_perm1    ', u_perm1* coulomb_k
+    print*, 'u_perm2    ', u_perm2* coulomb_k
+    
+    print*, 'u_multipole', u_multipole
     
     
     

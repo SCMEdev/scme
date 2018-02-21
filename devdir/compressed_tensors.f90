@@ -63,6 +63,34 @@ function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrer
     
 end
 
+function get_stone_field(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
+    integer :: nn1,nn2,mm1,mm2
+    real(dp) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
+    real(dp) :: marr(pos_(mm2+1)), pref
+    integer nn, mm
+    integer n1,n2,m1,m2,f1,f2
+    integer scaling !I am not sure why the scaling factor of 1/(2n-1)!! is needed for the potential to comply with scme. Maybe because we define the moments in some way or because 
+    
+    marr = 0
+    do nn = nn1, nn2
+        n1 = pos_(nn)+1
+        n2 = pos_(nn+1)
+        pref=(-1)**(nn)/dble(intff(2*nn-1,1))
+        do mm = mm1, mm2
+            m1 = pos_(mm)+1
+            m2 = pos_(mm+1)
+            
+            f1 = pos_(nn+mm)+1
+            f2 = pos_(nn+mm+1)
+            
+            marr(m1:m2) = marr(m1:m2) + pref*inner( nn+mm, nn, dfarr(f1:f2), narr(n1:n2) )
+            
+            !print*, mm,nn
+        enddo
+    enddo
+    
+end
+
 
 function polyinner2(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
     integer,  intent(in) :: nn1,nn2,mm1,mm2
