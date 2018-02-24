@@ -9,3 +9,6 @@ src/nogit/*
 *.xyz
 *.symlink
 reference*
+devdir/temp*
+prerequisites.makefile
+*/prerequisites.makefile

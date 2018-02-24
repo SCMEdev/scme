@@ -205,7 +205,7 @@ contains !//////////////////////////////////////////////////////////////
     
     real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_scme!qn_perm, qn_tot, 
     
-    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi_scme, phi_comp, f34!phi_perm, phi_tot, 
+    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi_scme, phi_comp!phi_perm, phi_tot, 
     real(dp), dimension(pos_(px+1),pos_(px+1),n_atoms/3) :: polz
     
     !real(dp), dimension(pos_(nkx+2)) :: rrr, df
@@ -215,7 +215,7 @@ contains !//////////////////////////////////////////////////////////////
     
     !real(dp) tol, u_mult1,u_mult2, u_perm1,u_perm2
     !real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: dqn,qn_pol
-    !real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: phi_pol, phi_pol2, dphi
+    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: f34 !phi_pol, phi_pol2, dphi
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -358,11 +358,15 @@ tprint(x,'x',s)
     !call printa(eH)
     !call printer(dEhdr,"m",1)
     !stop
+    do m =1,nM
+      !print*, compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
+      print*, eH(:,m)
+    enddo
+    !stop
     
     f34=0
-    print*, qn_scme
     
-    call system_stone_field(3,4,1,2,6,rCM,qn_scme,f34)
+    call system_stone_field(3,4,1,2,nM,rCM,qn_scme,f34)
     
     call printa(f34,t="f34")
     
