@@ -1,6 +1,6 @@
 module compressed_utils
 
-use printer_mod, only: str, printer, printo
+use printer_mod, only: str, printer, printo, printa
 use compressed_arrays 
 implicit none
 
@@ -60,7 +60,7 @@ subroutine print_trace_lengths
         print*, "n="//str(n,2)//", len="//str(acc,3)//" <= "//str(temp(1:n05))!//" => "//str(sum(temp(1:n05)))
     enddo
     
-    call printo([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
+    call printa([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
     print*, str([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
 end subroutine
 
@@ -98,7 +98,7 @@ subroutine print_trace_index_matrix(k)
         enddo
     enddo
     print'(a)',"integer, parameter :: tmatrix("//str(ileng)//","//str(tleng)//") = reshape([ &"
-    call printo(matrix,0,1)
+    call printa(matrix,0,1)
     print'(a)',"], shape(tmatrix), order=[2,1])"
 
     
@@ -186,7 +186,7 @@ subroutine print_square_index_matrix(k)
         enddo
     enddo
     print'(a)', "integer, parameter :: matr("//str(ileng)//","//str(ileng)//") = reshape( [ &"
-    call printo(matrix,0,1)
+    call printa(matrix,0,1)
     print'(a)', "], shape(matr) )"
     
 end subroutine
@@ -218,7 +218,7 @@ subroutine print_choose_matrix
     
     ! Print for copying
     write(*,'(a)') "integer, parameter :: choose_matrix(0:"//str(k)//",0:"//str(k)//") = reshape( [&"
-    call printo(mat,0,1)
+    call printa(mat,0,1)
     write(*,'(a)') " ], shape(choose_matrix) )"
 end subroutine
 

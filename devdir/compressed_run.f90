@@ -9,11 +9,13 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
+!test_polarize
+test_stone_field
 !geom2xyz
 !test_intfac_ff
 !test_df
-test_polarize2
-
+!test_polarize2
+!test_printoa
 !test_polynextpow_n
 !test_mp_pot
 !test_polyinner

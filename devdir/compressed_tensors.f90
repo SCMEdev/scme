@@ -1,6 +1,6 @@
 module compressed_tensors 
 
-use printer_mod, only: str, printer, printo
+use printer_mod, only: str, printer, printo, printa
 use compressed_utils, bad=>main!, bad=>main2!,only: test_apple_g
 use compressed_arrays!, p_=>pos_, l_=>len_!, only: mm_, gg_, pos_, len_, binc_, tmm_ 
 implicit none
@@ -17,19 +17,26 @@ end subroutine
 
     
 
-subroutine polarize(nx,mx,alp,phi,dq)
-    integer, intent(in) :: nx,mx
+subroutine polarize_stone(alp,phi,dq)
+    integer, parameter :: nx=2,mx=2
     real(dp), intent(in) ::  alp(pos_(nx+1),pos_(mx+1))
+    !real(dp) ::  alp2(pos_(nx+1),pos_(mx+1))
     real(dp), intent(in) ::  phi(pos_(mx+1))
     real(dp), intent(out) ::  dq(pos_(nx+1))
     
-    integer n1,n2,m1,m2
+    integer p1,p2,p3,p4!n1,n2,m1,m2
     
-    n1=2
-    n2=pos_(nx+1)
-    m1=2
-    m2=pos_(mx+1)
-    dq(n1:n2) = matmul( alp(n1:n2,m1:m2), phi(m1:m2)*gg_(m1:m2) ) 
+    p1=pos_(1)+1
+    p2=pos_(1+1)
+    p3=pos_(2)+1
+    p4=pos_(2+1)
+    
+    !alp2=alp
+    
+    !alp2(p1:p2,p3:p4) = alp2(p1:p2,p3:p4)/3d0
+    
+    dq(p1:p2) = matmul( alp(p1:p2,p1:p4), [phi(p1:p2),phi(p3:p4)/3d0]*gg_(p1:p4) ) 
+    dq(p3:p4) = matmul( alp(p3:p4,p1:p4),  phi(p1:p4)*gg_(p1:p4) ) 
     
     
             
@@ -90,6 +97,42 @@ function get_stone_field(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didf
     enddo
     
 end
+
+subroutine system_stone_field(ni,nx,ki,kx,nM,rCM,qn,fk)
+    integer, intent(in) :: ni,nx,ki,kx,nM
+    real(dp), intent(in) :: rCM(3,nM), qn(pos_(nx+1),nM)
+    real(dp), intent(out) :: fk(pos_(kx+1),nM)
+    !internal:
+    integer m1,m2, nkx
+    real(dp) :: rr(3),r2, sss(nx+kx+1)
+    real(dp),dimension(pos_(nx+kx+1)) :: rrr, df
+    
+    nkx=nx+kx
+    
+    do m1 = 1,nM
+        second:do m2 = 1,nM
+            
+            if(m1==m2)cycle second
+            
+            rr = rCM(:,m1)-rCM(:,m2)
+            r2 = sum(rr**2)
+            
+            
+            
+            call vector_powers(nkx,rr,rrr)!(k,r,rr) 
+            !call dfdu_erf(1.6_dp,r2,nkx,sss)!(a,u,nmax,ders) 
+            call dfdu(r2,nkx,sss) 
+            call lin_polydf(nkx,rrr,sss,df)!(nmax,rrr,sss,df)
+            
+            
+            fk(:,m1) = fk(:,m1) + get_stone_field(qn(:,m2),df,ni,nx,ki,kx)
+            
+            
+            
+        enddo second
+    enddo
+end
+
 
 
 function polyinner2(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence

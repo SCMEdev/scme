@@ -3,7 +3,8 @@ bd:=build
 srcdirs:=src devdir
 ext:=f90
 
-fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp  -ffree-line-length-0 -Wall -fcheck=all
+err:= -Wall -fcheck=all -g -fbacktrace -ffpe-trap=zero,overflow,underflow
+fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp  -ffree-line-length-0 $(err)
 #-D'DEBUG_PRINTING'
 fc:=gfortran
 

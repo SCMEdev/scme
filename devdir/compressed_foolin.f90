@@ -1,6 +1,6 @@
 module compressed_foolin !>>>
 
-use printer_mod, only: str, printer, printo
+use printer_mod, only: str, printer, printo, printa
 use compressed_arrays 
 use compressed_tensors, bad=>main 
 use compressed_utils, bad=>main
@@ -38,8 +38,8 @@ end subroutine
 subroutine main; ! MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN
 !call &
 !print_trace_ind 
-call printo(pos_,0)
-call printo(len_,0)
+call printa(pos_,0)
+call printa(len_,0)
 !call printo(pow_,0)
 !call stupido
 

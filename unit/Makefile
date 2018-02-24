@@ -8,7 +8,7 @@ b := build
 
 
 FC = gfortran
-FFLAGS = -O0 -cpp -I$(scme_build) -J$b $(comline)
+FFLAGS = -O0 -cpp -I$(scme_build) -J$b $(comline) -g -fbacktrace -ffpe-trap=zero,overflow,underflow
 #-pg
 #-fopenmp
 ## flags for home:

@@ -16,7 +16,7 @@ fc := gfortran
 opti:= 
 #-Ofast -flto -march=native 
 # -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -finline-functions 
-err := -Wall -fmax-errors=3 -fcheck=all
+err := -Wall -fmax-errors=3 -fcheck=all -g -fbacktrace -ffpe-trap=zero,overflow,underflow
 
 flags:= -I$(bd) -J$(bd) $(err) $(opti) -ffree-line-length-0 -cpp
 
