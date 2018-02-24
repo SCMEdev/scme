@@ -215,7 +215,7 @@ contains !//////////////////////////////////////////////////////////////
     
     !real(dp) tol, u_mult1,u_mult2, u_perm1,u_perm2
     !real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: dqn,qn_pol
-    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: f34 !phi_pol, phi_pol2, dphi
+    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: f34 , f34_scme !phi_pol, phi_pol2, dphi
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -354,6 +354,11 @@ tprint(x,'x',s)
     !call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
     
     !stop
+    do m=1,nM
+        
+        f34_scme(2:4,m)=eh(:,m)
+        f34_scme(5:10,m)=compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
+    enddo
     
     !call printa(eH)
     !call printer(dEhdr,"m",1)
@@ -364,11 +369,14 @@ tprint(x,'x',s)
     enddo
     !stop
     
+    
     f34=0
     
     call system_stone_field(3,4,1,2,nM,rCM,qn_scme,f34)
     
     call printa(f34,t="f34")
+    call printa(f34_scme,t="f34_scme")
+    call printa(f34/f34_scme,t="f34/f34_scme")
     
     stop
     !/ Induce dipole and quadrupole to self consistency
