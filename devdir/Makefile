@@ -18,8 +18,10 @@ opti:=
 # -ftree-vectorize -ftree-loop-if-convert -ftree-loop-distribution -finline-functions 
 err := -Wall -fmax-errors=3 -fcheck=all -g -fbacktrace -ffpe-trap=zero,overflow,underflow
 
-flags:= -I$(bd) -J$(bd) $(err) $(opti) -ffree-line-length-0 -cpp
 
+base:= -I$(bd) -J$(bd) -ffree-line-length-0 -cpp
+
+flags:= $(base) $(err) $(opti) 
 # Must place main object first for generic program to call the correct module. 
 generic = $^ -o $@ -cpp -DMODU=$(notdir $(<:.o=)) generic_program.f08
 
@@ -35,9 +37,13 @@ $(bd)/%.o:%.f90
 	@mkdir -p $(@D)
 	$(fc) $(flags) -c $< -o $@
 
+#apple detracer cannot run with bounds checking, so skip all the error flags. 
+$(bd)/detrace_apple.o:detrace_apple.f90
+	@mkdir -p $(@D)
+	$(fc) $(base) $(opti) -c $< -o $@
 
 
-#Executables
+
 all:
 	make -j4 run.x
 	make -j4 tests.x
@@ -48,6 +54,7 @@ old:
 new: 
 	make -j4 apple.x utils.x convert.x fool.x tests.x run.x 
 
+#Executables
 detraceo.x: $(bd)/detrace_mod.o $(objects)
 	$(comp) -DSUB=io_octa
 

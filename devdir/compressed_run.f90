@@ -9,7 +9,11 @@ contains !//////////////////////////////////////////////////////////////////////
 
 subroutine main
 call &
+!test_next_lex_and_can
 !test_polarize
+!test_next_set2pown(5,1)
+test_old_field
+call &
 test_stone_field
 !geom2xyz
 !test_intfac_ff

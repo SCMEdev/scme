@@ -33,7 +33,7 @@ subroutine suit
     call test_subdiv_pow_h(4,3)
     call test_subdiv_pow_h(3,4)
     
-    call test_next_key2n(4,1)
+    call test_next_set2pown(4,1)
     call test_sorted
     call test_expand_compress
     call test_brakk
@@ -82,6 +82,43 @@ subroutine suit
 
 end subroutine
     
+
+subroutine test_next_lex_and_can
+    !this routine tests the routines that produces the next full or compressed tensor index set, not the powers. 
+    integer set1(4),set2(4), i,n, pown1(3),pown2(3)
+    n=4
+    set1 = [1,1,1,1]
+    set2 = [1,1,1,1]
+    do i=1,3**4
+        if(i>1)then
+            set1 = next_lex(set1,1)
+            set2 = next_can(set2,1)
+            
+        endif
+        pown1 = set2pown(set1)
+        pown2 = set2pown(set2)
+        print*, "pown1",pown1
+        print*, "set1: "//str(set1)//" has pow "//str(pown1)//";  set2: "//str(set2)//" has pow: "//str(pown2)//" which is again the set "//str(pown2set(pown1))
+    enddo
+end
+
+subroutine test_polyfinder
+    integer nn(3), i, n, it
+    it = 0
+    print*, "key, pos, finder, polyf, it, polyf-it "
+    do n = 0, 7
+        nn=[n,0,0]
+        do i = 1, len_(n)
+            if (i>1)call nextpown(nn)
+            it = it+1
+            print'(a,*(I4))'," ["//str(nn)//"]",pos_(n), finder(nn), polyfind(nn), it, polyfind(nn)-it
+        enddo
+    enddo
+    print*, str(pos_)
+end
+
+
+        
 
 subroutine test_printoa
     integer :: mati(5,4), veci(10)
@@ -199,7 +236,7 @@ end
 subroutine test_stone_field
     real(dp) :: q1c(3),q2c(6), q3c(10), q4c(15)
     real(dp) :: q1cc(3),q2cc(6), q3cc(10), q4cc(15)
-    real(dp) :: f1c(3),f2c(6), f3c(10), f4c(15),ff4c(pos_(4+1))
+    real(dp) :: f1c(3),f2c(6), f3c(10), f4c(15),ff4c(pos_(4+1)), ff4b(pos_(4+1),2)
     
     real(dp) :: q1f(3,1),q2f(3,3,1),dq1f(3,1),dq2f(3,3,1), q3f(3,3,3,1), q4f(3,3,3,3,1)
     real(dp) :: f1f(3,1),f2f(3,3,1), f3f(3,3,3,1), f4f(3,3,3,3,1)
@@ -272,7 +309,7 @@ subroutine test_stone_field
     
     
     print*
-    print*, "q3,q4=0, f reduced"
+    print*, "q3,q4=0, -> f1,f2"
     k1=1
     k2=2
     p1=pos_(0)+1
@@ -287,11 +324,116 @@ subroutine test_stone_field
     call printa(ff4c)
     
     
+    print*, "q3,q4=0, f1,f2"
+    k1=1
+    k2=2
+    p1=pos_(0)+1
+    p2=pos_(k2+1)
+    
+    ff4c=0
+    ff4c(p1:p2) = get_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,1,nx,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    print*, "q3,q4=0, f1,f2,f3"
+    k1=1
+    k2=3
+    p1=pos_(0)+1
+    p2=pos_(k2+1)
+    
+    ff4c=0
+    ff4b(p1:p2,1) = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,1,2,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4b(:,1))
+    
+    
     
     !call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
     !call calcDv(rCM, q1f, q2f, q3f, q4f, 1, 1, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
     
     
+end
+
+
+subroutine test_old_field
+    integer, parameter :: nm = 2
+    real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
+    real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
+    real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
+    integer NC
+    logical*1 iSlab
+    logical FULL
+    
+    integer,parameter :: nx=4,kx=5
+    real(dp) quad(6), octa(10), hexa(15)
+    real(dp) qn(pos_(nx+1),nm),fk(pos_(kx+1),nm)
+    
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    rMax = 100.1d0
+    rMax2 = rMax**2
+    rCM(:,1) = [0d0,0d0,0d0]
+    rCM(:,2) = [3.4231, 2.74389, 1.54739]
+    nc = 1
+    a=40d0
+    a2=a**2
+    Full = .true. 
+    iSlab = .false. 
+    
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
+    
+    !call random_number(quad)
+    !print'(a,*(g10.3))', 'quad:',quad
+    !qpole(:,:,1) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
+
+    !call random_number(octa)
+    !opole(:,:,:,1) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
+    
+    !call random_number(hexa)
+    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    quad=0
+    octa=0
+    hexa=0
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    dpole(:,1) = [2.345d0, -0.453245d0,0.6564256d0]
+    qn(:,2)=0
+    qn(:,1)=[0d0,dpole(:,1),quad,octa,hexa]
+    
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+    print'(a,*(g30.15))','d-1',d1v(:,2)
+    print'(a,*(g30.15))','d-2',opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
+    print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    
+    fk=0
+    call system_stone_field(1,4,1,5,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
+    print'(a,*(g30.15))','fk',fk(:,2)
+    
+    fk=0
+    call system_stone_field(1,4,1,4,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
+    print'(a,*(g30.15))','fk',fk(:,2)
+    
+
+
+
+    
+    !print*,'d1v'
+    !print'(1(g15.3))',d2v(:,:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
+   
+   print*, 'ABOVE: ---------------------test old field --------------------------'
+     
 end
 
 
@@ -705,7 +847,7 @@ subroutine test_apple_g
     print*, 'ABOVE: test_apple_g -------------------------------------------'
 end subroutine
 
-subroutine test_next_key2n(rank,tric) !result(ns)
+subroutine test_next_set2pown(rank,tric) !result(ns)
     integer, intent(in) :: rank, tric
     integer trilen, key(rank), nn(3), upper
     !integer :: ns(3, ((rank+1)*(rank+2))/2)
@@ -716,14 +858,14 @@ subroutine test_next_key2n(rank,tric) !result(ns)
     print '('//str(4)//'I2)', next_can([1,1,3,3],0)
     print '('//str(4)//'I2)', next_can([1,1,3,3],1)
     
-    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
+    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', set2pown([1,1,2,3])
     
     trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
     
     key = 1
        
     print*, 'n(1:'//str(rank)//') array:'
-    nn = key2n(key)
+    nn = set2pown(key)
     i = 1
     call pprint
     
@@ -733,13 +875,13 @@ subroutine test_next_key2n(rank,tric) !result(ns)
     do i = 2,upper!3**rank!trilen
        key = next(key,tric)
        
-       nn = key2n(key)
+       nn = set2pown(key)
        call pprint
     enddo
     
     
     
-    print*, 'ABOVE: test_next_key2n -------------------------------------------'
+    print*, 'ABOVE: test_next_set2pown -------------------------------------------'
     contains !// ////////////////////////
       
       
@@ -1267,73 +1409,6 @@ subroutine test_symouter
     
 end
 
-subroutine test_old_field
-    integer, parameter :: nm = 2
-    real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
-    real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
-    real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
-    integer NC
-    logical*1 iSlab
-    logical FULL
-    
-    real(dp) quad(6), octa(10)!, hexa(15)
-    
-    
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    rMax = 100.1d0
-    rMax2 = rMax**2
-    rCM(:,1) = [0d0,0d0,0d0]
-    rCM(:,2) = [3.4231, 2.74389, 1.54739]
-    nc = 1
-    a=40d0
-    a2=a**2
-    Full = .true. 
-    iSlab = .false. 
-    
-    
-    dpole=0
-    qpole=0
-    opole=0
-    hpole=0
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
-    
-    call random_number(quad)
-    print'(a,*(g10.3))', 'quad:',quad
-    !qpole(:,:,1) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
-
-    call random_number(octa)
-    !opole(:,:,:,1) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
-    
-    !call random_number(hexa)
-    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
-    
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    
-    dpole=0
-    qpole=0
-    opole=0
-    hpole=0
-    dpole(:,1) = [2.345d0, -0.453245d0,0.6564256d0]
-    
-    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
-    
-    print'(a,*(g30.15))','d-1',d1v(:,2)
-    print'(a,*(g30.15))','d-2',opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
-    print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
-    print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
-    print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
-    
-    
-    
-
-    print*,'d1v'
-    print'(1(g15.3))',d2v(:,:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
-   
-   print*, 'ABOVE: ---------------------test old field --------------------------'
-     
-end
 
 subroutine test_potgrad
     integer, parameter :: kmax=5, nmax = 3
@@ -1468,7 +1543,7 @@ subroutine test_mp_pot
     logical*1 iSlab
     logical FULL
     
-    integer, parameter :: kmax=6, nmax = 5
+    integer, parameter :: kmax=5, nmax = 4
     integer i
     real(dp) rr(3) 
     real(dp), dimension(pos_(kmax+1)) :: rrr
@@ -1484,7 +1559,7 @@ subroutine test_mp_pot
     
     
     ! For apple_potgrad
-    integer, parameter :: nkmax = 10
+    integer, parameter :: nkmax = nmax+kmax
     real(dp) rrh(3)
     real(dp), dimension(pos_(nkmax+1)) :: dtrrr,  rrrh, rrrnm, lin_df
     integer pq1,pq2
@@ -1634,7 +1709,7 @@ subroutine test_mp_pot
     print'(a,*(g30.15))','dtrrr', dtrrr
     print'(a,*(g30.15))','lin_df', lin_df
     
-    stop"just stop it!"
+    !stop"just stop it!"
     
     
     phi=0

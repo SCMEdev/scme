@@ -355,7 +355,7 @@ tprint(x,'x',s)
     
     !stop
     do m=1,nM
-        
+        f34_scme(1,m)=0
         f34_scme(2:4,m)=eh(:,m)
         f34_scme(5:10,m)=compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
     enddo
@@ -372,7 +372,7 @@ tprint(x,'x',s)
     
     f34=0
     
-    call system_stone_field(3,4,1,2,nM,rCM,qn_scme,f34)
+    call system_stone_field(3,4,1,2,rCM,qn_scme,f34)
     
     call printa(f34,t="f34")
     call printa(f34_scme,t="f34_scme")
@@ -410,7 +410,7 @@ tprint(x,'x',s)
     
     !/ Compute filed gradients of the electric fields, to 5th order
     !call system_stone_field(1,nx,1,kx,nM,rCM,qn_perm,phi_perm)
-    call system_stone_field(1,nx,1,kx,nM,rCM,qn_scme,phi_comp)
+    call system_stone_field(1,nx,1,kx,rCM,qn_scme,phi_comp)
     
     
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)

@@ -405,18 +405,41 @@ function apple_g(n) result(g)
 end
 
 
-function key2n(key) result(n)
-   integer, intent(in) :: key(:)
-   integer i, n(3), rank, ind
-   rank = size(key)
-   n=0
-   ! get number of x,y,z indices (or rather 1,2,3 indices)
-   do i = 1,rank
-     ind = key(i)
-     n(ind) = n(ind) + 1
-   enddo
-end function
+!function key2n(key) result(n)
+!   integer, intent(in) :: key(:)
+!   integer i, n(3), rank, ind
+!   rank = size(key)
+!   n=0
+!   ! get number of x,y,z indices (or rather 1,2,3 indices)
+!   do i = 1,rank
+!     ind = key(i)
+!     n(ind) = n(ind) + 1
+!   enddo
+!end function
 
+function set2pown(set) result(pown)
+    integer, intent(in)  :: set(:) 
+    integer pown(3) , i
+    pown=0
+    do i = 1, size(set)
+        pown(set(i)) = pown(set(i)) + 1
+    enddo
+end
+
+function pown2set(pown) result(set)
+    integer, intent(in)  :: pown(3) 
+    integer set(sum(pown)) , i,j, p0,pu
+    pu=0
+    print*,"pown",pown
+    do i = 1,3
+        p0=pu
+        pu=p0+pown(i)
+        do j=p0+1,pu
+            set(j) = i
+        enddo
+        
+    enddo
+end
 
 
 
@@ -469,20 +492,6 @@ end subroutine
     
 
 
-subroutine test_polyfinder
-integer nn(3), i, n, it
-it = 0
-print*, "key, pos, finder, polyf, it, polyf-it "
-do n = 0, 7
-    nn=[n,0,0]
-    do i = 1, len_(n)
-        if (i>1)call nextpown(nn)
-        it = it+1
-        print'(a,*(I4))'," ["//str(nn)//"]",pos_(n), finder(nn), polyfind(nn), it, polyfind(nn)-it
-    enddo
-enddo
-print*, str(pos_)
-end
 
 function finder(n) result(row)
    ! Given nx,ny,nz, returns corresponding row in tricorn _vector_. 
@@ -518,31 +527,6 @@ function polyfinder(a,b,c) result(row)
    row = row + pos_(a+bc)
    
 end
-
-
-
-pure function sorted(key) 
-   ! given an unsorted key, returns surted key. 
-   integer, intent(in) :: key(:)
-   integer :: sorted(size(key))
-   integer :: saveit, minimum, i, j, rank, minposi
-   sorted = key
-   rank = size(sorted)
-   
-   do i = 1,rank-1
-      saveit = sorted(i)
-      minimum = saveit
-      minposi = i 
-      do j = i+1, rank
-        if(sorted(j).le.minimum)then
-          minimum = sorted(j)
-          minposi = j
-        endif
-      enddo
-      sorted(i)=minimum
-      sorted(minposi)=saveit
-   enddo
-end function
 
 
 
@@ -639,13 +623,39 @@ function expand(tricorn, rank) result(linfull)
     linfull(1) = tricorn(1)
     
     do i = 2,3**rank 
-        key = next(key,0)
-        nn = key2n(key)
+        key = next_lex(key,0)
+        nn = set2pown(key)
         tri_ind = finder(nn)
         linfull(i) = tricorn(tri_ind)
     enddo
     
 end 
+
+
+
+pure function sorted(key) 
+   ! given an unsorted key, returns surted key. 
+   integer, intent(in) :: key(:)
+   integer :: sorted(size(key))
+   integer :: saveit, minimum, i, j, rank, minposi
+   sorted = key
+   rank = size(sorted)
+   
+   do i = 1,rank-1
+      saveit = sorted(i)
+      minimum = saveit
+      minposi = i 
+      do j = i+1, rank
+        if(sorted(j).le.minimum)then
+          minimum = sorted(j)
+          minposi = j
+        endif
+      enddo
+      sorted(i)=minimum
+      sorted(minposi)=saveit
+   enddo
+end function
+
 
 
 pure function sumfacfac(u)

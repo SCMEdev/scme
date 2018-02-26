@@ -71,12 +71,17 @@ function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrer
 end
 
 function get_stone_field(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
-    integer :: nn1,nn2,mm1,mm2
-    real(dp) :: narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!narr(:), dfarr(:)
-    real(dp) :: marr(pos_(mm2+1)), pref
+    integer,intent(in) :: nn1,nn2,mm1,mm2
+    real(dp),intent(in) :: narr(:), dfarr(:)!narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!
+    real(dp) :: marr(pos_(mm2+1))
+    real(dp) :: pref
     integer nn, mm
     integer n1,n2,m1,m2,f1,f2
-    integer scaling !I am not sure why the scaling factor of 1/(2n-1)!! is needed for the potential to comply with scme. Maybe because we define the moments in some way or because 
+    
+    if(pos_(nn2+1)>size(narr))stop"get_stone_field: MOMENT array rank smaller than required multipole-order"
+    if(pos_(nn2+mm2+1)>size(dfarr))stop"get_stone_field: gradient-array rank smaller than required interaction-order"
+    
+    !integer scaling !I am not sure why the scaling factor of 1/(2n-1)!! is needed for the potential to comply with scme. Maybe because we define the moments in some way or because 
     
     marr = 0
     do nn = nn1, nn2
@@ -98,16 +103,23 @@ function get_stone_field(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didf
     
 end
 
-subroutine system_stone_field(ni,nx,ki,kx,nM,rCM,qn,fk)
-    integer, intent(in) :: ni,nx,ki,kx,nM
-    real(dp), intent(in) :: rCM(3,nM), qn(pos_(nx+1),nM)
-    real(dp), intent(out) :: fk(pos_(kx+1),nM)
+!subroutine system_stone_field(na,nb,nx,ka,kb,kx,nM,rCM,qn,fk)
+    !integer, intent(in) :: na,nb,nx,ka,kb,kx,nM
+    !real(dp), intent(in) :: rCM(3,nM), qn(pos_(nx+1),nM)
+    !real(dp), intent(out) :: fk(pos_(kx+1),nM)
+subroutine system_stone_field(na,nb,ka,kb,rCM,qn,fk)
+    integer, intent(in) :: na,nb,ka,kb
+    real(dp), intent(in) :: rCM(:,:), qn(:,:)
+    real(dp), intent(out) :: fk(:,:)
     !internal:
-    integer m1,m2, nkx
-    real(dp) :: rr(3),r2, sss(nx+kx+1)
-    real(dp),dimension(pos_(nx+kx+1)) :: rrr, df
+    integer m1,m2, nkb, k2!k1
+    real(dp) :: rr(3),r2, sss(nb+kb+1)
+    real(dp),dimension(pos_(nb+kb+1)) :: rrr, df
+    integer nM
     
-    nkx=nx+kx
+    nM=size(qn,2)
+    nkb=nb+kb
+    fk=0
     
     do m1 = 1,nM
         second:do m2 = 1,nM
@@ -119,13 +131,16 @@ subroutine system_stone_field(ni,nx,ki,kx,nM,rCM,qn,fk)
             
             
             
-            call vector_powers(nkx,rr,rrr)!(k,r,rr) 
+            call vector_powers(nkb,rr,rrr)!(k,r,rr) 
             !call dfdu_erf(1.6_dp,r2,nkx,sss)!(a,u,nmax,ders) 
-            call dfdu(r2,nkx,sss) 
-            call lin_polydf(nkx,rrr,sss,df)!(nmax,rrr,sss,df)
+            call dfdu(r2,nkb,sss) 
+            call lin_polydf(nkb,rrr,sss,df)!(nmax,rrr,sss,df)
             
+            !k1=1
+            !k1=pos_(0)+1
+            k2=pos_(kb+1)
             
-            fk(:,m1) = fk(:,m1) + get_stone_field(qn(:,m2),df,ni,nx,ki,kx)
+            fk(:k2,m1) = fk(:k2,m1) + get_stone_field(qn(:,m2),df,na,nb,ka,kb)
             
             
             
