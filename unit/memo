@@ -1,1 +1,0 @@
-when running ./2run.x we get a lot of zeros in the reduced filed. but get_stone_field and system_stone_field both seem fine. Figure it out!

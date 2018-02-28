@@ -10,6 +10,7 @@ use detrace_apple, bad=>main
 use polariz_parameters
 
 use calc_derivs, only:calcDv
+use calc_higher_order, only:octu_hexaField
 
 
 implicit none
@@ -83,6 +84,10 @@ subroutine suit
 end subroutine
     
 
+!subroutine test_system_polarize
+    
+    
+
 subroutine test_next_lex_and_can
     !this routine tests the routines that produces the next full or compressed tensor index set, not the powers. 
     integer set1(4),set2(4), i,n, pown1(3),pown2(3)
@@ -141,13 +146,17 @@ subroutine test_printoa
 end
 
 subroutine test_polarize
-    real(dp) :: q1c(3),q2c(6), q3c(10), q4c(15)
-    real(dp) :: f1c(3),f2c(6), f3c(10), f4c(15)
-    real(dp) :: p11c(3,3),p12c(3,6), p22c(6,6),pp2(10,10), dq(10) 
+    integer, parameter :: nm=3
+    real(dp) :: q1c(3,nm),q2c(6,nm), q3c(10,nm), q4c(15,nm)
+    real(dp) :: f1c(3,nm),f2c(10,nm)!, f3c(10,nm), f4c(15,nm)
+    real(dp) :: p11c(3,3,nm),p12c(3,6,nm), p22c(6,6,nm),pp2(10,10,nm), dq(10,nm) , dqs(10,nm)
     
-    real(dp) :: q1f(3,1),q2f(3,3,1),dq1f(3,1),dq2f(3,3,1), q3f(3,3,3,1), q4f(3,3,3,3,1)
-    real(dp) :: f1f(3,1),f2f(3,3,1), f3f(3,3,3,1), f4f(3,3,3,3,1)
-    real(dp) :: p11f(3,3,1),p12f(3,3,3,1), p22f(3,3,3,3,1),p111f(3,3,3,1)
+    real(dp) :: q1f(3,nm),q2f(3,3,nm),dq1f(3,nm),dq2f(3,3,nm), q3f(3,3,3,nm), q4f(3,3,3,3,nm)
+    real(dp) :: f1f(3,nm),f2f(3,3,nm)!, f3f(3,3,3,nm), f4f(3,3,3,3,nm)
+    real(dp) :: p11f(3,3,nm),p12f(3,3,3,nm), p22f(3,3,3,3,nm),p111f(3,3,3,nm)
+    integer m
+    real(dp) f12(10,nm)
+    !real(dp), dimension(pos_(4+1),2) qn_perm, qn_ind,qn_del,qn_tot, fn
     
     
     
@@ -157,44 +166,49 @@ subroutine test_polarize
     
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,43,4,3,5,23,345,34000])
     
+    !compressed random fileds
     call random_number(f1c)
-    call random_number(f2c)
-    call random_number(f3c)
-    call random_number(f4c)
+    call random_number(f2c(:6,:))
+    !call random_number(f3c)
+    !call random_number(f4c)
     
     
-    
+    !full non-symmetrized polarizability
     call random_number(p11f)
     call random_number(p12f)
     call random_number(p22f)
     
-    call symmetrize_p(p11f, p12f,p22f)
+    do m = 1,nm
+        !create full random fields
+        f12(:,m) = [0d0,f1c(:,m),f2c(:6,m)]
+        
+        f1f(:,m)=f1c(:,m)
+        f2f(:,:,m)=reshape(expand(f2c(:6,m),2),[3,3])
+        !f3f(:,:,:,m)=reshape(expand(f3c(:,m),3),[3,3,3])
+        !f4f(:,:,:,:,m)=reshape(expand(f4c(:,m),4),[3,3,3,3])
+        
+        ! Create full polarizabilities
+        call symmetrize_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m))
+        
+        
+        call polycompress_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m),pp2(:,:,m))
+        
+        
+        ! Print to see
+        !print*, "f2f:";call printo(f2f(:,:,m) )
+        !print*, "f3f:";call printo(f3f(:,:,:,m) )
+        !print*, "f4f:";call printo(f4f(:,:,:,:,m) )
+        !
+        !
+        !print*, "p11f:";call printo(p11f(:,:,m) )
+        !print*, "p12f:";call printo(p12f(:,:,:,m) )
+        !print*, "p22f:";call printo(p22f(:,:,:,:,m) )
+        
+        
+        call printa(pp2(:,:,m),t="Polarizability matrix")
+    enddo
     
-    
-    
-    f1f(:,1)=f1c
-    f2f=reshape(expand(f2c,2),shape(f2f))
-    f3f=reshape(expand(f3c,3),shape(f3f))
-    f4f=reshape(expand(f4c,4),shape(f4f))
-    
-    
-    
-    call polycompress_p(p11f,p12f,p22f,pp2)
-    
-    
-    
-    print*, "f2f:";call printo(f2f(:,:,1) )
-    print*, "f3f:";call printo(f3f(:,:,:,1) )
-    print*, "f4f:";call printo(f4f(:,:,:,:,1) )
-    
-    
-    print*, "p11f:";call printo(p11f(:,:,1) )
-    print*, "p12f:";call printo(p12f(:,:,:,1) )
-    print*, "p22f:";call printo(p22f(:,:,:,:,1) )
-    
-    
-    call printa(pp2,t="pp2")
-    
+    !make hyperpolarizability and permanent poles zero
     p111f=0
     q1f=0
     q2f=0
@@ -202,20 +216,32 @@ subroutine test_polarize
     q4f=0
     
     
-    call induce_dipole(dq1f, q1f, f1f, f2f, p11f, p12f, p111f, 1, converged)
-    call induce_quadrupole(dq2f, q2f, f1f, f2f, p12f, p22f, 1, converged)
+    call induce_dipole(dq1f, q1f, f1f, f2f, p11f, p12f, p111f, nm, converged)
+    call induce_quadrupole(dq2f, q2f, f1f, f2f, p12f, p22f, nm, converged)
     
-    print*, "q1f:"; call printo( q1f(:,1) )
-    print*, "dq1f:";call printo(dq1f(:,1) )
-    
-    print*, "q2f:"; call printo( q2f(:,:,1) )
-    print*, "dq2f:";call printo(dq2f(:,:,1) )
+    dqs=0
+    call system_polarize_stone(pp2,f12,dqs)
     
     
-    call polarize_stone(pp2,[0d0,f1c,f2c],dq)
+    do m = 1,nm
+        
+        !print*, "q1f:"; call printo( q1f(:,m) )
+        !print*, "dq1f:";call printo(dq1f(:,m) )
+        !
+        !print*, "q2f:"; call printo( q2f(:,:,m) )
+        !print*, "dq2f:";call printo(dq2f(:,:,m) )
+        
+        dq=0
+        call polarize_stone(pp2(:,:,m),[0d0,f1c(:,m),f2c(:6,m)],dq(:,m))
+        
+        print*, "mol nr. "//str(m)//":"
+        print*, "scme dq:", [0d0, dq1f(:,m), compress(reshape(dq2f(:,:,m),[3**2]),2) ]
+        print*, "ston dq:", dq(:,m)
+        print*, "syss dq:", dqs(:,m)
+        
+    enddo
     
-    print*, [0d0, dq1f(:,1), compress(reshape(dq2f,[3**2]),2) ]
-    print*, (dq)
+    
     
     
     
@@ -265,9 +291,9 @@ subroutine test_stone_field
     call printa(q3c,t="q3c")
     call printa(q4c,t="q4c")
         
-    print*, "q2f:";call printo(q2f(:,:,1)     )
-    print*, "q3f:";call printo(q3f(:,:,:,1)   )
-    print*, "q4f:";call printo(q4f(:,:,:,:,1) )
+    !print*, "q2f:";call printo(q2f(:,:,1)     )
+    !print*, "q3f:";call printo(q3f(:,:,:,1)   )
+    !print*, "q4f:";call printo(q4f(:,:,:,:,1) )
     
     
     r2=sum(rr**2)
@@ -280,31 +306,38 @@ subroutine test_stone_field
     q1cc=0;q2cc=0;q3cc=0;q4cc=0;
     
     print*, "full"
-    ff4c = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     print*
     print*, "q1=0"
-    ff4c = get_stone_field([0d0,q1cc,q2c,q3c,q4c],df,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1cc,q2c,q3c,q4c],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
-    ff4c = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,2,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,2,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     print*
     print*, "q1,q2=0"
-    ff4c = get_stone_field([0d0,q1cc,q2cc,q3c,q4c],df,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1cc,q2cc,q3c,q4c],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
-    ff4c = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,3,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,3,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     print*
     print*, "q3,q4=0"
-    ff4c = get_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
-    ff4c = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,1,2,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,2,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     
@@ -316,11 +349,11 @@ subroutine test_stone_field
     p2=pos_(k2+1)
     
     ff4c=0
-    ff4c(p1:p2) = get_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,1,nx,1,2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call add_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,ff4c,1,nx,1,2)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     ff4c=0
-    ff4c(p1:p2) = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,1,2,1,2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,2,1,2)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     
@@ -331,7 +364,7 @@ subroutine test_stone_field
     p2=pos_(k2+1)
     
     ff4c=0
-    ff4c(p1:p2) = get_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,1,nx,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call add_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,ff4c,1,nx,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
     call printa(ff4c)
     
     print*, "q3,q4=0, f1,f2,f3"
@@ -341,8 +374,8 @@ subroutine test_stone_field
     p2=pos_(k2+1)
     
     ff4c=0
-    ff4b(p1:p2,1) = get_stone_field([0d0,q1c,q2c,q3c,q4c],df,1,2,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
-    call printa(ff4b(:,1))
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,2,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
     
     
     
@@ -350,6 +383,7 @@ subroutine test_stone_field
     !call calcDv(rCM, q1f, q2f, q3f, q4f, 1, 1, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
     
     
+   print*, 'ABOVE: test stone field -----------------------------------------------'
 end
 
 
@@ -358,12 +392,14 @@ subroutine test_old_field
     real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
     real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
     real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
+    
+    real(dp) eT(3,nm), dEdr(3,3,nm), uH
     integer NC
     logical*1 iSlab
     logical FULL
     
     integer,parameter :: nx=4,kx=5
-    real(dp) quad(6), octa(10), hexa(15)
+    real(dp) dipo(3), quad(6), octa(10), hexa(15)
     real(dp) qn(pos_(nx+1),nm),fk(pos_(kx+1),nm)
     
     
@@ -371,7 +407,8 @@ subroutine test_old_field
     rMax = 100.1d0
     rMax2 = rMax**2
     rCM(:,1) = [0d0,0d0,0d0]
-    rCM(:,2) = [3.4231, 2.74389, 1.54739]
+    !rCM(:,2) = [3.4231, 2.74389, 1.54739]
+    rCM(:,2) = [1.4231, 1.24389, 1.54739]
     nc = 1
     a=40d0
     a2=a**2
@@ -386,44 +423,58 @@ subroutine test_old_field
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
     
-    !call random_number(quad)
-    !print'(a,*(g10.3))', 'quad:',quad
-    !qpole(:,:,1) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
-
-    !call random_number(octa)
-    !opole(:,:,:,1) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
+    dipo = [2.345d0, -0.453245d0,0.6564256d0]
     
-    !call random_number(hexa)
-    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
+    dpole(:,1) = dipo
+    
+    call random_number(quad)
+    quad=detracer(quad,2)
+    qpole(:,:,1) = reshape(expand(quad,2),shape=[3,3])
+
+    call random_number(octa)
+    octa=detracer(octa,3)
+    opole(:,:,:,1) = reshape(expand(octa,3),shape=[3,3,3])
+    
+    call random_number(hexa)
+    hexa=detracer(hexa,4)
+    hpole(:,:,:,:,1) = reshape(expand(hexa,4),shape=[3,3,3,3])
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    quad=0
-    octa=0
-    hexa=0
     
-    dpole=0
-    qpole=0
-    opole=0
-    hpole=0
-    dpole(:,1) = [2.345d0, -0.453245d0,0.6564256d0]
+    dipo=0;dpole=0
+    quad=0;qpole=0
+    !octa=0;opole=0
+    !hexa=0;hpole=0
+    
+    
     qn(:,2)=0
     qn(:,1)=[0d0,dpole(:,1),quad,octa,hexa]
     
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
     
     print'(a,*(g30.15))','d-1',d1v(:,2)
-    print'(a,*(g30.15))','d-2',opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
-    print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
-    print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
-    print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    print'(a,*(g30.15))','d-2',compress( reshape(      d2v(:,:,2),shape=[3**2]),2)
+    !print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    !print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    !print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    
+    
+    print*,
     
     fk=0
-    call system_stone_field(1,4,1,5,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
-    print'(a,*(g30.15))','fk',fk(:,2)
+    call system_stone_field(1,4,1,3,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
+    !print'(a,*(g30.15))','fk1',fk(:,1)
+    print'(a,*(g30.15))','fk2',fk(2:4,2)
+    print'(a,*(g30.15))','fk2',fk(5:10,2)
     
-    fk=0
-    call system_stone_field(1,4,1,4,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
-    print'(a,*(g30.15))','fk',fk(:,2)
+    print*,
+    
+    
+    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eT, dEdr, rMax2, iSlab,full)
+    print'(a,*(g30.15))','d-1',eT(:,2)
+    print'(a,*(g30.15))','d-2',compress( reshape(      transpose(dedr(:,:,2)),shape=[3**2]),2)
+    
+    
     
 
 

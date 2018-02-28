@@ -14,7 +14,29 @@ contains !///////////////////////////////////////////////
 subroutine main !Called by 'generic_program.f90'
 end subroutine
 
-
+subroutine system_energy_stone(nn1,nn2,qn,fn,me,ee)
+    real(dp), intent(in), dimension(:,:) :: qn, fn
+    real(dp), intent(out) :: me(size(fn,2)), ee
+    integer, intent(in) :: nn1,nn2 !
+    
+    real(dp),parameter :: pref(0:5) = [1.0_dp,1.0_dp, 1.0_dp/3.0_dp, 1.0_dp/15.0_dp, 1.0_dp/105.0_dp,1.0_dp/945.0_dp]
+    integer m, nm, p2, nn, n1,n2
+    !
+    !print*, pref
+    nm=size(fn,2)
+    p2=size(fn,1)
+    !me=0
+    do m = 1,nm
+        me(m)=0
+        do nn=nn1,nn2
+            n1=pos_(nn)+1
+            n2=pos_(nn+1)
+            me(m) = me(m) + pref(nn)*sum (fn(n1:n2,m)*qn(n1:n2,m)*gg_(n1:n2) )
+        enddo
+        !print*, me(m)
+    enddo
+    ee=sum(me)/2_dp
+end
     
 
 subroutine polarize_stone(alp,phi,dq)
@@ -42,6 +64,23 @@ subroutine polarize_stone(alp,phi,dq)
             
 end 
 
+subroutine system_polarize_stone(psys,f12,dq)
+    integer, parameter :: px=2,p2=pos_(px+1)
+    real(dp), intent(in) :: psys(:,:,:), f12(:,:)
+    real(dp), intent(out) :: dq(:,:)
+    integer nm, m1
+    real(dp) rr(3),r2
+    
+    nm = size(f12,2)
+    if( ( nm.ne.size(dq,2) ).or.( nm.ne.size(psys,3) ) )stop"system_polarize_stone: unequal number of particles inarrays"
+    
+    dq=0
+    do m1=1,nm
+        
+        call polarize_stone( psys(:,:,m1), f12(:,m1), dq(:,m1) )
+    enddo
+end
+        
 
 function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
     integer :: nn1,nn2,mm1,mm2
@@ -70,55 +109,60 @@ function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrer
     
 end
 
-function get_stone_field(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
-    integer,intent(in) :: nn1,nn2,mm1,mm2
-    real(dp),intent(in) :: narr(:), dfarr(:)!narr(pos_(nn2+1)), dfarr(pos_(nn2+mm2+1))!
-    real(dp) :: marr(pos_(mm2+1))
+
+subroutine add_stone_field(narr,dfarr,karr,nn1,nn2,kk1,kk2) !m is rank didfarrerence
+    integer,intent(in) :: nn1,nn2,kk1,kk2
+    real(dp),intent(in) :: narr(:), dfarr(:)!narr(pos_(nn2+1)), dfarr(pos_(nn2+kk2+1))!
+    real(dp),intent(inout) :: karr(:)
     real(dp) :: pref
-    integer nn, mm
-    integer n1,n2,m1,m2,f1,f2
+    integer nn, kk
+    integer n1,n2,k1,k2,f1,f2
     
-    if(pos_(nn2+1)>size(narr))stop"get_stone_field: MOMENT array rank smaller than required multipole-order"
-    if(pos_(nn2+mm2+1)>size(dfarr))stop"get_stone_field: gradient-array rank smaller than required interaction-order"
+    if(pos_(nn2+1)>size(narr,1))stop"get_stone_field: SOURCE array rank smaller than required MULTIPOLE-order"
+    if(pos_(kk2+1)>size(karr,1))stop"get_stone_field: FIELD array rank smaller than required GRADIENT-order"
+    if(pos_(nn2+kk2+1)>size(dfarr))stop"get_stone_field: GRADIENT-array rank smaller than required INTERACTION-order"
     
-    !integer scaling !I am not sure why the scaling factor of 1/(2n-1)!! is needed for the potential to comply with scme. Maybe because we define the moments in some way or because 
     
-    marr = 0
+    !!karr = 0 nope, now were adding
     do nn = nn1, nn2
         n1 = pos_(nn)+1
         n2 = pos_(nn+1)
         pref=(-1)**(nn)/dble(intff(2*nn-1,1))
-        do mm = mm1, mm2
-            m1 = pos_(mm)+1
-            m2 = pos_(mm+1)
+        do kk = kk1, kk2
+            k1 = pos_(kk)+1
+            k2 = pos_(kk+1)
             
-            f1 = pos_(nn+mm)+1
-            f2 = pos_(nn+mm+1)
+            f1 = pos_(nn+kk)+1
+            f2 = pos_(nn+kk+1)
             
-            marr(m1:m2) = marr(m1:m2) + pref*inner( nn+mm, nn, dfarr(f1:f2), narr(n1:n2) )
+            karr(k1:k2) = karr(k1:k2) + pref*inner( nn+kk, nn, dfarr(f1:f2), narr(n1:n2) )
             
-            !print*, mm,nn
+            !print*, kk,nn
         enddo
     enddo
     
 end
 
-!subroutine system_stone_field(na,nb,nx,ka,kb,kx,nM,rCM,qn,fk)
-    !integer, intent(in) :: na,nb,nx,ka,kb,kx,nM
+
+!subroutine system_stone_field(nn1,nn2,nx,kk1,kk2,kx,nM,rCM,qn,fk)
+    !integer, intent(in) :: nn1,nn2,nx,kk1,kk2,kx,nM
     !real(dp), intent(in) :: rCM(3,nM), qn(pos_(nx+1),nM)
     !real(dp), intent(out) :: fk(pos_(kx+1),nM)
-subroutine system_stone_field(na,nb,ka,kb,rCM,qn,fk)
-    integer, intent(in) :: na,nb,ka,kb
+subroutine system_stone_field(nn1,nn2,kk1,kk2,rCM,qn,fk)
+    integer, intent(in) :: nn1,nn2,kk1,kk2
     real(dp), intent(in) :: rCM(:,:), qn(:,:)
     real(dp), intent(out) :: fk(:,:)
-    !internal:
-    integer m1,m2, nkb, k2!k1
-    real(dp) :: rr(3),r2, sss(nb+kb+1)
-    real(dp),dimension(pos_(nb+kb+1)) :: rrr, df
+    !internn1l:
+    integer m1,m2, nk2, k2!k1
+    real(dp) :: rr(3),r2, sss(nn2+kk2+1)
+    real(dp),dimension(pos_(nn2+kk2+1)) :: rrr, df
     integer nM
     
     nM=size(qn,2)
-    nkb=nb+kb
+    if(nM/=size(fk,2))stop"system_stone_field: Inconsistent number of sites"
+    
+    
+    nk2=nn2+kk2
     fk=0
     
     do m1 = 1,nM
@@ -131,16 +175,17 @@ subroutine system_stone_field(na,nb,ka,kb,rCM,qn,fk)
             
             
             
-            call vector_powers(nkb,rr,rrr)!(k,r,rr) 
+            call vector_powers(nk2,rr,rrr)!(k,r,rr) 
             !call dfdu_erf(1.6_dp,r2,nkx,sss)!(a,u,nmax,ders) 
-            call dfdu(r2,nkb,sss) 
-            call lin_polydf(nkb,rrr,sss,df)!(nmax,rrr,sss,df)
+            call dfdu(r2,nk2,sss) 
+            call lin_polydf(nk2,rrr,sss,df)!(nmax,rrr,sss,df)
             
             !k1=1
             !k1=pos_(0)+1
-            k2=pos_(kb+1)
+            !k2=pos_(kb+1)
             
-            fk(:k2,m1) = fk(:k2,m1) + get_stone_field(qn(:,m2),df,na,nb,ka,kb)
+            !fk(:k2,m1) = fk(:k2,m1) + get_stone_field(qn(:,m2),df,nn1,nn2,kk1,kk2)
+            call add_stone_field(qn(:,m2),df,fk(:,m1),nn1,nn2,kk1,kk2)
             
             
             

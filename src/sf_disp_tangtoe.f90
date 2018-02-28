@@ -267,7 +267,7 @@ contains
        swFunc = 1.0_dp + x3 * (-6.0_dp * x2 + 15.0_dp * x - 10.0_dp)
     end if
 
-    !      swFunc = 1.0_dp
+          swFunc = 1.0_dp
 
     return
 
@@ -340,8 +340,8 @@ contains
        dSdr = 30.0_dp * x2 * (- x2 + 2.0_dp * x - 1.0_dp) * dr
     end if
 
-    !      swFunc = 1.d0
-    !      dSdr = 0.d0
+          swFunc = 1.d0
+          dSdr = 0.d0
 
     return
 

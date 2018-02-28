@@ -617,7 +617,7 @@ function expand(tricorn, rank) result(linfull)
     real(dp) tricorn( : ) , linfull(3**rank)
     integer i, tri_ind, nn(3), trilen
     trilen = (rank+1)*(rank+2)/2
-    if(size(tricorn) /= trilen)stop"length(tricorn tensor) /= (rank+1)*(rank+2)/2"
+    if(size(tricorn) /= trilen)stop"expand(): length(tricorn tensor) /= (rank+1)*(rank+2)/2"
     key = 1
     linfull = 0
     linfull(1) = tricorn(1)

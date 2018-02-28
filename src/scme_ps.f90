@@ -67,7 +67,7 @@ module scme
   use opole, only: get_octupoles
   
   use compressed_utils,only: compress, expand
-  use compressed_tensors, only:lin_df, lin_polydf, apple1_df, vector_powers, dfdu_erf, polyinner1, polyinner2, polyinner_matrix, get_stone_field, dfdu, system_stone_field
+  use compressed_tensors, only:lin_df, lin_polydf, apple1_df, vector_powers, dfdu_erf, polyinner1, polyinner2, polyinner_matrix, dfdu, system_stone_field, system_polarize_stone, system_energy_stone
   use compressed_arrays
   use compressed_tests, only:polycompress_p
   !use detrace_apple, only: detrace_a, ff
@@ -90,6 +90,7 @@ contains !//////////////////////////////////////////////////////////////
                             ,USE_ALL_REP &
                             ,USE_VAR_QUAD &
                             ,USE_VAR_OCT &
+                            ,USE_COMPRESSED &
                             ) 
 
     implicit none
@@ -194,18 +195,19 @@ contains !//////////////////////////////////////////////////////////////
     
     real(dp) :: cec(xyz,hho,n_atoms/3),cer2(hho,n_atoms/3), rCE(xyz,n_atoms/3)
     
-    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT
-    logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD, VAR_OCT
+    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT, USE_COMPRESSED
+    logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD, VAR_OCT, COMPRESSED
     
     
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                                                                                       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !Compressed tensors
     integer,parameter :: nx=4,kx=4, px=2, nkx=nx+kx, kpolx=2, pkx=pos_(kx+1), pnx=pos_(nx+1)
+    integer,parameter :: p(0:5)=pos_(0:5)+1, e(0:5)=(pos_(0+1:5+1))
     integer nn, p1,p2
     
-    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_scme!qn_perm, qn_tot, 
+    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_scme, q12, q12_induced, q12scme, qn_perm, qn_tot
     
-    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi_scme, phi_comp!phi_perm, phi_tot, 
+    real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi_scme, phi_comp,phi_perm, phi_tot
     real(dp), dimension(pos_(px+1),pos_(px+1),n_atoms/3) :: polz
     
     !real(dp), dimension(pos_(nkx+2)) :: rrr, df
@@ -215,7 +217,9 @@ contains !//////////////////////////////////////////////////////////////
     
     !real(dp) tol, u_mult1,u_mult2, u_perm1,u_perm2
     !real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: dqn,qn_pol
-    real(dp), dimension(pos_(kpolx+1),n_atoms/3) :: f34 , f34_scme !phi_pol, phi_pol2, dphi
+    real(dp) :: e_mol(n_atoms/3), e_sys
+    
+    real(dp), dimension(pos_(kx+1),n_atoms/3) :: f12_34, f12_12, f12 , f12scme,f12_12scme, f12_34scme !phi_pol, phi_pol2, dphi
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -228,15 +232,18 @@ contains !//////////////////////////////////////////////////////////////
     ALL_REP=.false.
     VAR_QUAD=.false.
     VAR_OCT=.false.
+    COMPRESSED=.false.
     
-    
+    print*, "compressed",compressed 
+    print*, "use_compressed",use_compressed 
     if(present(USE_PS_PES))     PES          = USE_PS_PES
     if(present(USE_FULL_RANK))  FULL         = USE_FULL_RANK
     if(present(USE_OO_REP))     OO_REP       = USE_OO_REP
     if(present(USE_ALL_REP))    ALL_REP      = USE_ALL_REP
     if(present(USE_VAR_QUAD))   VAR_QUAD     = USE_VAR_QUAD
     if(present(USE_VAR_OCT))    VAR_OCT      = USE_VAR_OCT
-    
+    IF(present(USE_COMPRESSED)) COMPRESSED   = USE_COMPRESSED
+    print*, "compressed",compressed 
     
     
     
@@ -305,21 +312,22 @@ tprint(x,'x',s)
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     
     call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
+    call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     !call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
     !opole_orig = opole
     
-    !/ Partridge-Schwenke Dipoles (PSD)
-    !do m = 1,nM
-    !   dms = 0
-    !   call vibdms(xyz_hho(:,:,m),dms) 
-    !   dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
-    !end do
+    !!/ Partridge-Schwenke Dipoles (PSD)
+    do m = 1,nM
+       dms = 0
+       call vibdms(xyz_hho(:,:,m),dms) 
+       dpole0(:,m) = dms(:)! *kk1*kk2! *eA_Deb!  (eA comes out)
+    end do
     
     
     
     !if(VAR_QUAD) 
-    !if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
-    !if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
+    if(VAR_QUAD)call get_quadrupoles(cec,cer2,rCE,qpole0,nM) !overwriting quadrupoles
+    if(VAR_OCT)call get_octupoles(cec,cer2,opole,nM) !overwriting octupoles
     
     
     !/ Save first reference value of dipole and quadrupole before the "induction loop"
@@ -330,8 +338,14 @@ tprint(x,'x',s)
     
     qn_scme=0
     call convert_xpoles_to_qn_scme !/ NEW qn_scme
+    qn_perm=qn_scme
     
     
+    
+    !call printa(qn_scme,t="qn_scme")
+    !call printo(dpole(:,1))
+    !print*, "qpole:"
+    !call printo(qpole(:,:,1))
     
     
     
@@ -339,78 +353,129 @@ tprint(x,'x',s)
     
     
     !/ Rotate polarizability tensors into local coordinate systems
-    call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
     
     
     
     !print*, "rCM",rCM, "opole", opole, "hpole",hpole, "nM",nM, "NC",NC, "a",a, "a2",a2, "uH",uH, "eH",eH, "dEhdr",dEhdr, "rMax2",rMax2, "iSlab",iSlab,"FULL",FULL
     
     
-    
     !/ Compute the electric field (F) and gradient (dF) for the permanent octupole and hexadecapole
     ! why dont we induce those, we have the polarizabilities!?
+    
+    !eh=0!-d1v
+    !dehdr=0!-d2v
     call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
     !! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
     !call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
     
     !stop
+    f12_34scme=0
     do m=1,nM
-        f34_scme(1,m)=0
-        f34_scme(2:4,m)=eh(:,m)
-        f34_scme(5:10,m)=compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
+        !f34_scme(1,m)=0
+        f12_34scme(2:4,m)=eh(:,m)
+        f12_34scme(5:10,m)=compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
     enddo
     
-    !call printa(eH)
-    !call printer(dEhdr,"m",1)
+    
+    
+    f12_34=0
+    
+    call system_stone_field(3,4,1,2,rCM,qn_scme,f12_34)  
+    f12_34=-f12_34
+    
+    !call printa(f12_34,t="f34")
+    !call printa(f12_34scme,t="f34_scme")
+    !call printa(f12_34(2:10,:)/f12_34scme(2:10,:),t="f34/f34_scme")
+    
+    q12=0
+    q12(1:10,:)=qn_scme(1:10,:)
     !stop
-    do m =1,nM
-      !print*, compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
-      print*, eH(:,m)
-    enddo
-    !stop
-    
-    
-    f34=0
-    
-    call system_stone_field(3,4,1,2,rCM,qn_scme,f34)
-    
-    call printa(f34,t="f34")
-    call printa(f34_scme,t="f34_scme")
-    call printa(f34/f34_scme,t="f34/f34_scme")
-    
-    stop
     !/ Induce dipole and quadrupole to self consistency
-    !converged = .false.
-    !iteration = 0
-    !do while (.not. converged)
-    !iteration = iteration + 1
-    !
-    !   call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-    !   ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
-    !   
-    !   
-    !   
-    !   
-    !   !call get_stone_field(
-    !   !call addFields(eH, eD, eT, nM)
-    !   eT = eH + eD !add fields
-    !   call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
-    !   
-    !
-    !   ! Induce dipoles and quadrupoles.
-    !   converged = .true.
-    !
-    !   call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-    !   call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
-    !end do
+    converged = .false.
+    iteration = 0
+    do while (.not. converged)
+    iteration = iteration + 1
+        
+        call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+        ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
+        
+        f12_12 = 0
+        call system_stone_field(1,2,1,2,rCM,q12,f12_12)
+        f12_12=-f12_12
+        
+        f12 = f12_34 + f12_12
+        
+        !call printa(f12(:,:),t="f12")
+        
+        
+        !stop
+        !call addFields(eH, eD, eT, nM)
+        eT = eH + eD !add fields
+        call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+        
+        f12scme=0
+        do m=1,nM
+            !f34_scme(1,m)=0
+            f12scme(2:4,m)=eT(:,m)
+            f12scme(5:10,m)=compress(reshape(transpose(detdr(:,:,m)),[3**2]),2)
+        enddo
+        
+        !call printa(f12scme(:,:),t="f12scme")
+        !call printa(f12(2:10,:)/f12scme(2:10,:),t="f12/f12scme")
+        
+        !print*, "iteration", iteration
+        !if(iteration==2)stop
+        
+        
+        ! Induce dipoles and quadrupoles.
+        converged = .true.
+        
+        
+        q12_induced=0
+        call system_polarize_stone(polz,f12,q12_induced)
+        q12(:10,:)=qn_scme(:10,:)+q12_induced(:10,:)
+        
+        !call printa(q12_induced,t="q12_induced")
+        
+        
+        
+        call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+        call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+        
+        q12scme=0
+        do m =1,nm
+            q12scme(2:4,m)=dpole(:,m)
+            q12scme(5:10,m)=compress(reshape(qpole(:,:,m),[3**2]),2)
+        enddo
+        
+        !call printa(q12,t="q12")
+        !call printa(q12scme,t="q12scme")
+        !call printa(q12(2:10,:)/q12scme(2:10,:),t="q12/q12scme")
+        
+        
+        
+    end do
+    
+    !total moments
+    !print*, p(0),p(1), p(2),p(3)
+    !print*, e(0),e(1), e(2),e(3)
+    
+    qn_tot(p(3):e(4),:)=qn_scme(p(3):e(4),:)
+    qn_tot(:10,:) = q12(:10,:)
+    
+    !call printa(qn_tot,t="qn_tot")
+    !call printa(qn_tot(p(1):e(2),:)/q12(p(1):e(2),:),t="qn_tot/q12")
+    !call printa(qn_tot(p(3):e(4),:)/qn_perm(p(3):e(4),:),t="qn_tot/q12")
     
     
+    !stop
     
     !dip_ind=dpole
     
     !/ Compute filed gradients of the electric fields, to 5th order
     !call system_stone_field(1,nx,1,kx,nM,rCM,qn_perm,phi_perm)
-    call system_stone_field(1,nx,1,kx,rCM,qn_scme,phi_comp)
+    call system_stone_field(1,nx,1,kx,rCM,qn_perm,phi_perm)
+    call system_stone_field(1,nx,1,kx,rCM,qn_tot,phi_tot)
     
     
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
@@ -418,17 +483,16 @@ tprint(x,'x',s)
     phi_scme=0
     call convert_d1234v_to_phi_scme
     
-    print*, "phi COMPRESSED:"
-    call printa(phi_comp) 
-    
-    
-    print*, "phi SCME:"
-    call printa(phi_scme)
+    !print*, "phi COMPRESSED:"
+    !call printa(phi_tot) 
+    !
+    !
+    !print*, "phi SCME:"
+    !call printa(phi_scme)
     
     !call printa(phi_perm,2,5,0)
-    call printa(phi_scme(2:,:)/phi_comp(2:,:),t="diff")
+    !call printa(phi_scme(2:,:)/phi_tot(2:,:),t="system field accuracy")
     
-    stop
     
     
     
@@ -526,6 +590,15 @@ tprint(tau, 'tauu',s)
     !print*, 'u_perm1    ', u_perm1* coulomb_k
     !print*, 'u_perm2    ', u_perm2* coulomb_k
     
+    !print*, "qn-perm, phi-tot:"
+    !call printa(qn_perm)
+    !call printa(phi_tot)
+    
+    call system_energy_stone(1,4,qn_perm,phi_tot,e_mol,e_sys)                                                                          !!!!!!!!!!!!!!!!!!!!!!
+    !call system_energy_stone(1,4,qn_tot,phi_perm,e_mol,e_sys)                                                                          !!!!!!!!!!!!!!!!!!!!!!
+    
+    e_mol = e_mol*coulomb_k
+    e_sys = e_sys*coulomb_k
     
     
     call multipole_energy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
@@ -533,8 +606,17 @@ tprint(tau, 'tauu',s)
     
     
     
-    print*, 'u_multipole', u_multipole
+    print*, 'scme  energy', u_multipole
     
+    
+    print*, 'compr energy', e_sys
+    
+    print*, "compressed",compressed 
+    if(compressed)u_multipole=e_sys
+    
+    print*, 'outpu energy', u_multipole
+    
+    stop
     
     
     !// Dispersion /////////////////////////////////////////////////////
@@ -736,7 +818,7 @@ tprint(u_tot,'u_tot',s)
             phi_scme(p1:p2,m) = compress(reshape(d4v(:,:,:,:,m),[3**nn]),nn)
             
             !polycompress_p(p11f,p12f,p22f,alp)
-            call polycompress_p(dd(:,:,m),dq(:,:,:,m),qq(:,:,:,:,m),polz(:,:,m))
+            !call polycompress_p(dd(:,:,m),dq(:,:,:,m),qq(:,:,:,:,m),polz(:,:,m))
             
         enddo
     end
