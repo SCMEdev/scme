@@ -36,14 +36,8 @@ include Makefile.rules
 
 ## object file list >>>>>>>
 SCME_OBJECTS = \
-	scme_ps.o calc_derivs.o calc_higher_order.o \
-	data_types.o \
-	multipole_parameters.o polariz_parameters.o \
-	calcEnergy_mod.o calc_lower_order.o \
-	inducePoles.o \
-	molecProperties.o \
-	ps_pes.o ps_dms.o printer_mod.o sf_disp_tangtoe.o force_torqueCM.o \
-	localAxes_mod.o qpole.o opole.o \
+	$(notdir src/calc_derivs.o src/calc_energy.o src/calc_higher_order.o src/calc_lower_order.o src/data_types.o src/force_torqueCM.o src/inducePoles.o src/localAxes_mod.o src/molecProperties.o src/multipole_parameters.o src/opole.o src/polariz_parameters.o src/poldip.o src/printer_mod.o src/ps_dms.o src/ps_pes.o src/qpole.o src/scme_ps.o src/sf_disp_tangtoe.o devdir/compressed_arrays.o devdir/compressed_foolin.o devdir/compressed_run.o devdir/compressed_tensors.o devdir/compressed_tests.o devdir/compressed_utils.o devdir/detrace_apple.o devdir/detrace_mod.o devdir/opole_dev.o devdir/poldip.o devdir/qpole_dev.o)
+	
 	
 	
 ## <<<<<<<
@@ -57,54 +51,217 @@ else
 endif
 
 ## Dependencies >>>>>>>>>>>>>
-molecProperties.o	\
-calc_derivs.o		\
-calc_lower_order.o	\
-calc_higher_order.o:	\
-sf_disp_tangtoe.o \
+
+### DEPENDENCIES______________________________
 
 
-# scme dep. on most
-scme_ps.o:		\
-calc_derivs.o		\
-data_types.o		\
-polariz_parameters.o	\
-molecProperties.o	\
-calc_lower_order.o	\
-calc_higher_order.o	\
-inducePoles.o		\
-calcEnergy_mod.o	\
+calc_derivs.o:\
+data_types.o\
+sf_disp_tangtoe.o\
+
+
+
+calc_energy.o:\
+data_types.o\
+
+
+
+calc_higher_order.o:\
+data_types.o\
+sf_disp_tangtoe.o\
+
+
+
+calc_lower_order.o:\
+data_types.o\
+sf_disp_tangtoe.o\
+
+
+
+data_types.o:\
+
+
+
+force_torqueCM.o:\
+data_types.o\
+
+
+
+inducePoles.o:\
+data_types.o\
+
+
+
+localAxes_mod.o:\
+data_types.o\
+
+
+
+molecProperties.o:\
+data_types.o\
+sf_disp_tangtoe.o\
+
+
+
+multipole_parameters.o:\
+data_types.o\
+
+
+
+opole.o:\
+printer_mod.o\
+data_types.o\
+
+
+
+polariz_parameters.o:\
+data_types.o\
+
+
+
+poldip.o:\
+printer_mod.o\
+data_types.o\
+qpole.o\
 multipole_parameters.o\
-ps_pes.o \
-ps_dms.o \
-printer_mod.o \
-sf_disp_tangtoe.o \
-force_torqueCM.o \
-localAxes_mod.o \
-qpole.o \
-opole.o \
+localAxes_mod.o\
+opole.o\
+qpole.o\
+polariz_parameters.o\
 
 
-# most dep. on data_types
 
-opole.o \
-qpole.o \
-localAxes_mod.o \
-molecProperties.o	\
-calc_derivs.o		\
-calc_lower_order.o	\
-calc_higher_order.o	\
-printer_mod.o \
-force_torqueCM.o \
-sf_disp_tangtoe.o \
-ps_dms.o	\
-ps_pes.o \
-force_torqueCM.o		\
-inducePoles.o		\
-calcEnergy_mod.o	\
-polariz_parameters.o	\
-multipole_parameters.o: \
-data_types.o		\
+printer_mod.o:\
+
+
+
+ps_dms.o:\
+data_types.o\
+
+
+
+ps_pes.o:\
+data_types.o\
+
+
+
+qpole.o:\
+data_types.o\
+
+
+
+scme_ps.o:\
+data_types.o\
+multipole_parameters.o\
+polariz_parameters.o\
+molecProperties.o\
+calc_lower_order.o\
+calc_higher_order.o\
+calc_derivs.o\
+inducePoles.o\
+calc_energy.o\
+sf_disp_tangtoe.o\
+force_torqueCM.o\
+ps_dms.o\
+ps_pes.o\
+printer_mod.o\
+localAxes_mod.o\
+qpole.o\
+opole.o\
+compressed_utils.o\
+compressed_tensors.o\
+compressed_arrays.o\
+compressed_tests.o\
+
+
+
+sf_disp_tangtoe.o:\
+data_types.o\
+
+
+
+compressed_arrays.o:\
+
+
+
+compressed_foolin.o:\
+printer_mod.o\
+compressed_arrays.o\
+compressed_tensors.o\
+compressed_utils.o\
+
+
+
+compressed_run.o:\
+compressed_tests.o\
+
+
+
+compressed_tensors.o:\
+printer_mod.o\
+compressed_utils.o\
+compressed_arrays.o\
+
+
+
+compressed_tests.o:\
+compressed_arrays.o\
+compressed_tensors.o\
+compressed_utils.o\
+calc_energy.o\
+inducePoles.o\
+detrace_apple.o\
+polariz_parameters.o\
+calc_derivs.o\
+
+
+
+compressed_utils.o:\
+printer_mod.o\
+compressed_arrays.o\
+
+
+
+detrace_apple.o:\
+
+
+
+detrace_mod.o:\
+printer_mod.o\
+data_types.o\
+
+
+
+opole_dev.o:\
+localAxes_mod.o\
+data_types.o\
+printer_mod.o\
+multipole_parameters.o\
+qpole.o\
+opole.o\
+
+
+
+poldip.o:\
+printer_mod.o\
+data_types.o\
+qpole.o\
+multipole_parameters.o\
+localAxes_mod.o\
+opole.o\
+qpole.o\
+polariz_parameters.o\
+
+
+
+qpole_dev.o:\
+printer_mod.o\
+localAxes_mod.o\
+data_types.o\
+multipole_parameters.o\
+
+
+
 
 ## <<<<<<<<<<
 

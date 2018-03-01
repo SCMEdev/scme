@@ -148,9 +148,9 @@ end
     !integer, intent(in) :: nn1,nn2,nx,kk1,kk2,kx,nM
     !real(dp), intent(in) :: rCM(3,nM), qn(pos_(nx+1),nM)
     !real(dp), intent(out) :: fk(pos_(kx+1),nM)
-subroutine system_stone_field(nn1,nn2,kk1,kk2,rCM,qn,fk)
-    integer, intent(in) :: nn1,nn2,kk1,kk2
-    real(dp), intent(in) :: rCM(:,:), qn(:,:)
+subroutine system_stone_field(kern,damping,nn1,nn2,kk1,kk2,rCM,qn,fk)
+    integer, intent(in) :: nn1,nn2,kk1,kk2, kern
+    real(dp), intent(in) :: rCM(:,:), qn(:,:),damping
     real(dp), intent(out) :: fk(:,:)
     !internn1l:
     integer m1,m2, nk2, k2!k1
@@ -159,9 +159,9 @@ subroutine system_stone_field(nn1,nn2,kk1,kk2,rCM,qn,fk)
     integer nM
     
     nM=size(qn,2)
-    if(nM/=size(fk,2))stop"system_stone_field: Inconsistent number of sites"
+    if(nM/=size(fk,2))stop"SCME:system_stone_field(): Inconsistent number of sites"
     
-    
+    if(kern<0 .or.kern>2)stop"SCME:system_stone_field(): Currently valid kernels:  0, 1, 2  =  1/r, erf(r/a)/r, (1-exp(r/a))/r"
     nk2=nn2+kk2
     fk=0
     
@@ -176,8 +176,11 @@ subroutine system_stone_field(nn1,nn2,kk1,kk2,rCM,qn,fk)
             
             
             call vector_powers(nk2,rr,rrr)!(k,r,rr) 
-            !call dfdu_erf(1.6_dp,r2,nkx,sss)!(a,u,nmax,ders) 
-            call dfdu(r2,nk2,sss) 
+            
+            if(kern==0)call dfdu(r2,nk2,sss) 
+            if(kern==1)call dfdu_erf(damping,r2,nk2,sss)!(a,u,nmax,ders) 
+            if(kern==2)call dfdu_exp(damping,r2,nk2,sss)!(a,u,nmax,ders) 
+            !call dfdu(r2,nk2,sss) 
             call lin_polydf(nk2,rrr,sss,df)!(nmax,rrr,sss,df)
             
             !k1=1

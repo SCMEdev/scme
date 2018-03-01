@@ -91,6 +91,8 @@ contains !//////////////////////////////////////////////////////////////
                             ,USE_VAR_QUAD &
                             ,USE_VAR_OCT &
                             ,USE_COMPRESSED &
+                            ,DAMPING_PARAMETER &
+                            ,kernel_choice &
                             ) 
 
     implicit none
@@ -197,7 +199,10 @@ contains !//////////////////////////////////////////////////////////////
     
     logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT, USE_COMPRESSED
     logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD, VAR_OCT, COMPRESSED
-    
+    integer, intent(in), optional :: kernel_choice
+    real(dp), intent(in), optional :: DAMPING_PARAMETER
+    real(dp) DAMPING
+    integer :: kern
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                                                                                       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !Compressed tensors
@@ -233,6 +238,8 @@ contains !//////////////////////////////////////////////////////////////
     VAR_QUAD=.false.
     VAR_OCT=.false.
     COMPRESSED=.false.
+    DAMPING = 1.0_dp
+    kern = 1
     
     print*, "compressed",compressed 
     print*, "use_compressed",use_compressed 
@@ -242,7 +249,10 @@ contains !//////////////////////////////////////////////////////////////
     if(present(USE_ALL_REP))    ALL_REP      = USE_ALL_REP
     if(present(USE_VAR_QUAD))   VAR_QUAD     = USE_VAR_QUAD
     if(present(USE_VAR_OCT))    VAR_OCT      = USE_VAR_OCT
-    IF(present(USE_COMPRESSED)) COMPRESSED   = USE_COMPRESSED
+    if(present(USE_COMPRESSED)) COMPRESSED   = USE_COMPRESSED
+    if(present(DAMPING_PARAMETER))   DAMPING      = DAMPING_PARAMETER
+    if(present(kernel_choice))   kern      = kernel_choice
+    
     print*, "compressed",compressed 
     
     
@@ -380,7 +390,7 @@ tprint(x,'x',s)
     
     f12_34=0
     
-    call system_stone_field(3,4,1,2,rCM,qn_scme,f12_34)  
+    call system_stone_field(kern,damping,3,4,1,2,rCM,qn_scme,f12_34)  
     f12_34=-f12_34
     
     !call printa(f12_34,t="f34")
@@ -400,7 +410,7 @@ tprint(x,'x',s)
         ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
         
         f12_12 = 0
-        call system_stone_field(1,2,1,2,rCM,q12,f12_12)
+        call system_stone_field(kern,damping,1,2,1,2,rCM,q12,f12_12)
         f12_12=-f12_12
         
         f12 = f12_34 + f12_12
@@ -474,8 +484,8 @@ tprint(x,'x',s)
     
     !/ Compute filed gradients of the electric fields, to 5th order
     !call system_stone_field(1,nx,1,kx,nM,rCM,qn_perm,phi_perm)
-    call system_stone_field(1,nx,1,kx,rCM,qn_perm,phi_perm)
-    call system_stone_field(1,nx,1,kx,rCM,qn_tot,phi_tot)
+    call system_stone_field(kern,damping,1,nx,1,kx,rCM,qn_perm,phi_perm)
+    call system_stone_field(kern,damping,1,nx,1,kx,rCM,qn_tot,phi_tot)
     
     
     call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
@@ -622,7 +632,7 @@ tprint(tau, 'tauu',s)
     !// Dispersion /////////////////////////////////////////////////////
     !call new_dispersion(rw, aforces, uDisp, nM, a, a2)
     call oxygen_dispersion(xyz_hho, xa_forces, uDisp, nM, a, a2) !uDisp created here
-    
+    u_tot = u_tot + uDisp
     
     if(PES)then
         !// Partridge-Schwenke PES /////////////////////////////////////////
@@ -636,11 +646,15 @@ tprint(tau, 'tauu',s)
            xa_forces(:,:,m) = xa_forces(:,:,m) - ps_grad
            
         end do
-    endif!(USE_PS_PES)
+        u_tot = u_tot + u_ps
+    endif
     
     !// Output /////////////////////////////////////////////////////////
     u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
     !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
+    
+    print*, "u_ps",u_ps
+    print*, "u_disp",uDisp
     
     print*, "u_tot w/disp+ps",u_tot
     
@@ -659,7 +673,7 @@ tprint(tau, 'tauu',s)
 
 !        a_oo = 8.28581239473008496178_dp !fitted to reduced rank interactions
 !        b_oo = 3.49709147777022710812_dp
-
+    u_rep = 0
     if(OO_REP)then
         
         if(FULL)then

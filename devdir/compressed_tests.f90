@@ -462,7 +462,7 @@ subroutine test_old_field
     print*,
     
     fk=0
-    call system_stone_field(1,4,1,3,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
+    call system_stone_field(0,1d0,1,4,1,3,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
     !print'(a,*(g30.15))','fk1',fk(:,1)
     print'(a,*(g30.15))','fk2',fk(2:4,2)
     print'(a,*(g30.15))','fk2',fk(5:10,2)
