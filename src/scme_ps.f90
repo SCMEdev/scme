@@ -241,8 +241,8 @@ contains !//////////////////////////////////////////////////////////////
     DAMPING = 1.0_dp
     kern = 1
     
-    print*, "compressed",compressed 
-    print*, "use_compressed",use_compressed 
+    !print*, "compressed",compressed 
+    !print*, "use_compressed",use_compressed 
     if(present(USE_PS_PES))     PES          = USE_PS_PES
     if(present(USE_FULL_RANK))  FULL         = USE_FULL_RANK
     if(present(USE_OO_REP))     OO_REP       = USE_OO_REP
@@ -253,7 +253,7 @@ contains !//////////////////////////////////////////////////////////////
     if(present(DAMPING_PARAMETER))   DAMPING      = DAMPING_PARAMETER
     if(present(kernel_choice))   kern      = kernel_choice
     
-    print*, "compressed",compressed 
+    !print*, "compressed",compressed 
     
     
     
@@ -616,15 +616,15 @@ tprint(tau, 'tauu',s)
     
     
     
-    print*, 'scme  energy', u_multipole
-    
-    
-    print*, 'compr energy', e_sys
-    
-    print*, "compressed",compressed 
+    !print*, 'scme  energy', u_multipole
+    !
+    !
+    !print*, 'compr energy', e_sys
+    !
+    !print*, "compressed",compressed 
     if(compressed)u_multipole=e_sys
     
-    print*, 'outpu energy', u_multipole
+    !print*, 'outpu energy', u_multipole
     
     !   stop""
     
@@ -653,10 +653,10 @@ tprint(tau, 'tauu',s)
     u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
     !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
     
-    print*, "u_ps",u_ps
-    print*, "u_disp",uDisp
-    
-    print*, "u_tot w/disp+ps",u_tot
+    !print*, "u_ps",u_ps
+    !print*, "u_disp",uDisp
+    !
+    !print*, "u_tot w/disp+ps",u_tot
     
     
     do m = 1,nM
@@ -780,8 +780,8 @@ tprint(tau, 'tauu',s)
         
         
         
-    print*, "u_rep",u_rep
-    print*, "u_tot",u_tot
+    !print*, "u_rep",u_rep
+    !print*, "u_tot",u_tot
         
         
         

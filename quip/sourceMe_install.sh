@@ -12,7 +12,7 @@ ln -sf $PWD/sourceMe_quipenv.sh $QUIP_ROOT/sourceMe_quipenv.sh
 mkdir -p $QUIP_ROOT/src/ThirdParty/
 ln -sf $PWD/cube_tools.f95 		$QUIP_ROOT/src/ThirdParty/cube_tools.f95
 ln -sf $PWD/Makefile.ThirdParty $QUIP_ROOT/src/ThirdParty/Makefile
-rm -f $QUIP_ROOT/src/ThirdParty/scme
+mv  $QUIP_ROOT/src/ThirdParty/scme  $QUIP_ROOT/src/ThirdParty/scme_BACKUP_$(date +"%m-%d-%Y_%H:%M:%S")
 ln -sf $PWD/../../scme 			$QUIP_ROOT/src/ThirdParty/scme
 
 # Link IPModel_SCME.f95 in QUIP/src/Potenitals/ 
@@ -33,10 +33,4 @@ or from here
 (cd $QUIP_ROOT && make install-quippy)
 "
 
-# ** COMPILE QUIPPY **
-# Source the environment, and install
-# cd $QUIP_ROOT 
-#. sourceMe_quipenv.sh
-# (cd $QUIP_ROOT && make config) #only needed the first time! 
-#(cd $QUIP_ROOT && make install-quippy)
 

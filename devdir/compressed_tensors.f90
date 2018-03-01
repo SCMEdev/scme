@@ -161,7 +161,12 @@ subroutine system_stone_field(kern,damping,nn1,nn2,kk1,kk2,rCM,qn,fk)
     nM=size(qn,2)
     if(nM/=size(fk,2))stop"SCME:system_stone_field(): Inconsistent number of sites"
     
-    if(kern<0 .or.kern>2)stop"SCME:system_stone_field(): Currently valid kernels:  0, 1, 2  =  1/r, erf(r/a)/r, (1-exp(r/a))/r"
+    if(kern<0 .or.kern>2)then
+        print*, "SCME:system_stone_field(): Invalid kernel ", kern
+        print*, "Valid kernels:  0, 1, 2  =  1/r, erf(r/a)/r, (1-exp(r/a))/r"
+        stop""
+    endif
+    
     nk2=nn2+kk2
     fk=0
     
