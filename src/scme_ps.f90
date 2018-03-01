@@ -616,7 +616,7 @@ tprint(tau, 'tauu',s)
     
     print*, 'outpu energy', u_multipole
     
-    stop
+    !   stop""
     
     
     !// Dispersion /////////////////////////////////////////////////////
@@ -641,6 +641,9 @@ tprint(tau, 'tauu',s)
     !// Output /////////////////////////////////////////////////////////
     u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
     !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
+    
+    print*, "u_tot w/disp+ps",u_tot
+    
     
     do m = 1,nM
       do ia = 1,3 !o,h,h
@@ -763,7 +766,8 @@ tprint(tau, 'tauu',s)
         
         
         
-        
+    print*, "u_rep",u_rep
+    print*, "u_tot",u_tot
         
         
         

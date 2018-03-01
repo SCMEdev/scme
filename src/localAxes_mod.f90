@@ -16,7 +16,7 @@ subroutine create_xyz_hho_new(ra,xyz_hho,nM)
     real(dp), intent(out) :: xyz_hho(3,3,nM)!xyz,hho,nM
     integer, intent(in)    :: nM
     integer io,ih1, ih2, m, j!, posi
-    real(dp), parameter :: oh_max_A = 2.0_dp !Angstrom
+    real(dp), parameter :: oh_max_A = 1.2_dp !Angstrom
     
     do m = 1,nM !molecules
        ih1 = (m-1)*3+1
