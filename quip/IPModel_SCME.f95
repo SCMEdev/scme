@@ -126,7 +126,7 @@ subroutine IPModel_SCME_Initialise_str(this, args_str, param_str)
      call system_abort("IPModel_SCME_Initialise_str: SCME with updated parameters/damping. Make sure your potential is compatible. Proceed with caution, email Albert for instructions if in doubt.")
   endif
   !call IPModel_SCME_read_params_xml(this, param_str)
-  this%cutoff = 2.0_dp
+  this%cutoff = 100.0_dp
 
   !  Add initialisation code here
 
