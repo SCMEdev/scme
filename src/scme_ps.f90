@@ -59,7 +59,7 @@ module scme
   use printer_mod, only: printer, xyz_hho_to_linear,str,printo,printa !printer_h2o_linear, !, h2o_to_linear
   
   use localAxes_mod, only:dipoleAxes,plusAxes, bisectorAxes, &
-                          get_cm,force_and_torque_on_atoms,create_xyz_hho_new 
+                          get_cm,force_and_torque_on_atoms,create_hho_xyz_arr 
                           !localAxes, force_torqueOnAtoms,create_rw, calc_cm, create_xyz, !, create_xyz_hho
   
   use qpole, only: get_quadrupoles, expansion_coordinates
@@ -228,6 +228,7 @@ contains !//////////////////////////////////////////////////////////////
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    real(dp) internal_coords(3,n_atoms/3)
     
     
     !Default optional arguments
@@ -289,8 +290,8 @@ contains !//////////////////////////////////////////////////////////////
     !call create_xyz_hho(ra,xyz_hho,nM)
     
     call recoverMolecules_new(coords, ra, nM, a, a2) !JÖ rw
-    call create_xyz_hho_new(ra,xyz_hho,nM)
-    
+    call create_hho_xyz_arr(ra,xyz_hho,internal_coords,nM)
+tprint(internal_coords,'internal_coords',s)    
 !tprint(coords, 'coords',s)    
 !tprint(ra, 'ra',s)    
 !tprint(xyz_hho, 'xyz_hho',s)    
@@ -317,7 +318,7 @@ tprint(rCM, 'rCM',s)
        call bisectorAxes(xyz_hho(:,:,m),x(:,:,m))
        !call plusAxes(xyz_hho(:,:,m),x(:,:,m))
     enddo
-tprint(x,'x',s)    
+tprint(x,'rotation matrices',s)    
 
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     
@@ -552,8 +553,8 @@ tprint(x,'x',s)
     !/ Compute the torques on centers of mass
     call torqueCM(dpole, qpole, opole, hpole, d1v, d2v, d3v, d4v, nM, tau)
     
-tprint(fCM, 'fCM',s)
-tprint(tau, 'tauu',s)
+!tprint(fCM, 'fCM',s)
+!tprint(tau, 'tauu',s)
     
     !/ Multipole forces on atoms 
     !/ Compute force on atoms from CM force/torque as "temp. rigid body"
@@ -616,6 +617,8 @@ tprint(tau, 'tauu',s)
     
     
     
+tprint(e_sys, 'new_multipole',s)
+tprint(u_multipole, 'old_multipole',s)
     !print*, 'scme  energy', u_multipole
     !
     !
@@ -789,7 +792,7 @@ tprint(tau, 'tauu',s)
     
     
     !// Debug output ///////////////////////////////////////////////////!(pipe to file, diff to see change, comment to mute)
-tprint(u_multipole,'u_multipole',s)
+!tprint(u_multipole,'u_multipole',s)
 tprint(uDisp,'uDisp',s)
 tprint(u_ps,'u_ps',s)
 tprint(u_tot,'u_tot',s)

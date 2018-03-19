@@ -11,12 +11,14 @@ contains !/////////////////////////////////////////////////////////////
 
 
 
-subroutine create_xyz_hho_new(ra,xyz_hho,nM)
+subroutine create_hho_xyz_arr(ra,xyz_hho,arr,nM)
     real(dp), intent(in)   :: ra(3,3*nM) !j  (xyz,hho.nM) ...
-    real(dp), intent(out) :: xyz_hho(3,3,nM)!xyz,hho,nM
+    real(dp), intent(out) :: xyz_hho(3,3,nM),arr(3,nM)!xyz,hho,nM
     integer, intent(in)    :: nM
     integer io,ih1, ih2, m, j!, posi
     real(dp), parameter :: oh_max_A = 1.2_dp !Angstrom
+    
+    real(dp) ang,r1,r2,rr1(3),rr2(3)
     
     do m = 1,nM !molecules
        ih1 = (m-1)*3+1
@@ -33,8 +35,16 @@ subroutine create_xyz_hho_new(ra,xyz_hho,nM)
          xyz_hho(j,3,m) = ra(j,io )  !O
          
        enddo 
+       rr1=xyz_hho(:,1,m) - xyz_hho(:,3,m)
+       rr2=xyz_hho(:,2,m) - xyz_hho(:,3,m)
+       r1=sqrt(sum(rr1**2))
+       r2=sqrt(sum(rr2**2))
+       ang=dot_product(rr1,rr2)/(r1*r2)
+       ang=acos(ang)*180/3.1415926535d0
+       arr(:,m) = [ang,r1,r2]
+       
      enddo 
-   end subroutine create_xyz_hho_new
+   end subroutine
 
      
 !         rw(m)%r1(1) = ra(iH1+1)

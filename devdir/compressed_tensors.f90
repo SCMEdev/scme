@@ -35,7 +35,7 @@ subroutine system_energy_stone(nn1,nn2,qn,fn,me,ee)
         enddo
         !print*, me(m)
     enddo
-    ee=sum(me)/2_dp
+    ee=sum(me(1:nm))/2_dp !use me(1:nm) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 end
     
 

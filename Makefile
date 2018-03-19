@@ -3,7 +3,7 @@ bd:=build
 srcdirs:=src devdir
 ext:=f90
 
-err:= -Wall -fcheck=all -g -fbacktrace -ffpe-trap=zero,overflow,underflow -fmax-errors=3
+err:= -Wall -fcheck=all -g -fbacktrace -ffpe-trap=zero,overflow,underflow -fmax-errors=3 -D'DEBUG_PRINTING'
 fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp  -ffree-line-length-0 $(err)
 #-D'DEBUG_PRINTING'
 fc:=gfortran
