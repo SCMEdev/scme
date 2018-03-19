@@ -90,7 +90,7 @@ contains !//////////////////////////////////////////////////////////////
                             ,USE_ALL_REP &
                             ,USE_VAR_QUAD &
                             ,USE_VAR_OCT &
-                            ,USE_COMPRESSED &
+                            ,USE_version &
                             ,DAMPING_PARAMETER &
                             ,kernel_choice &
                             ) 
@@ -197,12 +197,12 @@ contains !//////////////////////////////////////////////////////////////
     
     real(dp) :: cec(xyz,hho,n_atoms/3),cer2(hho,n_atoms/3), rCE(xyz,n_atoms/3)
     
-    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT, USE_COMPRESSED
+    logical, intent(in), optional:: USE_PS_PES , USE_FULL_RANK , USE_OO_REP   , USE_ALL_REP, USE_VAR_QUAD, USE_VAR_OCT!, USE_COMPRESSED
     logical ::                      PES , FULL , OO_REP   , ALL_REP, VAR_QUAD, VAR_OCT, COMPRESSED
-    integer, intent(in), optional :: kernel_choice
+    integer, intent(in), optional :: kernel_choice, use_version
     real(dp), intent(in), optional :: DAMPING_PARAMETER
     real(dp) DAMPING
-    integer :: kern
+    integer :: kern, version
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!                                                                                       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !Compressed tensors
@@ -210,7 +210,7 @@ contains !//////////////////////////////////////////////////////////////
     integer,parameter :: p(0:5)=pos_(0:5)+1, e(0:5)=(pos_(0+1:5+1))
     integer nn, p1,p2
     
-    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_scme, q12, q12_induced, q12scme, qn_perm, qn_tot
+    real(dp), dimension(pos_(nx+1),n_atoms/3):: qn_scme, q12, q12_prev, q12_induced, q12scme, qn_perm, qn_tot
     
     real(dp), dimension(pos_(kx+1),n_atoms/3) :: phi_scme, phi_comp,phi_perm, phi_tot
     real(dp), dimension(pos_(px+1),pos_(px+1),n_atoms/3) :: polz
@@ -228,7 +228,7 @@ contains !//////////////////////////////////////////////////////////////
     
     
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    real(dp) internal_coords(3,n_atoms/3)
+    real(dp) internal_coords(3,n_atoms/3), u_mult
     
     
     !Default optional arguments
@@ -238,9 +238,9 @@ contains !//////////////////////////////////////////////////////////////
     ALL_REP=.false.
     VAR_QUAD=.false.
     VAR_OCT=.false.
-    COMPRESSED=.false.
+    version=12
     DAMPING = 1.0_dp
-    kern = 1
+    kern = 1 !1=gaussian,2=exponential,0=coulomb
     
     !print*, "compressed",compressed 
     !print*, "use_compressed",use_compressed 
@@ -250,7 +250,7 @@ contains !//////////////////////////////////////////////////////////////
     if(present(USE_ALL_REP))    ALL_REP      = USE_ALL_REP
     if(present(USE_VAR_QUAD))   VAR_QUAD     = USE_VAR_QUAD
     if(present(USE_VAR_OCT))    VAR_OCT      = USE_VAR_OCT
-    if(present(USE_COMPRESSED)) COMPRESSED   = USE_COMPRESSED
+    if(present(USE_version)) version   = USE_version
     if(present(DAMPING_PARAMETER))   DAMPING      = DAMPING_PARAMETER
     if(present(kernel_choice))   kern      = kernel_choice
     
@@ -319,6 +319,7 @@ tprint(rCM, 'rCM',s)
        !call plusAxes(xyz_hho(:,:,m),x(:,:,m))
     enddo
 tprint(x,'rotation matrices',s)    
+tprint( matmul( x(:,:,2), transpose(x(:,:,2)) ),'rotation matrix: m*mT',s)    
 
     !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     
@@ -355,39 +356,74 @@ tprint(x,'rotation matrices',s)
     
     !call printa(qn_scme,t="qn_scme")
     !call printo(dpole(:,1))
-    !print*, "qpole:"
     !call printo(qpole(:,:,1))
     
     
-    
-    
-    
-    
-    !/ Rotate polarizability tensors into local coordinate systems
-    
-    
-    
-    !print*, "rCM",rCM, "opole", opole, "hpole",hpole, "nM",nM, "NC",NC, "a",a, "a2",a2, "uH",uH, "eH",eH, "dEhdr",dEhdr, "rMax2",rMax2, "iSlab",iSlab,"FULL",FULL
-    
-    
-    !/ Compute the electric field (F) and gradient (dF) for the permanent octupole and hexadecapole
-    ! why dont we induce those, we have the polarizabilities!?
-    
-    !eh=0!-d1v
-    !dehdr=0!-d2v
-    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
-    !! output: uH=scalar energy; eH(3,nM)=field from q,h; dEhdr(3,3,nM)=field gradient
-    !call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-    
     !stop
-    f12_34scme=0
-    do m=1,nM
-        !f34_scme(1,m)=0
-        f12_34scme(2:4,m)=eh(:,m)
-        f12_34scme(5:10,m)=compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
+    !!  f12_34scme=0
+    !!  do m=1,nM
+    !!      !f34_scme(1,m)=0
+    !!      f12_34scme(2:4,m)=eh(:,m)
+    !!      f12_34scme(5:10,m)=compress(reshape(transpose(dehdr(:,:,m)),[3**2]),2)
+    !!  enddo
+    
+    u_multipole=0
+    
+    !! OLD CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if(version==1 .or. version==12)then
+    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eH, dEhdr, rMax2, iSlab,FULL) 
+    
+    converged = .false.
+    iteration = 0
+    do while (.not. converged)
+    iteration = iteration + 1
+        
+        call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
+        ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
+        
+        
+        !stop
+        !call addFields(eH, eD, eT, nM)
+        eT = eH + eD !add fields
+        call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
+        
+        
+        converged = .true.
+        
+        call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
+        call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
+        
+    end do
+tprint(iteration, 'iterations OLD:', s)
+    
+    
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+        !/ Compute the forces on the centers of mass
+    call forceCM(dpole, qpole, opole, hpole, d2v, d3v, d4v, d5v, nM, fsf, fCM)
+
+    !/ Compute the torques on centers of mass
+    call torqueCM(dpole, qpole, opole, hpole, d1v, d2v, d3v, d4v, nM, tau)
+    
+!tprint(fCM, 'fCM',s)
+!tprint(tau, 'tauu',s)
+    
+    !/ Multipole forces on atoms 
+    !/ Compute force on atoms from CM force/torque as "temp. rigid body"
+    do m = 1,nM
+       xa_forces(:,:,m)=0
+       call force_and_torque_on_atoms(tau(:,m),fCM(:,m),xyz_hho(:,:,m), xa_forces(:,:,m), rCM(:,m))
     enddo
+    xa_forces=xa_forces*coulomb_k ! Coulomb force constant to get eV/A
     
+    call multipole_energy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_mult)
+    u_mult = u_mult * coulomb_k ! Coulomb force constant to get eV
     
+    if(version==1)u_multipole=u_mult
+endif
+    
+    !! NEW CODE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+if(version==2 .or. version==12)then
     
     f12_34=0
     
@@ -399,16 +435,17 @@ tprint(x,'rotation matrices',s)
     !call printa(f12_34(2:10,:)/f12_34scme(2:10,:),t="f34/f34_scme")
     
     q12=0
+    q12_prev=0
+    
     q12(1:10,:)=qn_scme(1:10,:)
     !stop
     !/ Induce dipole and quadrupole to self consistency
+    
     converged = .false.
     iteration = 0
     do while (.not. converged)
     iteration = iteration + 1
         
-        call dip_quadField(rCM, dpole, qpole, nM, NC, a, a2, uD, uQ, eD, dEddr, rMax2, iSlab)
-        ! output: uD,uQ=scalar energies; eD(3,nM)=d+q field; dEddr(3,3,nM)=d+q filed gradient
         
         f12_12 = 0
         call system_stone_field(kern,damping,1,2,1,2,rCM,q12,f12_12)
@@ -416,56 +453,27 @@ tprint(x,'rotation matrices',s)
         
         f12 = f12_34 + f12_12
         
-        !call printa(f12(:,:),t="f12")
-        
-        
-        !stop
-        !call addFields(eH, eD, eT, nM)
-        eT = eH + eD !add fields
-        call add_field_gradients(dEhdr, dEddr, dEtdr, nM) !dEtdr = dEhdr + dEddr !add field gradients
-        
-        f12scme=0
-        do m=1,nM
-            !f34_scme(1,m)=0
-            f12scme(2:4,m)=eT(:,m)
-            f12scme(5:10,m)=compress(reshape(transpose(detdr(:,:,m)),[3**2]),2)
-        enddo
-        
-        !call printa(f12scme(:,:),t="f12scme")
-        !call printa(f12(2:10,:)/f12scme(2:10,:),t="f12/f12scme")
-        
-        !print*, "iteration", iteration
-        !if(iteration==2)stop
-        
-        
         ! Induce dipoles and quadrupoles.
-        converged = .true.
         
-        
+        q12_prev(:10,:)=q12(:10,:)
         q12_induced=0
         call system_polarize_stone(polz,f12,q12_induced)
         q12(:10,:)=qn_scme(:10,:)+q12_induced(:10,:)
         
+        
         !call printa(q12_induced,t="q12_induced")
-        
-        
-        
-        call induce_dipole(dpole, dpole0, eT, dEtdr, dd, dq, hp, nM, converged)
-        call induce_quadrupole(qpole, qpole0, eT, dEtdr, dq, qq, nM, converged)
-        
-        q12scme=0
-        do m =1,nm
-            q12scme(2:4,m)=dpole(:,m)
-            q12scme(5:10,m)=compress(reshape(qpole(:,:,m),[3**2]),2)
-        enddo
         
         !call printa(q12,t="q12")
         !call printa(q12scme,t="q12scme")
         !call printa(q12(2:10,:)/q12scme(2:10,:),t="q12/q12scme")
         
+        if(all(abs(q12_prev(:10,:)-q12(:10,:))<1e-7))converged=.true.! print*,'compressed converged @ iteration',iteration !
         
         
     end do
+    
+    print*, 'iterations NEW', iteration
+    
     
     !total moments
     !print*, p(0),p(1), p(2),p(3)
@@ -489,153 +497,40 @@ tprint(x,'rotation matrices',s)
     call system_stone_field(kern,damping,1,nx,1,kx,rCM,qn_tot,phi_tot)
     
     
-    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
-    
-    phi_scme=0
-    call convert_d1234v_to_phi_scme
-    
-    !print*, "phi COMPRESSED:"
-    !call printa(phi_tot) 
-    !
-    !
-    !print*, "phi SCME:"
-    !call printa(phi_scme)
-    
-    !call printa(phi_perm,2,5,0)
-    !call printa(phi_scme(2:,:)/phi_tot(2:,:),t="system field accuracy")
     
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    !stop"hej"
-!tprint(d1v, 'd1v',s)
-!tprint(d2v, 'd2v',s)
-!tprint(d3v, 'd3v',s)
-!tprint(d4v, 'd4v',s)
-!tprint(d5v, 'd5v',s)
-    !/ Compute the forces on the centers of mass
-    call forceCM(dpole, qpole, opole, hpole, d2v, d3v, d4v, d5v, nM, fsf, fCM)
-
-    !/ Compute the torques on centers of mass
-    call torqueCM(dpole, qpole, opole, hpole, d1v, d2v, d3v, d4v, nM, tau)
-    
-!tprint(fCM, 'fCM',s)
-!tprint(tau, 'tauu',s)
-    
-    !/ Multipole forces on atoms 
-    !/ Compute force on atoms from CM force/torque as "temp. rigid body"
-    do m = 1,nM
-       xa_forces(:,:,m)=0
-       call force_and_torque_on_atoms(tau(:,m),fCM(:,m),xyz_hho(:,:,m), xa_forces(:,:,m), rCM(:,m))
-    enddo
-    xa_forces=xa_forces*coulomb_k ! Coulomb force constant to get eV/A
-    
-    
-    !/ Mutipole energy
-    !/ This should in principle be the induced poles in the field of the static poles
-    !/ What is computed is the static poles in the field of the induced poles. 
-    !/ But since T is symmetric, this is probably equivalent. 
-    !/ 
-    !/ But for the forces, they are computed above with the static+induced poles in the static+induced field gradients. Should be static+induced poles in only static field gradients?? 
-    !/ Because U_ind = Q_ind F_stat, U_stat = U_stat F_stat, so U_tot = Q_tot F_stat. 
-    !/ solution: calcDv(dpole0,qpole0....
-    !/           torqueCM(dpole, qpole, ... 
-    !/           forceCM(dpole, qpole, ... unchanged syntax      (i.e. total pole in static field)
-    !/           multipole_energy(dpole, qpole....            (i.e. total pole in static field)
-    !m=4
-    !print*, "hpole:"
-    !call printo(hpole(:,:,:,:,m))
-    !print*, "d4v:"
-    !call printo(d4v(:,:,:,:,m))
-    
-    
-    !u_mult1=0
-    !u_mult2=0
-    !u_perm1 =0
-    !u_perm2 =0
-    !do m=1,nM
-    !    u_mult1 = u_mult1 + sum( qn_scme(:pkx,m)* phi_tot(:pkx,m)*gg_(:pkx) )
-    !    u_mult2 = u_mult2 + sum(  qn_tot(:pkx,m)*phi_perm(:pkx,m)*gg_(:pkx) )
-    !    u_perm1 = u_perm1 + sum( qn_perm(:,m)*phi_perm(:,m)*gg_(:pkx) )
-    !    u_perm2 = u_perm2 + sum( qn_perm(:,m)*phi_perm(:,m)*gg_(:pkx) ) 
-    !enddo
-    
-    
-    !print*, 'u_mult1    ', u_mult1* coulomb_k
-    !print*, 'u_mult2    ', u_mult2* coulomb_k
-    !
-    !print*, 'u_perm1    ', u_perm1* coulomb_k
-    !print*, 'u_perm2    ', u_perm2* coulomb_k
-    
-    !print*, "qn-perm, phi-tot:"
-    !call printa(qn_perm)
-    !call printa(phi_tot)
     
     call system_energy_stone(1,4,qn_perm,phi_tot,e_mol,e_sys)                                                                          !!!!!!!!!!!!!!!!!!!!!!
+    !phi_scme=0
+    !call convert_d1234v_to_phi_scme
     !call system_energy_stone(1,4,qn_tot,phi_perm,e_mol,e_sys)                                                                          !!!!!!!!!!!!!!!!!!!!!!
     
     e_mol = e_mol*coulomb_k
     e_sys = e_sys*coulomb_k
     
+    ! Kolla vidare om allt är innanför som bör vara det 
     
-    call multipole_energy(dpole0, qpole0, opole, hpole, d1v, d2v, d3v, d4v, nM, u_multipole)
-    u_multipole = u_multipole * coulomb_k ! Coulomb force constant to get eV
+    u_multipole=e_sys
     
-    
-    
-tprint(e_sys, 'new_multipole',s)
-tprint(u_multipole, 'old_multipole',s)
     !print*, 'scme  energy', u_multipole
     !
     !
     !print*, 'compr energy', e_sys
     !
     !print*, "compressed",compressed 
-    if(compressed)u_multipole=e_sys
+endif
     
-    !print*, 'outpu energy', u_multipole
+tprint(e_sys, 'new_multipole',s)
+tprint(u_mult, 'old_multipole',s)
+tprint(u_multipole, 'output_multipole',s)
     
-    !   stop""
     
     
     !// Dispersion /////////////////////////////////////////////////////
     !call new_dispersion(rw, aforces, uDisp, nM, a, a2)
     call oxygen_dispersion(xyz_hho, xa_forces, uDisp, nM, a, a2) !uDisp created here
-    u_tot = u_tot + uDisp
+tprint(uDisp,'uDisp',s)
     
     if(PES)then
         !// Partridge-Schwenke PES /////////////////////////////////////////
@@ -651,15 +546,12 @@ tprint(u_multipole, 'old_multipole',s)
         end do
         u_tot = u_tot + u_ps
     endif
+tprint(u_ps,'u_ps',s)
     
     !// Output /////////////////////////////////////////////////////////
     u_tot = u_multipole + uDisp + u_ps      !Total system energy (output)
     !call xyz_hho_to_linear(xa_forces,fa,nM) !Total forces in fa(nM*9) (output)
     
-    !print*, "u_ps",u_ps
-    !print*, "u_disp",uDisp
-    !
-    !print*, "u_tot w/disp+ps",u_tot
     
     
     do m = 1,nM
@@ -683,9 +575,9 @@ tprint(u_multipole, 'old_multipole',s)
           a_oo = 2872.579_dp!<full
           b_oo = 3.387391_dp!<full       !3.384538_dp
         else
-          !stop"put in the fitting parameters for full rank OO repulsion"
-          a_oo = 2872.579
-          b_oo = 3.387391
+          stop"SCME: fit the reduced rank"
+          a_oo = 0!2872.579
+          b_oo = 0!3.387391
         endif
         
         u_rep = 0
@@ -725,20 +617,6 @@ tprint(u_multipole, 'old_multipole',s)
         endif
  
 
-
-
-
-
-
-
-
-
-
-
-
-
- 
- 
         
         !yy  = A_oo*dexp( -      aa_oo*d_oo) 
         !yy = yy + A_oh*dexp( -  aa_oh*d_oh1)
@@ -780,36 +658,14 @@ tprint(u_multipole, 'old_multipole',s)
         enddo
         u_tot = u_tot + u_rep      !Repulsion energy
      endif
+tprint(u_rep,'u_rep',s)
         
         
         
-    !print*, "u_rep",u_rep
-    !print*, "u_tot",u_tot
-        
-        
-        
-        
-    
-    
-    !// Debug output ///////////////////////////////////////////////////!(pipe to file, diff to see change, comment to mute)
-!tprint(u_multipole,'u_multipole',s)
-tprint(uDisp,'uDisp',s)
-tprint(u_ps,'u_ps',s)
 tprint(u_tot,'u_tot',s)
-    
-    
-    !call h2o_to_linear(aforces,fa_test,nM)
-    !call printer(fa_test,'aforces linear')
-    
-    !call printer(fa,'xa_forces linear')
-!tprint(xa_forces,'xa_forces',s) 
-!tprint(hho_fa,'hho_fa',s) 
-
-    !s=0
-!call printer(1,'1',s)    
-    
-    
-
+        
+        
+        
 
 
     contains !/////////////////////////////////////////////////////////////////////////////////
