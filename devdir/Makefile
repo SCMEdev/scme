@@ -32,6 +32,9 @@ vpath %.f90 ../src
 # -I = where to search! 
 # -J = where to put!    
 
+all:
+	make -j4 run.x
+	make -j4 tests.x
 
 $(bd)/%.o:%.f90
 	@mkdir -p $(@D)
@@ -44,9 +47,9 @@ $(bd)/detrace_apple.o:detrace_apple.f90
 
 
 
-all:
-	make -j4 run.x
-	make -j4 tests.x
+#all:
+#	make -j4 run.x
+#	make -j4 tests.x
 
 old: 
 	make -j4 pold.x detraceo.x detraceh.x detraceg.x qpole.x opole.x
