@@ -145,6 +145,106 @@ subroutine test_printoa
     
 end
 
+subroutine test_compress_expand_subdivided
+    
+    integer, parameter :: nm=1, m=1
+    integer p1,p2, pp, i1, i2, i3
+    real(dp) :: p11f(3,3,nm),p12f(3,3,3,nm),p21f(3,3,3,nm), p22f(3,3,3,3,nm)
+    real(dp) :: p11c(3,3,nm),p12c(3,6,nm),p21c(6,3,nm), p22c(6,6,nm),pp2(10,10,nm), dq(10,nm) , dqs(10,nm)
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,43,4,3,5,23,345,34000])
+    call random_number(p11f)
+    call random_number(p12f)
+    call random_number(p22f)
+    
+    call symmetrize_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m))
+    
+    do i3=1,3
+        do i2 = 1,3
+            do i1 = 1,3
+                p21f(i2,i3,i1,m) = p12f(i1,i2,i3,m)
+            enddo
+        enddo
+    enddo
+    !call printo(p12f(:,:,:,m),order=[2,3,1])
+    !call printo(p21f(:,:,:,m),order=[1,2,3])
+    
+    call polycompress_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m),pp2(:,:,m))
+    
+    !call printa(pp2(:,:,m))
+    
+    Print*
+    Print*, "TEST COMPRESSION: ___________________________________________________"
+    
+    !p12
+    p1=1;p2=2
+    pp=p1+p2
+    !call compress_subdivided(reshape(p12f(:,:,:,m),[3**pp]),p12c(:,:,m),pp,p1,p2)
+    p12c(:,:,m) = compress_subdivided(reshape(p12f(:,:,:,m),[3**pp]),p1,p2)
+    
+    call printa( pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) )
+    call printa(p12c(:,:,m))
+    print*
+    print*, "diff:"
+    call printa(pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) - p12c(:,:,m))
+    
+    
+    !p21
+    p1=2;p2=1
+    pp=p1+p2
+    !call compress_subdivided(reshape(p21f(:,:,:,m),[3**pp]),p21c(:,:,m),pp,p1,p2)
+    p21c(:,:,m) = compress_subdivided(reshape(p21f(:,:,:,m),[3**pp]),p1,p2)
+    
+    call printa(pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m))
+    call printa(p21c(:,:,m))
+    print*
+    print*, "diff:"
+    call printa( pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) - p21c(:,:,m))
+    
+    !p22
+    p1=2;p2=2
+    pp=p1+p2
+    !call compress_subdivided(reshape(p22f(:,:,:,:,m),[3**pp]),p22c(:,:,m),pp,p1,p2)
+    p22c(:,:,m) = compress_subdivided(reshape(p22f(:,:,:,:,m),[3**pp]),p1,p2)
+    
+    call printa(pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m))
+    call printa(p22c(:,:,m))
+    print*
+    print*, "diff:"
+    call printa( pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) - p22c(:,:,m) )
+    
+    
+    Print*
+    Print*, "TEST EXPANSION: _______________________________________________________"
+    Print*
+    
+    print*
+    print*, "original 12:"
+    call printo( p12f(:,:,:,m))
+    print*
+    print*, "new 12:"
+    call printo( reshape(expand_subdivided(p12c(:,:,m),1,2),shape=[3,3,3]) )
+    print*
+    print*, "diff 12:"
+    call printo( p12f(:,:,:,m) - reshape(expand_subdivided(p12c(:,:,m),1,2),shape=[3,3,3]) )
+    
+    print*
+    print*, "ONLY DIFFS:"
+    
+    print*
+    print*, "diff 21:"
+    call printo( p21f(:,:,:,m) - reshape(expand_subdivided(p21c(:,:,m),2,1),shape=[3,3,3]) )
+    
+    print*
+    print*, "diff 22:"
+    call printo( p22f(:,:,:,:,m) - reshape(expand_subdivided(p22c(:,:,m),2,2),shape=[3,3,3,3]) )
+    
+    
+    
+    
+end
+    
+
 subroutine test_polarize
     integer, parameter :: nm=3
     real(dp) :: q1c(3,nm),q2c(6,nm), q3c(10,nm), q4c(15,nm)
@@ -530,19 +630,20 @@ subroutine test_polarize2
     !POLARIZE FULL
     call polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
     
-    q1c_f=q1f
     q2c_f=compress(reshape(q2f,[3**2]),2)
-    
     
     
     !POLARIZE COMRESSED
     poly_mp = matmul(alp,poly_pot*gg_(1:10))
     
     
-    !print induced poles:
-    call printa([0d0,q1c_f,q2c_f],0,5,0)
+    !PRINT induced poles:
+    print*, "induced poles by FULL tensors:"
+    call printa([0d0,q1f,q2c_f])
     
-    call printa(poly_mp,0,5,0)
+    
+    print*, "induced poles by COMPRESSED tensors:"
+    call printa(poly_mp)
     
     
 end

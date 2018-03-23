@@ -10,7 +10,9 @@ contains !//////////////////////////////////////////////////////////////////////
 subroutine main
 call &
 !test_next_lex_and_can
-test_polarize
+!test_polarize
+!test_polarize2
+test_compress_expand_subdivided
 !test_next_set2pown(5,1)
 !test_stone_field
 !call &
