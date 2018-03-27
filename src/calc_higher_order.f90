@@ -157,6 +157,7 @@ contains
     rrrO = 0
     v    = 0
     g    = 0
+    dEdr=0!!!!!!!!!not doing this was giving me a floating point exception at octu_hexa_field(dEdr(:,:,i) = dEdr(:,:,i) + dEdr1(:,:) * swFunc). This is probably because I have previously put in automatic array notaion when adding the fields, while the original loop only went through some of the elements (the compressed ones)
         
     do i = 1, 3
        do j = 1, 3
@@ -214,6 +215,7 @@ contains
           g(j,i) = 0.d0
        end do
     end do
+    dEdr=0 !Jö addid for safety reasons, see comment above. 
     
     do i = 1, 3
        do j = 1, 3

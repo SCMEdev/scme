@@ -14,7 +14,7 @@ module molecProperties
   use sf_disp_tangtoe, only: SF, SFdsf
 implicit none
   private
-  public recoverMolecules, add_field_gradients, rotatePolariz, rotate_qoh_poles , recoverMolecules_new
+  public recoverMolecules, add_field_gradients, rotatePolariz, recoverMolecules_new, rotatePoles !rotate_qoh_poles , 
         !, SF, SFdsf, create_rw, calc_cm, addFields, setUnpolPoles, calcCentersOfMass, findPpalAxes,
 
 contains
@@ -101,13 +101,16 @@ contains
 
 
 
-  subroutine rotate_qoh_poles(q0, o0, h0, qpole, opole, hpole, nM, x) !JÖ d0,dpole
+  !subroutine rotate_qoh_poles(q0, o0, h0, qpole, opole, hpole, nM, x) !JÖ d0,dpole
+  subroutine rotatePoles(d0, q0, o0, h0, dpole, qpole, opole, hpole, nM, x) !JÖ d0,dpole
     implicit none
     !jö nodip! real(dp), intent(in) :: d0(3) 
-    real(dp), intent(in) :: q0(3,3), o0(3,3,3), h0(3,3,3,3), x(3,3,3)
+    real(dp), intent(in) :: d0(3) 
+    real(dp), intent(in) :: q0(3,3), o0(3,3,3), h0(3,3,3,3), x(3,3,nM)
     integer, intent(in) :: nM
 
     !jö nodip! real(dp), intent(out) :: dpole(:,:)
+    real(dp), intent(out) :: dpole(:,:)
     real(dp), intent(out) :: qpole(:,:,:), opole(:,:,:,:), hpole(:,:,:,:,:)
 
 ! Internal:
@@ -117,7 +120,7 @@ contains
     hpole = 0
     opole = 0
     qpole = 0
-!    dpole = 0
+    dpole = 0
     
     do m = 1, nM
        do l = 1, 3
@@ -141,13 +144,14 @@ contains
                 end do
              end do
              !jö no dip !dpole(l,m) = dpole(l,m) + x(l,ll,m) * d0(ll)
+             dpole(l,m) = dpole(l,m) + x(l,ll,m) * d0(ll)
           end do
        end do
     end do
 
     return
 
-  end subroutine rotate_qoh_poles
+  end subroutine 
 
 
   !----------------------------------------------------------------------+

@@ -1,6 +1,6 @@
 module compressed_tensors 
 
-use printer_mod, only: str, printer, printo
+use printer_mod, only: str, printer, printo, printa
 use compressed_utils, bad=>main!, bad=>main2!,only: test_apple_g
 use compressed_arrays!, p_=>pos_, l_=>len_!, only: mm_, gg_, pos_, len_, binc_, tmm_ 
 implicit none
@@ -14,27 +14,73 @@ contains !///////////////////////////////////////////////
 subroutine main !Called by 'generic_program.f90'
 end subroutine
 
-
+subroutine system_energy_stone(nn1,nn2,qn,fn,me,ee)
+    real(dp), intent(in), dimension(:,:) :: qn, fn
+    real(dp), intent(out) :: me(size(fn,2)), ee
+    integer, intent(in) :: nn1,nn2 !
+    
+    real(dp),parameter :: pref(0:5) = [1.0_dp,1.0_dp, 1.0_dp/3.0_dp, 1.0_dp/15.0_dp, 1.0_dp/105.0_dp,1.0_dp/945.0_dp]
+    integer m, nm, p2, nn, n1,n2
+    !
+    !print*, pref
+    nm=size(fn,2)
+    p2=size(fn,1)
+    !me=0
+    do m = 1,nm
+        me(m)=0
+        do nn=nn1,nn2
+            n1=pos_(nn)+1
+            n2=pos_(nn+1)
+            me(m) = me(m) + pref(nn)*sum (fn(n1:n2,m)*qn(n1:n2,m)*gg_(n1:n2) )
+        enddo
+        !print*, me(m)
+    enddo
+    ee=sum(me(1:nm))/2_dp !use me(1:nm) !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+end
     
 
-subroutine polarize(nx,mx,alp,phi,dq)
-    integer, intent(in) :: nx,mx
+subroutine polarize_stone(alp,phi,dq)
+    integer, parameter :: nx=2,mx=2
     real(dp), intent(in) ::  alp(pos_(nx+1),pos_(mx+1))
+    !real(dp) ::  alp2(pos_(nx+1),pos_(mx+1))
     real(dp), intent(in) ::  phi(pos_(mx+1))
     real(dp), intent(out) ::  dq(pos_(nx+1))
     
-    integer n1,n2,m1,m2
+    integer p1,p2,p3,p4!n1,n2,m1,m2
     
-    n1=2
-    n2=pos_(nx+1)
-    m1=2
-    m2=pos_(mx+1)
-    dq(n1:n2) = matmul( alp(n1:n2,m1:m2), phi(m1:m2)*gg_(m1:m2) ) 
+    p1=pos_(1)+1
+    p2=pos_(1+1)
+    p3=pos_(2)+1
+    p4=pos_(2+1)
+    
+    !alp2=alp
+    
+    !alp2(p1:p2,p3:p4) = alp2(p1:p2,p3:p4)/3d0
+    
+    dq(p1:p2) = matmul( alp(p1:p2,p1:p4), [phi(p1:p2),phi(p3:p4)/3d0]*gg_(p1:p4) ) 
+    dq(p3:p4) = matmul( alp(p3:p4,p1:p4),  phi(p1:p4)*gg_(p1:p4) ) 
     
     
             
 end 
 
+subroutine system_polarize_stone(psys,f12,dq)
+    integer, parameter :: px=2,p2=pos_(px+1)
+    real(dp), intent(in) :: psys(:,:,:), f12(:,:)
+    real(dp), intent(out) :: dq(:,:)
+    integer nm, m1
+    real(dp) rr(3),r2
+    
+    nm = size(f12,2)
+    if( ( nm.ne.size(dq,2) ).or.( nm.ne.size(psys,3) ) )stop"system_polarize_stone: unequal number of particles inarrays"
+    
+    dq=0
+    do m1=1,nm
+        
+        call polarize_stone( psys(:,:,m1), f12(:,m1), dq(:,m1) )
+    enddo
+end
+        
 
 function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence
     integer :: nn1,nn2,mm1,mm2
@@ -62,6 +108,99 @@ function polyinner1(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrer
     enddo
     
 end
+
+
+subroutine add_stone_field(narr,dfarr,karr,nn1,nn2,kk1,kk2) !m is rank didfarrerence
+    integer,intent(in) :: nn1,nn2,kk1,kk2
+    real(dp),intent(in) :: narr(:), dfarr(:)!narr(pos_(nn2+1)), dfarr(pos_(nn2+kk2+1))!
+    real(dp),intent(inout) :: karr(:)
+    real(dp) :: pref
+    integer nn, kk
+    integer n1,n2,k1,k2,f1,f2
+    
+    if(pos_(nn2+1)>size(narr,1))stop"get_stone_field: SOURCE array rank smaller than required MULTIPOLE-order"
+    if(pos_(kk2+1)>size(karr,1))stop"get_stone_field: FIELD array rank smaller than required GRADIENT-order"
+    if(pos_(nn2+kk2+1)>size(dfarr))stop"get_stone_field: GRADIENT-array rank smaller than required INTERACTION-order"
+    
+    
+    !!karr = 0 nope, now were adding
+    do nn = nn1, nn2
+        n1 = pos_(nn)+1
+        n2 = pos_(nn+1)
+        pref=(-1)**(nn)/dble(intff(2*nn-1,1))
+        do kk = kk1, kk2
+            k1 = pos_(kk)+1
+            k2 = pos_(kk+1)
+            
+            f1 = pos_(nn+kk)+1
+            f2 = pos_(nn+kk+1)
+            
+            karr(k1:k2) = karr(k1:k2) + pref*inner( nn+kk, nn, dfarr(f1:f2), narr(n1:n2) )
+            
+            !print*, kk,nn
+        enddo
+    enddo
+    
+end
+
+
+!subroutine system_stone_field(nn1,nn2,nx,kk1,kk2,kx,nM,rCM,qn,fk)
+    !integer, intent(in) :: nn1,nn2,nx,kk1,kk2,kx,nM
+    !real(dp), intent(in) :: rCM(3,nM), qn(pos_(nx+1),nM)
+    !real(dp), intent(out) :: fk(pos_(kx+1),nM)
+subroutine system_stone_field(kern,damping,nn1,nn2,kk1,kk2,rCM,qn,fk)
+    integer, intent(in) :: nn1,nn2,kk1,kk2, kern
+    real(dp), intent(in) :: rCM(:,:), qn(:,:),damping
+    real(dp), intent(out) :: fk(:,:)
+    !internn1l:
+    integer m1,m2, nk2, k2!k1
+    real(dp) :: rr(3),r2, sss(nn2+kk2+1)
+    real(dp),dimension(pos_(nn2+kk2+1)) :: rrr, df
+    integer nM
+    
+    nM=size(qn,2)
+    if(nM/=size(fk,2))stop"SCME:system_stone_field(): Inconsistent number of sites"
+    
+    if(kern<0 .or.kern>2)then
+        print*, "SCME:system_stone_field(): Invalid kernel ", kern
+        print*, "Valid kernels:  0, 1, 2  =  1/r, erf(r/a)/r, (1-exp(r/a))/r"
+        stop""
+    endif
+    
+    nk2=nn2+kk2
+    fk=0
+    
+    do m1 = 1,nM
+        second:do m2 = 1,nM
+            
+            if(m1==m2)cycle second
+            
+            rr = rCM(:,m1)-rCM(:,m2)
+            r2 = sum(rr**2)
+            
+            
+            
+            call vector_powers(nk2,rr,rrr)!(k,r,rr) 
+            
+            if(kern==0)call dfdu(r2,nk2,sss) 
+            if(kern==1)call dfdu_erf(damping,r2,nk2,sss)!(a,u,nmax,ders) 
+            if(kern==2)call dfdu_exp(damping,r2,nk2,sss)!(a,u,nmax,ders) 
+            !call dfdu(r2,nk2,sss) 
+            call lin_polydf(nk2,rrr,sss,df)!(nmax,rrr,sss,df)
+            
+            !k1=1
+            !k1=pos_(0)+1
+            !k2=pos_(kb+1)
+            
+            !fk(:k2,m1) = fk(:k2,m1) + get_stone_field(qn(:,m2),df,nn1,nn2,kk1,kk2)
+            call add_stone_field(qn(:,m2),df,fk(:,m1),nn1,nn2,kk1,kk2)
+            
+            
+            
+        enddo second
+    enddo
+end
+
 
 
 function polyinner2(narr,dfarr,nn1,nn2,mm1,mm2) result(marr)!m is rank didfarrerence

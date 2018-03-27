@@ -1,36 +1,41 @@
-#####################################################################
-bd=build
-srcdirs=src 
 
+bd:=build
+srcdirs:=src devdir
+ext:=f90
 
-vpath %.f90 $(srcdirs) 
-
-sourcenames:= $(notdir $(wildcard $(srcdirs:=/*.f90)))
-
-objects:= $(addprefix $(bd)/, $(sourcenames:%.f90=%.o))
-
-target=$(bd)/libscme.a
-
-#####################################################################
-
-fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp -D'DEBUG_PRINTING' -ffree-line-length-0 -Wall
+err:= -Wall -fcheck=all -g -fbacktrace -ffpe-trap=zero,overflow,underflow -fmax-errors=3 -D'DEBUG_PRINTING'
+fflags:= $(opti) -pg -I$(bd) -J$(bd) -cpp  -ffree-line-length-0 $(err)
+#-D'DEBUG_PRINTING'
 fc:=gfortran
 
+
+#Settings above. Furst run './prescan src devdir' to create the dependency file 'prerequisites.makefile'
+#####################################################################
+#####################################################################
+vpath %.f90 $(srcdirs) 
+
+srcs:= $(notdir $(wildcard $(srcdirs:=/*.$(ext))))
+
+objects:= $(addprefix $(bd)/, $(srcs:%.$(ext)=%.o))
+
+#####################################################################
+
 all:
-	make -j4 $(target)
+	make -j4 target
 
 
-$(target): $(objects)
-	ar rcs $@ $^
+target: $(objects)
+	@echo "objects are in $(bd) !!!"
 
 $(bd)/%.o: %.f90
 	@mkdir -p $(bd)
 	$(fc) $(fflags) -o $@ -c $<
 
 clean:
-	@rm -rf $(bd)
+	rm -rf $(bd)
 
 #####################################################################
+
 include prerequisites.makefile
 
 

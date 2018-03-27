@@ -63,14 +63,15 @@ private
 include 'IPModel_interface.h'
 
 public :: IPModel_SCME
-type IPModel_SCME
+type IPModel_SCME                                                        ! this is the so-called structure!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !integer :: n_types = 0
   !integer, allocatable :: atomic_num(:), type_of_atomic_num(:)
 
   real(dp) :: cutoff = 0.0_dp
   logical :: full_interaction_order, use_repulsion, use_PS_PES, &
-             use_super_repulsion,use_variable_quadrupole,use_variable_octapole
-
+             use_super_repulsion,use_variable_quadrupole,use_variable_octapole!, use_compressed
+  real(dp) :: damping_parameter
+  integer :: kernel_choice, use_version
   character(len=STRING_LENGTH) :: label
 
 end type IPModel_SCME
@@ -104,7 +105,7 @@ subroutine IPModel_SCME_Initialise_str(this, args_str, param_str)
 
   call Finalise(this)
 
-  call initialise(params)
+  call initialise(params)!DAMPING_PARAMETER kernel_choice
   this%label=''
   call param_register(params, 'label', '', this%label, help_string="No help yet.  This source file was $LastChangedBy$")
   call param_register(params, 'full_interaction_order', 'T', this%full_interaction_order, help_string="Whether to truncate the interaction order calculation at 5th order")
@@ -113,16 +114,19 @@ subroutine IPModel_SCME_Initialise_str(this, args_str, param_str)
   call param_register(params, 'use_PS_PES', 'T', this%use_PS_PES, help_string="Whether to use the PS potential energy surface")
   call param_register(params, 'use_variable_quadrupole', 'F', this%use_variable_quadrupole, help_string="Whether to use the geometry dependent quadrupole")
   call param_register(params, 'use_variable_octapole', 'F', this%use_variable_octapole, help_string="Whether to use the geometry dependent octapole")
+  call param_register(params, 'use_version', '12', this%use_version, help_string="1=old code,2=new code,12=both codes (for testing)")
+  call param_register(params, 'damping_parameter', '1.0', this%damping_parameter, help_string="value of damping parameter, ~1.2 for kernel 1, ~0.56 for kernel 2. larger = more damping")
+  call param_register(params, 'kernel_choice', '1', this%kernel_choice, help_string="choose kernel function:  0, 1, 2  =  1/r, erf(r/a)/r, (1 - exp(-r/a)/r")
   if (.not. param_read_line(params, args_str, ignore_unknown=.true.,task='IPModel_SCME_Initialise_str args_str')) then
     call system_abort("IPModel_SCME_Initialise_str failed to parse label from args_str="//trim(args_str))
   endif
   call finalise(params)
 
-  if( trim(this%label) /= "version_20170802" ) then
-     call system_abort("IPModel_SCME_Initialise_str: SCME with updated parameters/damping. Make sure your potential is compatible. Proceed with caution, email Albert for instructions if in doubt.")
-  endif
+  !!!if( trim(this%label) /= "version_20170802" ) then   !jö removed this. Not very convenient while developing. 
+  !!!   call system_abort("IPModel_SCME_Initialise_str: SCME with updated parameters/damping. Make sure your potential is compatible. Proceed with caution, email Albert for instructions if in doubt.")
+  !!!endif
   !call IPModel_SCME_read_params_xml(this, param_str)
-  this%cutoff = 2.0_dp
+  this%cutoff = 100.0_dp !jö put this to high number to avoid warning message while running python. 
 
   !  Add initialisation code here
 
@@ -233,7 +237,10 @@ subroutine IPModel_SCME_Calc(this, at, e, local_e, f, virial, local_virial, args
            USE_OO_REP          =this%use_repulsion, &
            USE_ALL_REP         =this%use_super_repulsion, &
            USE_VAR_QUAD        =this%use_variable_quadrupole, &
-           USE_VAR_OCT         =this%use_variable_octapole )
+           USE_VAR_OCT         =this%use_variable_octapole, &
+           USE_version      =this%use_version, &
+           DAMPING_PARAMETER   =this%damping_parameter, &
+           kernel_choice       =this%kernel_choice )             ! This is where SCME is called  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #endif
    
    

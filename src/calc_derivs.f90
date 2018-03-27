@@ -172,9 +172,9 @@ contains
                    if (r2 .gt. rMax2) cycle crescent!JÖ goto 11
                    
                    r1 = dsqrt(r2)
-                   !call SFdsf(r1, swFunc, dSdr)
-                   swFunc = 1d0
-                   dSdr = 1d0
+                   call SFdsf(r1, swFunc, dSdr)
+                   !swFunc = 1d0
+                   !dSdr = 1d0
                    
                    !do i = 1, 3
                    !   d(i) = dpole(i,m)
@@ -269,7 +269,7 @@ contains
                    !$$$                     stop
                    
                    
-                   !call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,opole, hpole, fsf)
+                   call addSwitchingForce(d1a, d2a, d3a, d4a, n, dSdr, dr, r1, dpole, qpole,opole, hpole, fsf)
                    
 !11              end do
                 end do crescent

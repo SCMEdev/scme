@@ -1,6 +1,6 @@
 module compressed_utils
 
-use printer_mod, only: str, printer, printo
+use printer_mod, only: str, printer, printo, printa
 use compressed_arrays 
 implicit none
 
@@ -14,6 +14,64 @@ subroutine main
 call print_trace_lengths    
 end subroutine
 
+
+function compress_subdivided(flin,k1,k2) result(cmat)
+    integer, intent(in) :: k1, k2
+    real(dp), intent(in) :: flin(:)
+    real(dp) :: cmat(len_(k1),len_(k2))!, intent(out)
+    integer :: set1(k1),set2(k2), i1,i2, base(k1+k2), ind!sf,s1,s2,
+    
+    if ( size(flin) /= 3**(k1+k2) )stop"COMPRESS_SUBDIVIDED: Inconsistent length and rank of linear input polarizability"
+    
+    do i1 = 1,k1+k2
+        base(i1) = 3**(i1-1)
+    enddo
+    
+    ! Now this is done without taking matrix symmetry for granted
+    set2=1
+    do i2 = 1, len_(k2)
+        if(i2>1) set2 = next_lex(set2,1)
+        
+        set1=1
+        do i1 = 1,len_(k1)
+            if(i1>1)set1 = next_lex(set1,1)
+            
+            ind=sum( ([set1,set2]-1)*base)+1
+            cmat(i1,i2) = flin(ind)
+        enddo
+    enddo
+end
+    !if ( k1+k2 /= kk    )stop"COMPRESS_SUBDIVIDED: Sum of subdivided ranks not equal to total rank"
+    !s1=size(cmat,1)
+    !s2=size(cmat,2)
+    !if ( s1 /= len_(k1) )stop"COMPRESS_SUBDIVIDED: inconsistent size1 and rank1 of output polarizability matrix"
+    !if ( s2 /= len_(k2) )stop"COMPRESS_SUBDIVIDED: inconsistent size2 and rank2 of output polarizability matrix"
+    !print*, "base = "//str(base)
+        !print*, "set2 = "//str(set2)
+            !print*, "set1 = "//str(set1)
+            !print*, "linear index = "//str(ind)!//" = "
+
+
+function expand_subdivided(cmat,k1,k2) result(flin)
+    integer, intent(in) :: k1,k2
+    real(dp), intent(in) :: cmat(:,:)
+    real(dp) :: flin(3**(k1+k2))
+    integer ii,i1,i2, set(k1+k2)!,se1(k1),se2(k2), s1,s2, 
+    
+    if ( size(cmat,1) /= len_(k1) )stop"EXPAND_SUBDIVIDED: inconsistent size1 and rank1 of output polarizability matrix"
+    if ( size(cmat,2) /= len_(k2) )stop"EXPAND_SUBDIVIDED: inconsistent size2 and rank2 of output polarizability matrix"
+    
+    set=1
+    do ii = 1,3**(k1+k2)
+        if(ii>1)set=next_can(set,0) !must use CANONICAL ORDER here since this complies with fortrans intrinsic ordering!
+        
+        i1 = finder(set2pown(set(1:k1)))
+        i2 = finder(set2pown(set(k1+1:k1+k2)))
+        
+        flin(ii)=cmat(i1,i2)
+    enddo
+end
+    
 
 
 subroutine inv_odd_powers(nkmax,rr,rinvv,r1)
@@ -60,7 +118,7 @@ subroutine print_trace_lengths
         print*, "n="//str(n,2)//", len="//str(acc,3)//" <= "//str(temp(1:n05))!//" => "//str(sum(temp(1:n05)))
     enddo
     
-    call printo([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
+    call printa([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
     print*, str([1, 23, 54, 1, 5, 7, 8, 909, 87, 0],0)
 end subroutine
 
@@ -98,7 +156,7 @@ subroutine print_trace_index_matrix(k)
         enddo
     enddo
     print'(a)',"integer, parameter :: tmatrix("//str(ileng)//","//str(tleng)//") = reshape([ &"
-    call printo(matrix,0,1)
+    call printa(matrix,0,1)
     print'(a)',"], shape(tmatrix), order=[2,1])"
 
     
@@ -186,7 +244,7 @@ subroutine print_square_index_matrix(k)
         enddo
     enddo
     print'(a)', "integer, parameter :: matr("//str(ileng)//","//str(ileng)//") = reshape( [ &"
-    call printo(matrix,0,1)
+    call printa(matrix,0,1)
     print'(a)', "], shape(matr) )"
     
 end subroutine
@@ -218,7 +276,7 @@ subroutine print_choose_matrix
     
     ! Print for copying
     write(*,'(a)') "integer, parameter :: choose_matrix(0:"//str(k)//",0:"//str(k)//") = reshape( [&"
-    call printo(mat,0,1)
+    call printa(mat,0,1)
     write(*,'(a)') " ], shape(choose_matrix) )"
 end subroutine
 
@@ -405,18 +463,41 @@ function apple_g(n) result(g)
 end
 
 
-function key2n(key) result(n)
-   integer, intent(in) :: key(:)
-   integer i, n(3), rank, ind
-   rank = size(key)
-   n=0
-   ! get number of x,y,z indices (or rather 1,2,3 indices)
-   do i = 1,rank
-     ind = key(i)
-     n(ind) = n(ind) + 1
-   enddo
-end function
+!function key2n(key) result(n)
+!   integer, intent(in) :: key(:)
+!   integer i, n(3), rank, ind
+!   rank = size(key)
+!   n=0
+!   ! get number of x,y,z indices (or rather 1,2,3 indices)
+!   do i = 1,rank
+!     ind = key(i)
+!     n(ind) = n(ind) + 1
+!   enddo
+!end function
 
+function set2pown(set) result(pown)
+    integer, intent(in)  :: set(:) 
+    integer pown(3) , i
+    pown=0
+    do i = 1, size(set)
+        pown(set(i)) = pown(set(i)) + 1
+    enddo
+end
+
+function pown2set(pown) result(set)
+    integer, intent(in)  :: pown(3) 
+    integer set(sum(pown)) , i,j, p0,pu
+    pu=0
+    print*,"pown",pown
+    do i = 1,3
+        p0=pu
+        pu=p0+pown(i)
+        do j=p0+1,pu
+            set(j) = i
+        enddo
+        
+    enddo
+end
 
 
 
@@ -469,20 +550,6 @@ end subroutine
     
 
 
-subroutine test_polyfinder
-integer nn(3), i, n, it
-it = 0
-print*, "key, pos, finder, polyf, it, polyf-it "
-do n = 0, 7
-    nn=[n,0,0]
-    do i = 1, len_(n)
-        if (i>1)call nextpown(nn)
-        it = it+1
-        print'(a,*(I4))'," ["//str(nn)//"]",pos_(n), finder(nn), polyfind(nn), it, polyfind(nn)-it
-    enddo
-enddo
-print*, str(pos_)
-end
 
 function finder(n) result(row)
    ! Given nx,ny,nz, returns corresponding row in tricorn _vector_. 
@@ -521,31 +588,6 @@ end
 
 
 
-pure function sorted(key) 
-   ! given an unsorted key, returns surted key. 
-   integer, intent(in) :: key(:)
-   integer :: sorted(size(key))
-   integer :: saveit, minimum, i, j, rank, minposi
-   sorted = key
-   rank = size(sorted)
-   
-   do i = 1,rank-1
-      saveit = sorted(i)
-      minimum = saveit
-      minposi = i 
-      do j = i+1, rank
-        if(sorted(j).le.minimum)then
-          minimum = sorted(j)
-          minposi = j
-        endif
-      enddo
-      sorted(i)=minimum
-      sorted(minposi)=saveit
-   enddo
-end function
-
-
-
 function next_lex(key,tric) result(next)
    ! Function returning the next combination of indices (key) given the previous key, IN LEXICOGRAPHICAL ORDER. 
    ! If tric=1 it gives the next tricorn key, if tric=0 it gives the next full-tensor key. 
@@ -553,6 +595,8 @@ function next_lex(key,tric) result(next)
    integer, intent(in), optional :: tric
    integer :: next(size(key))
    integer rank, i, j, vali
+   
+   if(.not.(tric==0 .or. tric==1))stop"NEXT LEX: illegal tricorn setting, only 0 or 1 is valied"
    
    rank = size(key)
    next = key
@@ -577,6 +621,8 @@ function next_can(key,tric) result(next)
    integer, intent(in), optional :: tric
    integer :: next(size(key))
    integer rank, i, j, vali
+   
+   if(.not.(tric==0 .or. tric==1))stop"NEXT CAN: illegal tricorn setting, only 0 or 1 is valied"
    
    rank = size(key)
    next = key
@@ -633,19 +679,45 @@ function expand(tricorn, rank) result(linfull)
     real(dp) tricorn( : ) , linfull(3**rank)
     integer i, tri_ind, nn(3), trilen
     trilen = (rank+1)*(rank+2)/2
-    if(size(tricorn) /= trilen)stop"length(tricorn tensor) /= (rank+1)*(rank+2)/2"
+    if(size(tricorn) /= trilen)stop"expand(): length(tricorn tensor) /= (rank+1)*(rank+2)/2"
     key = 1
     linfull = 0
     linfull(1) = tricorn(1)
     
     do i = 2,3**rank 
-        key = next(key,0)
-        nn = key2n(key)
+        key = next_lex(key,0)
+        nn = set2pown(key)
         tri_ind = finder(nn)
         linfull(i) = tricorn(tri_ind)
     enddo
     
 end 
+
+
+
+pure function sorted(key) 
+   ! given an unsorted key, returns surted key. 
+   integer, intent(in) :: key(:)
+   integer :: sorted(size(key))
+   integer :: saveit, minimum, i, j, rank, minposi
+   sorted = key
+   rank = size(sorted)
+   
+   do i = 1,rank-1
+      saveit = sorted(i)
+      minimum = saveit
+      minposi = i 
+      do j = i+1, rank
+        if(sorted(j).le.minimum)then
+          minimum = sorted(j)
+          minposi = j
+        endif
+      enddo
+      sorted(i)=minimum
+      sorted(minposi)=saveit
+   enddo
+end function
+
 
 
 pure function sumfacfac(u)

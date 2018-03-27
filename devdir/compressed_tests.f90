@@ -3,12 +3,14 @@ module compressed_tests
 use compressed_arrays
 use compressed_tensors, bad=>main
 use compressed_utils, bad=>main
-
+use calcEnergy_mod, only:multipole_energy
+use inducePoles,only: induce_dipole, induce_quadrupole
 use detrace_apple, bad=>main
 
 use polariz_parameters
 
 use calc_derivs, only:calcDv
+use calc_higher_order, only:octu_hexaField
 
 
 implicit none
@@ -32,7 +34,7 @@ subroutine suit
     call test_subdiv_pow_h(4,3)
     call test_subdiv_pow_h(3,4)
     
-    call test_next_key2n(4,1)
+    call test_next_set2pown(4,1)
     call test_sorted
     call test_expand_compress
     call test_brakk
@@ -51,10 +53,10 @@ subroutine suit
     call test_potgrad
     call test_mp_pot
     
-    call printo(tmm_,0)
-    call printo(mm_,0,0)
-    call printo(mm_,0,1)
-    call printo([1,2,3,4,5,6,77,7777,777,9],0,0)
+    call printa(tmm_,0)
+    call printa(mm_,0,0)
+    call printa(mm_,0,1)
+    call printa([1,2,3,4,5,6,77,7777,777,9],0,0)
     !call test_intfac_ff!takes two command line arguments
     
     call test_fac(5)
@@ -82,13 +84,282 @@ subroutine suit
 end subroutine
     
 
+!subroutine test_system_polarize
+    
+    
+
+subroutine test_next_lex_and_can
+    !this routine tests the routines that produces the next full or compressed tensor index set, not the powers. 
+    integer set1(4),set2(4), i,n, pown1(3),pown2(3)
+    n=4
+    set1 = [1,1,1,1]
+    set2 = [1,1,1,1]
+    do i=1,3**4
+        if(i>1)then
+            set1 = next_lex(set1,1)
+            set2 = next_can(set2,1)
+            
+        endif
+        pown1 = set2pown(set1)
+        pown2 = set2pown(set2)
+        print*, "pown1",pown1
+        print*, "set1: "//str(set1)//" has pow "//str(pown1)//";  set2: "//str(set2)//" has pow: "//str(pown2)//" which is again the set "//str(pown2set(pown1))
+    enddo
+end
+
+subroutine test_polyfinder
+    integer nn(3), i, n, it
+    it = 0
+    print*, "key, pos, finder, polyf, it, polyf-it "
+    do n = 0, 7
+        nn=[n,0,0]
+        do i = 1, len_(n)
+            if (i>1)call nextpown(nn)
+            it = it+1
+            print'(a,*(I4))'," ["//str(nn)//"]",pos_(n), finder(nn), polyfind(nn), it, polyfind(nn)-it
+        enddo
+    enddo
+    print*, str(pos_)
+end
+
+
+        
+
+subroutine test_printoa
+    integer :: mati(5,4), veci(10)
+    real(dp) :: matr(5,4), vecr(10)
+    
+    
+    
+    
+    call random_number(matr)
+    call random_number(vecr)
+    
+    call printa(nint(10*matr),0 ,0,"hey")
+    call printa(10*matr,0,t="hey")
+    
+    
+    call printa(nint(10*vecr),0 ,0,"hey")
+    call printa(10*vecr,t="hey")
+    
+    
+end
+
+subroutine test_compress_expand_subdivided
+    
+    integer, parameter :: nm=1, m=1
+    integer p1,p2, pp, i1, i2, i3
+    real(dp) :: p11f(3,3,nm),p12f(3,3,3,nm),p21f(3,3,3,nm), p22f(3,3,3,3,nm)
+    real(dp) :: p11c(3,3,nm),p12c(3,6,nm),p21c(6,3,nm), p22c(6,6,nm),pp2(10,10,nm), dq(10,nm) , dqs(10,nm)
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,43,4,3,5,23,345,34000])
+    call random_number(p11f)
+    call random_number(p12f)
+    call random_number(p22f)
+    
+    call symmetrize_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m))
+    
+    do i3=1,3
+        do i2 = 1,3
+            do i1 = 1,3
+                p21f(i2,i3,i1,m) = p12f(i1,i2,i3,m)
+            enddo
+        enddo
+    enddo
+    !call printo(p12f(:,:,:,m),order=[2,3,1])
+    !call printo(p21f(:,:,:,m),order=[1,2,3])
+    
+    call polycompress_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m),pp2(:,:,m))
+    
+    !call printa(pp2(:,:,m))
+    
+    Print*
+    Print*, "TEST COMPRESSION: ___________________________________________________"
+    
+    !p12
+    p1=1;p2=2
+    pp=p1+p2
+    !call compress_subdivided(reshape(p12f(:,:,:,m),[3**pp]),p12c(:,:,m),pp,p1,p2)
+    p12c(:,:,m) = compress_subdivided(reshape(p12f(:,:,:,m),[3**pp]),p1,p2)
+    
+    call printa( pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) )
+    call printa(p12c(:,:,m))
+    print*
+    print*, "diff:"
+    call printa(pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) - p12c(:,:,m))
+    
+    
+    !p21
+    p1=2;p2=1
+    pp=p1+p2
+    !call compress_subdivided(reshape(p21f(:,:,:,m),[3**pp]),p21c(:,:,m),pp,p1,p2)
+    p21c(:,:,m) = compress_subdivided(reshape(p21f(:,:,:,m),[3**pp]),p1,p2)
+    
+    call printa(pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m))
+    call printa(p21c(:,:,m))
+    print*
+    print*, "diff:"
+    call printa( pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) - p21c(:,:,m))
+    
+    !p22
+    p1=2;p2=2
+    pp=p1+p2
+    !call compress_subdivided(reshape(p22f(:,:,:,:,m),[3**pp]),p22c(:,:,m),pp,p1,p2)
+    p22c(:,:,m) = compress_subdivided(reshape(p22f(:,:,:,:,m),[3**pp]),p1,p2)
+    
+    call printa(pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m))
+    call printa(p22c(:,:,m))
+    print*
+    print*, "diff:"
+    call printa( pp2(pos_(p1)+1:pos_(p1+1),pos_(p2)+1:pos_(p2+1),m) - p22c(:,:,m) )
+    
+    
+    Print*
+    Print*, "TEST EXPANSION: _______________________________________________________"
+    Print*
+    
+    print*
+    print*, "original 12:"
+    call printo( p12f(:,:,:,m))
+    print*
+    print*, "new 12:"
+    call printo( reshape(expand_subdivided(p12c(:,:,m),1,2),shape=[3,3,3]) )
+    print*
+    print*, "diff 12:"
+    call printo( p12f(:,:,:,m) - reshape(expand_subdivided(p12c(:,:,m),1,2),shape=[3,3,3]) )
+    
+    print*
+    print*, "ONLY DIFFS:"
+    
+    print*
+    print*, "diff 21:"
+    call printo( p21f(:,:,:,m) - reshape(expand_subdivided(p21c(:,:,m),2,1),shape=[3,3,3]) )
+    
+    print*
+    print*, "diff 22:"
+    call printo( p22f(:,:,:,:,m) - reshape(expand_subdivided(p22c(:,:,m),2,2),shape=[3,3,3,3]) )
+    
+    
+    
+    
+end
+    
+
+subroutine test_polarize
+    integer, parameter :: nm=3
+    real(dp) :: q1c(3,nm),q2c(6,nm), q3c(10,nm), q4c(15,nm)
+    real(dp) :: f1c(3,nm),f2c(10,nm)!, f3c(10,nm), f4c(15,nm)
+    real(dp) :: p11c(3,3,nm),p12c(3,6,nm), p22c(6,6,nm),pp2(10,10,nm), dq(10,nm) , dqs(10,nm)
+    
+    real(dp) :: q1f(3,nm),q2f(3,3,nm),dq1f(3,nm),dq2f(3,3,nm), q3f(3,3,3,nm), q4f(3,3,3,3,nm)
+    real(dp) :: f1f(3,nm),f2f(3,3,nm)!, f3f(3,3,3,nm), f4f(3,3,3,3,nm)
+    real(dp) :: p11f(3,3,nm),p12f(3,3,3,nm), p22f(3,3,3,3,nm),p111f(3,3,3,nm)
+    integer m
+    real(dp) f12(10,nm)
+    !real(dp), dimension(pos_(4+1),2) qn_perm, qn_ind,qn_del,qn_tot, fn
+    
+    
+    
+    logical*1 converged
+    
+    integer nn
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,43,4,3,5,23,345,34000])
+    
+    !compressed random fileds
+    call random_number(f1c)
+    call random_number(f2c(:6,:))
+    !call random_number(f3c)
+    !call random_number(f4c)
+    
+    
+    !full non-symmetrized polarizability
+    call random_number(p11f)
+    call random_number(p12f)
+    call random_number(p22f)
+    
+    do m = 1,nm
+        !create full random fields
+        f12(:,m) = [0d0,f1c(:,m),f2c(:6,m)]
+        
+        f1f(:,m)=f1c(:,m)
+        f2f(:,:,m)=reshape(expand(f2c(:6,m),2),[3,3])
+        !f3f(:,:,:,m)=reshape(expand(f3c(:,m),3),[3,3,3])
+        !f4f(:,:,:,:,m)=reshape(expand(f4c(:,m),4),[3,3,3,3])
+        
+        ! Create full polarizabilities
+        call symmetrize_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m))
+        
+        
+        call polycompress_p(p11f(:,:,m), p12f(:,:,:,m),p22f(:,:,:,:,m),pp2(:,:,m))
+        
+        
+        ! Print to see
+        !print*, "f2f:";call printo(f2f(:,:,m) )
+        !print*, "f3f:";call printo(f3f(:,:,:,m) )
+        !print*, "f4f:";call printo(f4f(:,:,:,:,m) )
+        !
+        !
+        !print*, "p11f:";call printo(p11f(:,:,m) )
+        !print*, "p12f:";call printo(p12f(:,:,:,m) )
+        !print*, "p22f:";call printo(p22f(:,:,:,:,m) )
+        
+        
+        call printa(pp2(:,:,m),t="Polarizability matrix")
+    enddo
+    
+    !make hyperpolarizability and permanent poles zero
+    p111f=0
+    q1f=0
+    q2f=0
+    q3f=0
+    q4f=0
+    
+    
+    call induce_dipole(dq1f, q1f, f1f, f2f, p11f, p12f, p111f, nm, converged)
+    call induce_quadrupole(dq2f, q2f, f1f, f2f, p12f, p22f, nm, converged)
+    
+    dqs=0
+    call system_polarize_stone(pp2,f12,dqs)
+    
+    
+    do m = 1,nm
+        
+        !print*, "q1f:"; call printo( q1f(:,m) )
+        !print*, "dq1f:";call printo(dq1f(:,m) )
+        !
+        !print*, "q2f:"; call printo( q2f(:,:,m) )
+        !print*, "dq2f:";call printo(dq2f(:,:,m) )
+        
+        dq=0
+        call polarize_stone(pp2(:,:,m),[0d0,f1c(:,m),f2c(:6,m)],dq(:,m))
+        
+        print*, "mol nr. "//str(m)//":"
+        print*, "scme dq:", [0d0, dq1f(:,m), compress(reshape(dq2f(:,:,m),[3**2]),2) ]
+        print*, "ston dq:", dq(:,m)
+        print*, "syss dq:", dqs(:,m)
+        
+    enddo
+    
+    
+    ! test stone field!!!
+    
+    !call printa( [0d0, dq1f(:,1), compress(reshape(dq2f,[3**2]),2) ])
+    !call printa( dq)
+    !call multipole_energy(q1f, q2f, q3f, q4f, f1f, f2f, f3f, f4f, 1, uTot)
+    !call multipole_energy(q1f, q2f, q3f, q4f, f1f, f2f, f3f, f4f, 1, uTot)
+    
+    
+end
+
+
 subroutine test_polarize2
     !compressed
     real(dp) p12c(3,6),p21c(6,3), p22c(6,6)
     real(dp) v2c(6)
     real(dp) alp(pos_(2+1),pos_(2+1))
-    real(dp), dimension(pos_(2+1)) :: poly_qc, poly_vc 
-    integer s1,f1,s2,f2
+    real(dp), dimension(pos_(2+1)) :: poly_mp, poly_pot 
+    !integer s1,f1,s2,f2
     
     
     !full
@@ -99,7 +370,7 @@ subroutine test_polarize2
     real(dp) q1c_f(3), q2c_f(6)
     
     
-    !POLARIZABILITIES
+    ! CREATE POLARIZABILITIES
     call random_number(p11f)
     call random_number(p12f)
     call random_number(p22f)
@@ -109,43 +380,111 @@ subroutine test_polarize2
     print*, "nonsymmetry of polarizations:", test_polz_symmetry(p11f,p12f,p22f)
     
     call compress_p(p22f,p12f, p22c,p12c,p21c)
+    call polycompress_p(p11f, p12f,p22f,alp)
     
-    !POTENTIAL
+    
+    ! CREATE POTENTIAL
     call random_number(v1f)
     call random_number(v2f)
     v2f = (v2f + transpose(v2f) )/2d0
     v2c = compress(reshape(v2f,[3**2]),2)
+    poly_pot = [0d0,v1f,v2c]
     
-    !POLARIZE
+    
+    
+    !POLARIZE FULL
     call polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
     
-    q1c_f=q1f
     q2c_f=compress(reshape(q2f,[3**2]),2)
-    call printer(q2f,'q2f',0)
-    
-    !POLYTENSOR FORMALISM
-    s1 = pos_(1)+1
-    f1 = pos_(1+1)
-    s2 = pos_(2)+1
-    f2 = pos_(2+1)
-    
-    alp=0
-    alp(s1:f1,s1:f1)=p11f
-    alp(s1:f1,s2:f2)=p12c
-    alp(s2:f2,s1:f1)=p21c
-    alp(s2:f2,s2:f2)=p22c
-    
-    poly_vc = [0d0,v1f,v2c]
-    
-    poly_qc = matmul(alp,poly_vc*gg_(1:f2))
     
     
-    call printo([0d0,q1c_f,q2c_f],0,5,0)
+    !POLARIZE COMRESSED
+    poly_mp = matmul(alp,poly_pot*gg_(1:10))
     
-    call printo(poly_qc,0,5,0)
+    
+    !PRINT induced poles:
+    print*, "induced poles by FULL tensors:"
+    call printa([0d0,q1f,q2c_f])
+    
+    
+    print*, "induced poles by COMPRESSED tensors:"
+    call printa(poly_mp)
     
     
 end
+
+subroutine polycompress_p(p11f,p12f,p22f,alp)
+    real(dp), intent(in) :: p22f(3,3,3,3), p12f(3,3,3),p11f(3,3)
+    real(dp), intent(out) ::  alp(10,10)!
+    real(dp) p22c(6,6), p12c(3,6), p21c(6,3)
+    !real(dp) :: 
+    
+    integer i1,i2,i3,i4,  j1,j2
+    integer k1a,k1b,k2a,k2b
+    !integer s1,f1,s2,f2
+    
+    !p12c=10
+    !do i1=1,3
+    !    j2=0
+    !    do i2=1,3
+    !        do i3=i2,3
+    !            j2=j2+1
+    !            p12c(i1,j2) = p12f(i1,i3,i2)
+    !        enddo
+    !    enddo
+    !enddo
+    
+    p12c = compress_subdivided(reshape(p12f,[3**3]),1,2)
+    
+    p21c=transpose(p12c)
+
+    
+    !j1=0
+    !do i1=1,3
+    !    do i2=i1,3
+    !        j1=j1+1
+    !        j2=0
+    !        do i3=1,3
+    !            do i4=i3,3
+    !                j2=j2+1
+    !                p22c(j1,j2) = p22f(i1,i2,i3,i4)
+    !            enddo
+    !        enddo
+    !    enddo
+    !enddo
+    p22c = compress_subdivided(reshape(p22f,[3**4]),2,2)
+    
+    
+    alp(:,1)=0
+    alp(1,:)=0
+    
+    k1a = pos_(1)+1
+    k1b = pos_(1+1)
+    k2a = pos_(2)+1
+    k2b = pos_(2+1)
+    
+    alp(k1a:k1b,k1a:k1b)=p11f
+    alp(k1a:k1b,k2a:k2b)=p12c
+    alp(k2a:k2b,k1a:k1b)=p21c
+    alp(k2a:k2b,k2a:k2b)=p22c
+    
+    !s1 = pos_(1)+1
+    !f1 = pos_(1+1)
+    !s2 = pos_(2)+1
+    !f2 = pos_(2+1)
+    !
+    !alp=0
+    !alp(s1:f1,s1:f1)=p11f
+    !alp(s1:f1,s2:f2)=p12c
+    !alp(s2:f2,s1:f1)=p21c
+    !alp(s2:f2,s2:f2)=p22c
+    
+    
+    
+    
+end
+
+
 
 subroutine polarize_full(p11f, p12f,p22f,v1f,v2f, q1f,q2f)
     real(dp), intent(in) :: p11f(3,3), p12f(3,3,3),p22f(3,3,3,3)
@@ -287,6 +626,237 @@ end
     
 
 
+subroutine test_stone_field
+    real(dp) :: q1c(3),q2c(6), q3c(10), q4c(15)
+    real(dp) :: q1cc(3),q2cc(6), q3cc(10), q4cc(15)
+    real(dp) :: f1c(3),f2c(6), f3c(10), f4c(15),ff4c(pos_(4+1)), ff4b(pos_(4+1),2)
+    
+    real(dp) :: q1f(3,1),q2f(3,3,1),dq1f(3,1),dq2f(3,3,1), q3f(3,3,3,1), q4f(3,3,3,3,1)
+    real(dp) :: f1f(3,1),f2f(3,3,1), f3f(3,3,3,1), f4f(3,3,3,3,1)
+    
+    integer, parameter :: nx=4,kx=4,nkx=nx+kx
+    integer k1,k2,n1,n2, p1,p2
+    real(dp) :: sss(2*nkx), rr(3),r2
+    real(dp), dimension(pos_(2*nkx+1)) :: rrr,df
+    
+    call random_number(q1c)
+    call random_number(q2c)
+    call random_number(q3c)
+    call random_number(q4c)
+    call random_number(rr)
+    
+    
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,43,4,3,5,23,345,34000])
+        
+    q1f(:,1)=q1c
+    q2f=reshape(expand(q2c,2),shape(q2f))
+    q3f=reshape(expand(q3c,3),shape(q3f))
+    q4f=reshape(expand(q4c,4),shape(q4f))
+    
+    
+    call printa(q2c,t="q2c")
+    call printa(q3c,t="q3c")
+    call printa(q4c,t="q4c")
+        
+    !print*, "q2f:";call printo(q2f(:,:,1)     )
+    !print*, "q3f:";call printo(q3f(:,:,:,1)   )
+    !print*, "q4f:";call printo(q4f(:,:,:,:,1) )
+    
+    
+    r2=sum(rr**2)
+    call vector_powers(nkx,rr,rrr)!(k,r,rr) 
+    !call dfdu_erf(1.6_dp,r2,nkx,sss)!(a,u,nmax,ders) 
+    call dfdu(r2,nkx,sss) 
+    call lin_polydf(nkx,rrr,sss,df)!(nmax,rrr,sss,df)    
+    
+    
+    q1cc=0;q2cc=0;q3cc=0;q4cc=0;
+    
+    print*, "full"
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    print*
+    print*, "q1=0"
+    ff4c=0
+    call add_stone_field([0d0,q1cc,q2c,q3c,q4c],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,2,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    print*
+    print*, "q1,q2=0"
+    ff4c=0
+    call add_stone_field([0d0,q1cc,q2cc,q3c,q4c],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,3,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    print*
+    print*, "q3,q4=0"
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,ff4c,1,nx,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,2,1,kx)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    
+    print*
+    print*, "q3,q4=0, -> f1,f2"
+    k1=1
+    k2=2
+    p1=pos_(0)+1
+    p2=pos_(k2+1)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,ff4c,1,nx,1,2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,2,1,2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    
+    print*, "q3,q4=0, f1,f2"
+    k1=1
+    k2=2
+    p1=pos_(0)+1
+    p2=pos_(k2+1)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3cc,q4cc],df,ff4c,1,nx,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    print*, "q3,q4=0, f1,f2,f3"
+    k1=1
+    k2=3
+    p1=pos_(0)+1
+    p2=pos_(k2+1)
+    
+    ff4c=0
+    call add_stone_field([0d0,q1c,q2c,q3c,q4c],df,ff4c,1,2,k1,k2)!(narr,dfarr,nn1,nn2,mm1,mm2)
+    call printa(ff4c)
+    
+    
+    
+    !call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    !call calcDv(rCM, q1f, q2f, q3f, q4f, 1, 1, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+    
+   print*, 'ABOVE: test stone field -----------------------------------------------'
+end
+
+
+subroutine test_old_field
+    integer, parameter :: nm = 2
+    real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
+    real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
+    real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
+    
+    real(dp) eT(3,nm), dEdr(3,3,nm), uH
+    integer NC
+    logical*1 iSlab
+    logical FULL
+    
+    integer,parameter :: nx=4,kx=5
+    real(dp) dipo(3), quad(6), octa(10), hexa(15)
+    real(dp) qn(pos_(nx+1),nm),fk(pos_(kx+1),nm)
+    
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    rMax = 100.1d0
+    rMax2 = rMax**2
+    rCM(:,1) = [0d0,0d0,0d0]
+    !rCM(:,2) = [3.4231, 2.74389, 1.54739]
+    rCM(:,2) = [1.4231, 1.24389, 1.54739]
+    nc = 1
+    a=40d0
+    a2=a**2
+    Full = .true. 
+    iSlab = .false. 
+    
+    
+    dpole=0
+    qpole=0
+    opole=0
+    hpole=0
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
+    
+    dipo = [2.345d0, -0.453245d0,0.6564256d0]
+    
+    dpole(:,1) = dipo
+    
+    call random_number(quad)
+    quad=detracer(quad,2)
+    qpole(:,:,1) = reshape(expand(quad,2),shape=[3,3])
+
+    call random_number(octa)
+    octa=detracer(octa,3)
+    opole(:,:,:,1) = reshape(expand(octa,3),shape=[3,3,3])
+    
+    call random_number(hexa)
+    hexa=detracer(hexa,4)
+    hpole(:,:,:,:,1) = reshape(expand(hexa,4),shape=[3,3,3,3])
+    
+    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    dipo=0;dpole=0
+    quad=0;qpole=0
+    !octa=0;opole=0
+    !hexa=0;hpole=0
+    
+    
+    qn(:,2)=0
+    qn(:,1)=[0d0,dpole(:,1),quad,octa,hexa]
+    
+    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
+    
+    print'(a,*(g30.15))','d-1',d1v(:,2)
+    print'(a,*(g30.15))','d-2',compress( reshape(      d2v(:,:,2),shape=[3**2]),2)
+    !print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
+    !print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
+    !print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
+    
+    
+    print*,
+    
+    fk=0
+    call system_stone_field(0,1d0,1,4,1,3,rCM,qn,fk)!(ni,nx,ki,kx,nM,rCM,qn,fk)
+    !print'(a,*(g30.15))','fk1',fk(:,1)
+    print'(a,*(g30.15))','fk2',fk(2:4,2)
+    print'(a,*(g30.15))','fk2',fk(5:10,2)
+    
+    print*,
+    
+    
+    call octu_hexaField(rCM, opole, hpole, nM, NC, a, a2, uH, eT, dEdr, rMax2, iSlab,full)
+    print'(a,*(g30.15))','d-1',eT(:,2)
+    print'(a,*(g30.15))','d-2',compress( reshape(      transpose(dedr(:,:,2)),shape=[3**2]),2)
+    
+    
+    
+
+
+
+    
+    !print*,'d1v'
+    !print'(1(g15.3))',d2v(:,:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
+   
+   print*, 'ABOVE: ---------------------test old field --------------------------'
+     
+end
+
+
+
+
 subroutine test_intfac_ff
     integer a, b
     character(3) ach, bch
@@ -419,7 +989,7 @@ subroutine test_choose
         mat(i,j) = choose(i,j)
     enddo
     enddo
-    call printo(mat,3)
+    call printa(mat,3)
     print*, 'ABOVE: test_choose -------------------------------------------'
 end
 
@@ -436,7 +1006,7 @@ subroutine test_apple_g
     print*, 'ABOVE: test_apple_g -------------------------------------------'
 end subroutine
 
-subroutine test_next_key2n(rank,tric) !result(ns)
+subroutine test_next_set2pown(rank,tric) !result(ns)
     integer, intent(in) :: rank, tric
     integer trilen, key(rank), nn(3), upper
     !integer :: ns(3, ((rank+1)*(rank+2))/2)
@@ -447,14 +1017,14 @@ subroutine test_next_key2n(rank,tric) !result(ns)
     print '('//str(4)//'I2)', next_can([1,1,3,3],0)
     print '('//str(4)//'I2)', next_can([1,1,3,3],1)
     
-    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', key2n([1,1,2,3])
+    print '('//str( ((rank+1)*(rank+2))/2 )//'I6)', set2pown([1,1,2,3])
     
     trilen = ((rank+1)*(rank+2))/2 ! length of tricorn vector given full tensor rank
     
     key = 1
        
     print*, 'n(1:'//str(rank)//') array:'
-    nn = key2n(key)
+    nn = set2pown(key)
     i = 1
     call pprint
     
@@ -464,13 +1034,13 @@ subroutine test_next_key2n(rank,tric) !result(ns)
     do i = 2,upper!3**rank!trilen
        key = next(key,tric)
        
-       nn = key2n(key)
+       nn = set2pown(key)
        call pprint
     enddo
     
     
     
-    print*, 'ABOVE: test_next_key2n -------------------------------------------'
+    print*, 'ABOVE: test_next_set2pown -------------------------------------------'
     contains !// ////////////////////////
       
       
@@ -998,73 +1568,6 @@ subroutine test_symouter
     
 end
 
-subroutine test_old_field
-    integer, parameter :: nm = 2
-    real(dp) dpole(3,nm), qpole(3,3,nm), opole(3,3,3,nm), hpole(3,3,3,3,nm) 
-    real(dp) d1v(3,nm), d2v(3,3,nm), d3v(3,3,3,nm), d4v(3,3,3,3,nm), d5v(3,3,3,3,3,nm)
-    real(dp) a(3), a2(3), rCM(3,nm), fsf(3,nm), rMax2, rMax
-    integer NC
-    logical*1 iSlab
-    logical FULL
-    
-    real(dp) quad(6), octa(10)!, hexa(15)
-    
-    
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    rMax = 100.1d0
-    rMax2 = rMax**2
-    rCM(:,1) = [0d0,0d0,0d0]
-    rCM(:,2) = [3.4231, 2.74389, 1.54739]
-    nc = 1
-    a=40d0
-    a2=a**2
-    Full = .true. 
-    iSlab = .false. 
-    
-    
-    dpole=0
-    qpole=0
-    opole=0
-    hpole=0
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call random_seed(put=[2,234,1,5,435,4,5,42,3,43,432,4,3,5,23,345,34543])
-    
-    call random_number(quad)
-    print'(a,*(g10.3))', 'quad:',quad
-    !qpole(:,:,1) = reshape(expand(opdetr(quad,2),2),shape=[3,3])
-
-    call random_number(octa)
-    !opole(:,:,:,1) = reshape(expand(opdetr(octa,3),3),shape=[3,3,3])
-    
-    !call random_number(hexa)
-    !hpole(:,:,:,:,1) = reshape(expand(opdetr(hexa,4),4),shape=[3,3,3,3])
-    
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    
-    
-    dpole=0
-    qpole=0
-    opole=0
-    hpole=0
-    dpole(:,1) = [2.345d0, -0.453245d0,0.6564256d0]
-    
-    call calcDv(rCM, dpole, qpole, opole, hpole, nM, NC, a, a2, d1v, d2v, d3v, d4v, d5v, rMax2, fsf, iSlab,FULL)
-    
-    print'(a,*(g30.15))','d-1',d1v(:,2)
-    print'(a,*(g30.15))','d-2',opdetr(compress( reshape(      d2v(:,:,2),shape=[3**2]),2),2)
-    print'(a,*(g30.15))','d-3',opdetr(compress( reshape(    d3v(:,:,:,2),shape=[3**3]),3),3)
-    print'(a,*(g30.15))','d-4',opdetr(compress( reshape(  d4v(:,:,:,:,2),shape=[3**4]),4),4)
-    print'(a,*(g30.15))','d-5',opdetr(compress( reshape(d5v(:,:,:,:,:,2),shape=[3**5]),5),5)
-    
-    
-    
-
-    print*,'d1v'
-    print'(1(g15.3))',d2v(:,:,2) !opdetr(compress( reshape(d1v(:,:,1),shape=[3**2]),2),2) !d2v(:,:,1) !
-   
-   print*, 'ABOVE: ---------------------test old field --------------------------'
-     
-end
 
 subroutine test_potgrad
     integer, parameter :: kmax=5, nmax = 3
@@ -1199,7 +1702,7 @@ subroutine test_mp_pot
     logical*1 iSlab
     logical FULL
     
-    integer, parameter :: kmax=6, nmax = 5
+    integer, parameter :: kmax=5, nmax = 4
     integer i
     real(dp) rr(3) 
     real(dp), dimension(pos_(kmax+1)) :: rrr
@@ -1215,7 +1718,7 @@ subroutine test_mp_pot
     
     
     ! For apple_potgrad
-    integer, parameter :: nkmax = 10
+    integer, parameter :: nkmax = nmax+kmax
     real(dp) rrh(3)
     real(dp), dimension(pos_(nkmax+1)) :: dtrrr,  rrrh, rrrnm, lin_df
     integer pq1,pq2
@@ -1365,7 +1868,7 @@ subroutine test_mp_pot
     print'(a,*(g30.15))','dtrrr', dtrrr
     print'(a,*(g30.15))','lin_df', lin_df
     
-    stop"just stop it!"
+    !stop"just stop it!"
     
     
     phi=0

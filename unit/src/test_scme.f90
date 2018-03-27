@@ -396,33 +396,34 @@ module test_scme
     !         run timings.
     ! ---------------------------------------------------------
     p=1
-           coordinates(p:p+2) = [ -1.0907, -0.8252, -0.9284 ]
-    p=p+3; coordinates(p:p+2) = [ -1.4736, -1.3180, -1.6898 ]
-    p=p+3; coordinates(p:p+2) = [ -0.8686,  0.0696, -1.2669 ]
-    p=p+3; coordinates(p:p+2) = [ -0.1530,  2.5613,  0.8758 ]
-    p=p+3; coordinates(p:p+2) = [ -0.7162,  3.3599,  0.8471 ]
-    p=p+3; coordinates(p:p+2) = [ -0.8391,  1.8572,  1.0804 ]
-    p=p+3; coordinates(p:p+2) = [ -0.6756,  1.5259, -2.2016 ]
-    p=p+3; coordinates(p:p+2) = [ -0.3571,  2.1947, -1.5612 ]
-    p=p+3; coordinates(p:p+2) = [ -1.4623,  2.0190, -2.5554 ]
-    p=p+3; coordinates(p:p+2) = [ -2.1394,  0.5531,  1.1850 ]
-    p=p+3; coordinates(p:p+2) = [ -1.8516, -0.1730,  0.5943 ]
-    p=p+3; coordinates(p:p+2) = [ -2.6503,  0.1754,  1.8833 ]
-    p=p+3; coordinates(p:p+2) = [ -1.9288,  4.7626,  0.8354 ]
-    p=p+3; coordinates(p:p+2) = [ -1.6640,  4.9992, -0.1046 ]
-    p=p+3; coordinates(p:p+2) = [ -2.1483,  5.5160,  1.3337 ]
-    p=p+3; coordinates(p:p+2) = [ -3.6595,  2.6702, -0.1104 ]
-    p=p+3; coordinates(p:p+2) = [ -3.1531,  1.9088,  0.2640 ]
-    p=p+3; coordinates(p:p+2) = [ -3.2814,  3.4999,  0.2831 ]
-    p=p+3; coordinates(p:p+2) = [  1.1160,  4.1296, -1.3211 ]
-    p=p+3; coordinates(p:p+2) = [  1.5809,  4.9571, -1.0815 ]
-    p=p+3; coordinates(p:p+2) = [  0.9649,  3.6761, -0.4809 ]
-    p=p+3; coordinates(p:p+2) = [ -2.9721,  3.2005, -2.6291 ]
-    p=p+3; coordinates(p:p+2) = [ -3.3448,  2.9950, -1.7281 ]
-    p=p+3; coordinates(p:p+2) = [ -3.7567,  3.1501, -3.2142 ]
-    p=p+3; coordinates(p:p+2) = [ -1.2805,  5.2116, -1.8113 ]
-    p=p+3; coordinates(p:p+2) = [ -0.4045,  4.8032, -1.9164 ]
-    p=p+3; coordinates(p:p+2) = [ -1.8429,  4.6655, -2.4245 ]
+           coordinates(p:p+2) = [ -1.4736, -1.3180, -1.6898 ]!H
+    p=p+3; coordinates(p:p+2) = [ -0.8686,  0.0696, -1.2669 ]!H
+    p=p+3; coordinates(p:p+2) = [ -1.0907, -0.8252, -0.9284 ]!O
+    p=p+3; coordinates(p:p+2) = [ -0.7162,  3.3599,  0.8471 ]!H
+    p=p+3; coordinates(p:p+2) = [ -0.8391,  1.8572,  1.0804 ]!H
+    p=p+3; coordinates(p:p+2) = [ -0.1530,  2.5613,  0.8758 ]!O
+    p=p+3; coordinates(p:p+2) = [ -0.3571,  2.1947, -1.5612 ]!H
+    p=p+3; coordinates(p:p+2) = [ -1.4623,  2.0190, -2.5554 ]!H
+    p=p+3; coordinates(p:p+2) = [ -0.6756,  1.5259, -2.2016 ]!O
+    p=p+3; coordinates(p:p+2) = [ -1.8516, -0.1730,  0.5943 ]!H
+    p=p+3; coordinates(p:p+2) = [ -2.6503,  0.1754,  1.8833 ]!H
+    p=p+3; coordinates(p:p+2) = [ -2.1394,  0.5531,  1.1850 ]!O
+    p=p+3; coordinates(p:p+2) = [ -1.6640,  4.9992, -0.1046 ]!H
+    p=p+3; coordinates(p:p+2) = [ -2.1483,  5.5160,  1.3337 ]!H
+    p=p+3; coordinates(p:p+2) = [ -1.9288,  4.7626,  0.8354 ]!O
+    p=p+3; coordinates(p:p+2) = [ -3.1531,  1.9088,  0.2640 ]!H
+    p=p+3; coordinates(p:p+2) = [ -3.2814,  3.4999,  0.2831 ]!H
+    p=p+3; coordinates(p:p+2) = [ -3.6595,  2.6702, -0.1104 ]!O
+    p=p+3; coordinates(p:p+2) = [  1.5809,  4.9571, -1.0815 ]!H
+    p=p+3; coordinates(p:p+2) = [  0.9649,  3.6761, -0.4809 ]!H
+    p=p+3; coordinates(p:p+2) = [  1.1160,  4.1296, -1.3211 ]!O
+    p=p+3; coordinates(p:p+2) = [ -3.3448,  2.9950, -1.7281 ]!H
+    p=p+3; coordinates(p:p+2) = [ -3.7567,  3.1501, -3.2142 ]!H
+    p=p+3; coordinates(p:p+2) = [ -2.9721,  3.2005, -2.6291 ]!O
+    p=p+3; coordinates(p:p+2) = [ -0.4045,  4.8032, -1.9164 ]!H
+    p=p+3; coordinates(p:p+2) = [ -1.8429,  4.6655, -2.4245 ]!H
+    p=p+3; coordinates(p:p+2) = [ -1.2805,  5.2116, -1.8113 ]!O
+    
     print*, "things in coordinates should be 81 and it is: ", p+2
     cell(1) = 35.000
     cell(2) = 35.000
@@ -434,6 +435,8 @@ module test_scme
     do i=1,1
        call scme_calculate(n_atoms, coordinates, cell, forces, u_tot)
     end do
+    
+    print*, "test_scme_cluster_9_perf() energy is", u_tot
     
     
 

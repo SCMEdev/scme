@@ -26,5 +26,5 @@
 
 program sausage
 use test_scme
-call test_scme_cluster_6_perf()
+call test_scme_cluster_9_perf()
 end program

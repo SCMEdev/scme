@@ -16,7 +16,11 @@ module printer_mod
     
     ! Interface for tensor printed in given order
     interface printo !cat_tens
-        module procedure print_order1, print_order2, print_order3, print_order4, print_integer_matrix, print_integer_vector, print_real_matrix, print_real_vector
+        module procedure print_order1, print_order2, print_order3, print_order4
+    end interface
+    
+    interface printa !cat_tens
+        module procedure print_integer_matrix, print_integer_vector, print_real_matrix, print_real_vector
     end interface
     
     ! Interface for an str() funciton like in python
@@ -26,7 +30,7 @@ module printer_mod
     
     ! Private/Public
     private
-    public printer, xyz_hho_to_linear, str, printo !, printer_h2o_linear, h2o_to_linear
+    public printer, xyz_hho_to_linear, str, printo, printa !, printer_h2o_linear, h2o_to_linear
     
     
 contains !/////////////////////////////////////////////
@@ -277,15 +281,23 @@ subroutine brackets(j,b1,b2)
 end subroutine
 
 
-subroutine print_integer_matrix(matrix,space,copy)
-  integer, optional :: space, copy
-  integer :: matrix(:,:),imax, jmax, i, j, xspace, maxx(size(matrix,2))
+!!!!!!!!!!!!! Printa!
+
+subroutine print_integer_matrix(matrix,space,copy,t)
+  character(*),optional, intent(in) :: t
+  character(100):: xt
+  
+  integer, optional, intent(in) :: space, copy
+  integer, intent(in) :: matrix(:,:)
+  integer :: imax, jmax, i, j, xspace, maxx(size(matrix,2))
   character(1) :: endsep ,midsep, sep
   logical info
   
   imax = size(matrix,1)
   jmax = size(matrix,2)
   
+  xt=""
+  if(present(t)) xt = ' "'//t//'"'
   
   xspace = 5
   if(present(space)) xspace = space
@@ -313,7 +325,7 @@ subroutine print_integer_matrix(matrix,space,copy)
   
   if(info)then
     print*, "____"
-    print*, ">>>>   Integer Matrix: "//i2s(imax)//" x "//i2s(jmax)
+    print*, ">>>>   Integer Matrix: "//i2s(imax)//" x "//i2s(jmax)//" "//xt
   endif
   
   do i = 1,imax 
@@ -329,27 +341,35 @@ subroutine print_integer_matrix(matrix,space,copy)
 end subroutine 
 
 
-subroutine print_real_matrix(matrix,space,decs,copy)
-  integer, optional :: space, copy
-  real(dp) :: matrix(:,:)
-  integer :: imax, jmax, i, j, xspace, maxx(size(matrix,2)), decs, colspace
+subroutine print_real_matrix(matrix,space,copy,decs,t)!
+  character(*),optional, intent(in) :: t
+  character(100) :: xt
+  integer, optional, intent(in) :: space, copy,decs
+  real(dp), intent(in) :: matrix(:,:)
+  integer :: imax, jmax, i, j, xspace, maxx(size(matrix,2)), xdecs, colspace
   character(1) :: endsep ,midsep, sep
   integer hej
   logical info
   
+  
   imax = size(matrix,1)
   jmax = size(matrix,2)
   
+  xt=""
+  if(present(t)) xt = ' "'//t//'"'
   
-  xspace = 5
+  
+  xdecs=4
+  xspace = 0
   if(present(space)) xspace = space
+  if(present(decs)) xdecs = decs
   
   if(xspace==0)then
     do j = 1,jmax
-      maxx(j) = maxval(int(matrix(:,j)))
+      maxx(j) = maxval(max(int(abs(matrix(:,j))),1))
       
     enddo
-    maxx = ceiling(log10(dble(maxx+1))+1d-16)
+    !maxx = ceiling(log10(dble(maxx+1))+1d-16)
   else
     maxx = xspace
   endif  
@@ -367,16 +387,16 @@ subroutine print_real_matrix(matrix,space,decs,copy)
   
   if(info)then
     print*, "____"
-    print*, ">>>>   Real Matrix: "//i2s(imax)//" x "//i2s(jmax)
+    print*, ">>>>   Real Matrix: "//i2s(imax)//" x "//i2s(jmax)//" "//xt
   endif
   
-  colspace=1
+  colspace=2
   do i = 1,imax 
     sep = midsep
     write(*,'(a)',advance="no") " "
     do j = 1, jmax
       if(j==jmax.and.i==imax) sep = " "
-      write(*,'(f'//i2s(maxx(j)+decs+colspace)//'.'//i2s(decs)//',a)',advance="no") matrix(i,j),sep 
+      write(*,'(f'//i2s(maxx(j)+xdecs+colspace)//'.'//i2s(xdecs)//',a)',advance="no") matrix(i,j),sep 
     enddo
     write(*,'(a)') endsep
   enddo
@@ -384,16 +404,21 @@ subroutine print_real_matrix(matrix,space,decs,copy)
 end subroutine 
 
 
-subroutine print_integer_vector(vector,space,copy)
-  integer, optional :: space, copy
-  integer :: vector(:),jmax, j, xspace, maxx(size(vector))
+subroutine print_integer_vector(vector,space,copy,t)
+  character(*),optional, intent(in) :: t
+  character(100) :: xt
+  integer, optional, intent(in) :: space, copy
+  integer, intent(in) :: vector(:)
+  integer :: jmax, j, xspace, maxx(size(vector))
   character(1) :: sep
   logical info
   
   jmax = size(vector)
   
+  xt=""
+  if(present(t)) xt = ' "'//t//'"'
   
-  xspace = 5
+  xspace = 0
   if(present(space)) xspace = space
   
   if(xspace==0)then
@@ -413,7 +438,7 @@ subroutine print_integer_vector(vector,space,copy)
   
   if (info)then  
     print*, "____"
-    print*, ">>>>   Integer vector, size: "//i2s(jmax)
+    print*, ">>>>   Integer vector, size: "//i2s(jmax)//" "//xt
   endif
   
   do j = 1, jmax
@@ -423,21 +448,30 @@ subroutine print_integer_vector(vector,space,copy)
   print*
 end subroutine 
 
-subroutine print_real_vector(vector,space,decs,copy)
-  integer, optional :: space, copy
-  real(dp) :: vector(:)
-  integer :: jmax, j, xspace, maxx(size(vector)),decs
+
+subroutine print_real_vector(vector,space,copy,decs,t)
+  character(*),optional, intent(in) :: t
+  character(100) :: xt
+  integer, optional, intent(in) :: space, copy, decs
+  real(dp), intent(in) :: vector(:)
+  integer :: jmax, j, xspace, maxx(size(vector)), xdecs
   character(1) :: sep
   logical info
   
   jmax = size(vector)
   
   
-  xspace = 5
+  xt=""
+  if(present(t)) xt = ' "'//t//'"'
+  
+    
+  xdecs=4
+  xspace = 0
   if(present(space)) xspace = space
+  if(present(decs)) xdecs = space
   
   if(xspace==0)then
-    maxx = ceiling(log10(dble(vector+1))+1e-16)
+    maxx = ceiling(log10(max(abs(vector),1d0))+1e-16)
   else
     maxx = xspace
   endif  
@@ -453,15 +487,15 @@ subroutine print_real_vector(vector,space,decs,copy)
   
   if (info)then  
     print*, "____"
-    print*, ">>>>   Real vector, size: "//i2s(jmax)
+    print*, ">>>>   Real vector, size: "//i2s(jmax)//" "//xt
   endif
   
   
   do j = 1, jmax
     if(j==jmax)sep=" "
-    write(*,'(f'//i2s(maxx(j)+decs+1)//'.'//i2s(decs)//',a)',advance="no") vector(j),sep 
+    write(*,'(f'//i2s(maxx(j)+xdecs+2)//'.'//i2s(xdecs)//',a)',advance="no") vector(j),sep 
   enddo
-  !(f'//i2s(maxx(j)+decs+colspace)//'.'//i2s(decs)//',a)
+  !(f'//i2s(maxx(j)+xdecs+colspace)//'.'//i2s(xdecs)//',a)
   print*
 end subroutine 
 
