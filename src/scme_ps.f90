@@ -40,8 +40,8 @@ module scme
 
   ! Parameters:
   use data_types, only:A_a0,dp, num_cells, coulomb_k !, ea0_Deb, eA_Deb,kk1,kk2    !,h2o
-  use multipole_parameters, only: d0, q0, o0, h0 !d0, 
-  use polariz_parameters, only: dd0, dq0, hp0, qq0
+  use multipole_parameters, only: d0, q0, o0, h0 ,   q1_00, q2_00, q3_00, q4_00
+  use polariz_parameters, only: dd0, dq0, hp0, qq0,  p11_data, p12_data, p21_data, p22_data
   
   ! Routines:
   use molecProperties, only: recoverMolecules, rotatePolariz,add_field_gradients, recoverMolecules_new, rotatePoles!rotate_qoh_poles,,setUnpolPoles,findPpalAxes, calcCentersOfMass,addFields, 
@@ -66,7 +66,7 @@ module scme
   
   use opole, only: get_octupoles
   
-  use compressed_utils,only: compress, expand
+  use compressed_utils,only: compress, expand, compress_subdivided, expand_subdivided
   use compressed_tensors, only:lin_df, lin_polydf, apple1_df, vector_powers, dfdu_erf, polyinner1, polyinner2, polyinner_matrix, dfdu, system_stone_field, system_polarize_stone, system_energy_stone
   use compressed_arrays
   use compressed_tests, only:polycompress_p
@@ -230,6 +230,9 @@ contains !//////////////////////////////////////////////////////////////
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     real(dp) internal_coords(3,n_atoms/3), u_mult
     
+    real(dp) d_00(3), q_00(3,3), o_00(3,3,3), h_00(3,3,3,3)
+    real(dp) dd_00(3,3), dq_00(3,3,3), qq_00(3,3,3,3)
+    
     
     !Default optional arguments
     PES=.true.
@@ -262,7 +265,7 @@ contains !//////////////////////////////////////////////////////////////
     
     
     
-    s=2
+    s=2 ! printing mode 
     
     
     
@@ -321,10 +324,28 @@ tprint(rCM, 'rCM',s)
 tprint(x,'rotation matrices',s)    
 tprint( matmul( x(:,:,2), transpose(x(:,:,2)) ),'rotation matrix: m*mT',s)    
 
-    !/ Rotate the other poles into the local axes coordinate system defined by the dipole
     
-    call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
-    call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
+    
+    !Transform compressed data to full tensors before full-tensor rotations
+    d_00 = q1_00
+    q_00 = reshape(expand(q2_00,2),shape(q_00))
+    o_00 = reshape(expand(q3_00,3),shape(o_00))
+    h_00 = reshape(expand(q4_00,4),shape(h_00))
+    
+    
+    dd_00 = p11_data
+    dq_00 = reshape(expand_subdivided(p12_data,1,2),shape(dq_00))
+    qq_00 = reshape(expand_subdivided(p22_data,2,2),shape(qq_00))
+    
+    
+    ! Rotate full tensors
+    call rotatePoles(d_00, q_00, o_00, h_00, dpole0, qpole0, opole, hpole, nM, x)
+    !call rotatePoles(d0, q0, o0, h0, dpole0, qpole0, opole, hpole, nM, x)
+    
+    call rotatePolariz(dd_00, dq_00, qq_00, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
+    !call rotatePolariz(dd0, dq0, qq0, hp0, dd, dq, qq, hp, nM, x) !0=nonrotated
+    
+    
     !call rotate_qoh_poles(q0, o0, h0, qpole0, opole, hpole, nM, x)
     !opole_orig = opole
     
