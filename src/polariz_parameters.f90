@@ -3,7 +3,7 @@ module polariz_parameters
   ! multipole moment polarizabilities, previously read from file multipoles
   ! public: dd0, dq0, hp0,qq0
   
-  use data_types, only:dp
+  use data_types, only:dp, A_a0
   
   implicit none
   
@@ -12,7 +12,7 @@ module polariz_parameters
   ! au to Debye constant
   !real(dp), parameter :: au_to_debye = 2.5417709_dp
   ! Ang to au constant
-  real(dp), parameter :: ang_to_au = 1.88972666351031921149_dp
+  !real(dp), parameter :: A_a0 = 1.88972666351031921149_dp
   
   ! components of the polarizabilities
 !  real(dp), parameter :: x_x = 10.31146_dp
@@ -54,23 +54,37 @@ module polariz_parameters
  
   
     !COMPRESSED matrices
-    real(dp), public, parameter :: p11_data(3,3) = ang_to_au**(-3) * &
+    real(dp), public, parameter :: p11_data(3,3) = A_a0**-3 * &
     reshape([&
     x_x,  0.0_dp, 0.0_dp, &
     0.0_dp, y_y,  0.0_dp, &
     0.0_dp, 0.0_dp, z_z &
     ],shape(p11_data), order = [2,1])
     
-    real(dp), public, parameter :: p12_data(3,6) = ang_to_au**(-4) * &
+    real(dp), public, parameter :: p12_data(3,6) = A_a0**-4 * &
     reshape([ &
     0.0_dp,0.0_dp,x_xz,0.0_dp,0.0_dp,0.0_dp, &
-    ! 111   112    113   122    123    133
     0.0_dp,0.0_dp,0.0_dp,0.0_dp,y_yz,0.0_dp, &
-    ! 211  212     213    222    223    233
     z_xx,0.0_dp,0.0_dp,z_yy,0.0_dp,z_zz &
-    ! 311  312    313    322    323   333
     ],shape(p12_data), order = [2,1])
   
+    
+    real(dp), public, parameter :: p21_data(6,3) = transpose(p12_data)
+    
+    real(dp), public, parameter :: p22_data(6,6) = A_a0**-5 * &
+    reshape([ &
+    xx_xx, 0.0_dp, 0.0_dp, xx_yy, 0.0_dp, xx_zz,    &
+    0.0_dp, xy_xy, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp,  &
+    0.0_dp, 0.0_dp, xz_xz, 0.0_dp, 0.0_dp, 0.0_dp,  &
+    xx_yy, 0.0_dp, 0.0_dp, yy_yy, 0.0_dp, yy_zz,    &
+    0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp, yz_yz, 0.0_dp,  &
+    xx_zz, 0.0_dp, 0.0_dp, yy_zz, 0.0_dp, zz_zz     &
+    ],shape(p22_data), order = [2,1])
+
+
+    ! 111   112    113   122    123    133
+    ! 211  212     213    222    223    233
+    ! 311  312    313    322    323   333
 
     ! 111 112 113 122 123 133
     ! 211 212 213 222 223 233
@@ -79,31 +93,21 @@ module polariz_parameters
     !1: 11 12 13 22 23 33
     !2: 11 12 13 22 23 33
     !3: 11 12 13 22 23 33
-    
-    real(dp), public, parameter :: p21_data(6,3) = transpose(p12_data)
-    
-    real(dp), public, parameter :: p22_data(6,6) = ang_to_au**(-5) * &
-    reshape([ &
-    xx_xx, 0.0_dp, 0.0_dp, xx_yy, 0.0_dp, xx_zz, &
+
+
     ! 1111   1112   1113     1122   1123   1133 
-    0.0_dp, xy_xy, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp,  &
     ! 1112   1212   1213     1222   1223   1233 
-    0.0_dp, 0.0_dp, xz_xz, 0.0_dp, 0.0_dp, 0.0_dp,  &
     ! 1113   1213   1313     1322   1323   1333 
-    xx_yy, 0.0_dp, 0.0_dp, yy_yy, 0.0_dp, yy_zz,  &
     ! 1122   1222   1322     2222   2223   2233 
-    0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp, yz_yz, 0.0_dp,  &
     ! 1123   1223   1323     2223   2323   2333 
-    xx_zz, 0.0_dp, 0.0_dp, yy_zz, 0.0_dp, zz_zz   &
     ! 1133   1233   1333     2233   2333   3333 
-    ],shape(p22_data), order = [2,1])
     
 
     
 
 
   ! quadrupole-quadrupole polarizability
-  real(dp), public, parameter, dimension(3,3,3,3) :: qq0 = (ang_to_au)**(-5) * &
+  real(dp), public, parameter, dimension(3,3,3,3) :: qq0 = (A_a0)**(-5) * &
        reshape([&
        xx_xx, 0.0_dp, 0.0_dp, 0.0_dp, xx_yy, 0.0_dp, 0.0_dp, 0.0_dp, xx_zz,  &  ! (1,1,1,1), ... (1,1,3,3)
        0.0_dp, xy_xy, 0.0_dp, xy_xy, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp, 0.0_dp, &  ! (1,2,1,1), ... (1,2,3,3)
@@ -132,13 +136,13 @@ module polariz_parameters
   
     
   ! dipole-dipole polarizability
-  real(dp), public, parameter, dimension(3,3) :: dd0 = (ang_to_au)**(-3) * &
+  real(dp), public, parameter, dimension(3,3) :: dd0 = (A_a0)**(-3) * &
        reshape([x_x, 0.0_dp, 0.0_dp, &
        0.0_dp, y_y, 0.0_dp, &
        0.0_dp, 0.0_dp, z_z ], shape(dd0), order = [2,1])
   
   ! dipole-quadrupole polarizability
-  real(dp), public, parameter, dimension(3,3,3) :: dq0 = (ang_to_au)**(-4) * &
+  real(dp), public, parameter, dimension(3,3,3) :: dq0 = (A_a0)**(-4) * &
        reshape([0.0_dp, 0.0_dp, x_xz,  & ! (1,1,1), (1,1,2), (1,1,3)
        0.0_dp, 0.0_dp, 0.0_dp, &          ! (1,2,1), (1,2,2), (1,2,3)
        x_xz, 0.0_dp, 0.0_dp,  &          ! (1,3,1), (1,3,2), (1,3,3)
